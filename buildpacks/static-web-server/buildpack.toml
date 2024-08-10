@@ -1,0 +1,6 @@
+api = "0.10"
+
+[buildpack]
+id = "heroku/static-web-server"
+version = "0.1.0"
+name = "Heroku Static Web Server"
