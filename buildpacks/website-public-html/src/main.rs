@@ -1,9 +1,14 @@
+mod errors;
+
+use crate::errors::PublicHTMLBuildpackError;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
 use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericError, GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack};
+
+const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
 
 pub(crate) struct WebsitePublicHTMLBuildpack;
 
@@ -27,7 +32,7 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     //
     // Common errors that happen during buildpack execution such as I/O errors while
     // writing CNB TOML files are handled by libcnb.rs itself.
-    type Error = GenericError;
+    type Error = PublicHTMLBuildpackError;
 
     // This method will be called when the CNB lifecycle executes the detect phase (`bin/detect`).
     // Use the `DetectContext` to access CNB data such as the operating system this buildpack is currently
@@ -38,7 +43,13 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     // required exit code as well as the data written to the build plan. libcnb.rs will,
     // according to the returned value, handle both writing the build plan and exiting with
     // the correct status code for you.
-    fn detect(&self, _context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
+    fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
+        let public_html_exists = context
+            .app_dir
+            .join("public/index.html")
+            .try_exists()
+            .map_err(PublicHTMLBuildpackError::Detect)?;
+
         DetectResultBuilder::pass().build()
     }
 

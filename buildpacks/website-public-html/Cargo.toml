@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 libcnb = "0.22.0"
+commons = { git = "https://github.com/heroku/buildpacks-ruby", branch = "main" }
+indoc = "2"

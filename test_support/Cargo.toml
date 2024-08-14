@@ -1,5 +1,5 @@
 [package]
-name = "static-web-server"
+name = "test_support"
 rust-version.workspace = true
 edition.workspace = true
 
@@ -7,9 +7,6 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-libcnb = "0.22.0"
-
-[dev-dependencies]
+libcnb = "=0.22.0"
 libcnb-test = "=0.22.0"
 ureq = "2"
-test_support.workspace = true
