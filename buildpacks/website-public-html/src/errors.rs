@@ -15,11 +15,12 @@ If the issue persists and you think you found a bug in the buildpack then reprod
 locally with a minimal example and open an issue in the buildpack's GitHub repository with the details.";
 
 #[derive(Debug)]
-pub(crate) enum PublicHTMLBuildpackError {
+pub(crate) enum WebsitePublicHTMLBuildpackError {
     Detect(io::Error),
+    DocRoot(fs_extra::error::Error),
 }
 
-pub(crate) fn on_error(error: libcnb::Error<PublicHTMLBuildpackError>) {
+pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
     let logger = BuildLog::new(stdout()).without_buildpack_name();
     match error {
         libcnb::Error::BuildpackError(buildpack_error) => {
@@ -29,9 +30,10 @@ pub(crate) fn on_error(error: libcnb::Error<PublicHTMLBuildpackError>) {
     }
 }
 
-fn on_buildpack_error(error: PublicHTMLBuildpackError, logger: Box<dyn StartedLogger>) {
+fn on_buildpack_error(error: WebsitePublicHTMLBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
-        PublicHTMLBuildpackError::Detect(e) => on_detect_error(&e, logger),
+        WebsitePublicHTMLBuildpackError::Detect(e) => on_detect_error(&e, logger),
+        WebsitePublicHTMLBuildpackError::DocRoot(e) => on_doc_root_error(&e, logger),
     }
 }
 
@@ -46,8 +48,19 @@ fn on_detect_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
+fn on_doc_root_error(
+    error: &fs_extra::error::Error,
+    logger: Box<dyn StartedLogger>,
+) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            Error importing the document root for {buildpack_name}. 
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
 fn on_framework_error(
-    error: &libcnb::Error<PublicHTMLBuildpackError>,
+    error: &libcnb::Error<WebsitePublicHTMLBuildpackError>,
     logger: Box<dyn StartedLogger>,
 ) {
     print_error_details(logger, &error)

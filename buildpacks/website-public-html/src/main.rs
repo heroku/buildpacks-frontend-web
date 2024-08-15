@@ -1,16 +1,17 @@
 mod errors;
+mod import_doc_root;
 
-use std::fs;
-
-use crate::errors::PublicHTMLBuildpackError;
+use crate::errors::WebsitePublicHTMLBuildpackError;
+use import_doc_root::import_doc_root;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
-use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
-use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
-use libcnb::generic::{GenericError, GenericMetadata, GenericPlatform};
+use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack};
+use libherokubuildpack::log::log_header;
 
 const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
+const DOC_ROOT: &str = "public";
+const PUBLIC_HTML_PATH: &str = "public/index.html";
 
 pub(crate) struct WebsitePublicHTMLBuildpack;
 
@@ -34,7 +35,7 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     //
     // Common errors that happen during buildpack execution such as I/O errors while
     // writing CNB TOML files are handled by libcnb.rs itself.
-    type Error = PublicHTMLBuildpackError;
+    type Error = WebsitePublicHTMLBuildpackError;
 
     // This method will be called when the CNB lifecycle executes the detect phase (`bin/detect`).
     // Use the `DetectContext` to access CNB data such as the operating system this buildpack is currently
@@ -48,10 +49,10 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
         let public_html = context
             .app_dir
-            .join("public/index.html");
+            .join(PUBLIC_HTML_PATH);
         let public_html_exists = public_html
             .try_exists()
-            .map_err(PublicHTMLBuildpackError::Detect)?;
+            .map_err(WebsitePublicHTMLBuildpackError::Detect)?;
         println!("Detected path: {} ({})", public_html_exists, public_html.display());
 
         if public_html_exists {
@@ -64,25 +65,14 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     // Similar to detect, this method will be called when the CNB lifecycle executes the
     // build phase (`bin/build`).
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
-        println!("Website (Public HTML)");
-
-        BuildResultBuilder::new()
-            .launch(
-                LaunchBuilder::new()
-                    .process(
-                        ProcessBuilder::new(process_type!("web"), ["echo"])
-                            .arg("Hello Public HTML!")
-                            .default(true)
-                            .build(),
-                    )
-                    .build(),
-            )
-            .build()
+        log_header(BUILDPACK_NAME);
+        import_doc_root(&context)?;
+        BuildResultBuilder::new().build()
     }
 }
 
-impl From<PublicHTMLBuildpackError> for libcnb::Error<PublicHTMLBuildpackError> {
-    fn from(value: PublicHTMLBuildpackError) -> Self {
+impl From<WebsitePublicHTMLBuildpackError> for libcnb::Error<WebsitePublicHTMLBuildpackError> {
+    fn from(value: WebsitePublicHTMLBuildpackError) -> Self {
         libcnb::Error::BuildpackError(value)
     }
 }

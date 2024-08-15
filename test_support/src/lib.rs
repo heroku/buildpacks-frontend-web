@@ -8,7 +8,7 @@ use libcnb_test::{
 };
 use std::net::SocketAddr;
 use std::panic;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 
 const DEFAULT_BUILDER: &str = "heroku/builder:22";
