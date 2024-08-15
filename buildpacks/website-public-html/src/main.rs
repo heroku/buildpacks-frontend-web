@@ -1,5 +1,7 @@
 mod errors;
 
+use std::fs;
+
 use crate::errors::PublicHTMLBuildpackError;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
@@ -44,20 +46,25 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     // according to the returned value, handle both writing the build plan and exiting with
     // the correct status code for you.
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let public_html_exists = context
+        let public_html = context
             .app_dir
-            .join("public/index.html")
+            .join("public/index.html");
+        let public_html_exists = public_html
             .try_exists()
             .map_err(PublicHTMLBuildpackError::Detect)?;
+        println!("Detected path: {} ({})", public_html_exists, public_html.display());
 
-        DetectResultBuilder::pass().build()
+        if public_html_exists {
+            DetectResultBuilder::pass().build()
+        } else {
+            DetectResultBuilder::fail().build()
+        }
     }
 
     // Similar to detect, this method will be called when the CNB lifecycle executes the
     // build phase (`bin/build`).
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
-        println!("Hello Public HTML!");
-        println!("The build is running on: {} ({})!", context.target.os, context.target.arch);
+        println!("Website (Public HTML)");
 
         BuildResultBuilder::new()
             .launch(
@@ -71,6 +78,12 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
                     .build(),
             )
             .build()
+    }
+}
+
+impl From<PublicHTMLBuildpackError> for libcnb::Error<PublicHTMLBuildpackError> {
+    fn from(value: PublicHTMLBuildpackError) -> Self {
+        libcnb::Error::BuildpackError(value)
     }
 }
 

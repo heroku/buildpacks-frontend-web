@@ -1,9 +1,17 @@
 [package]
 name = "website-public-html"
-version = "0.1.0"
-edition = "2021"
+rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 libcnb = "0.22.0"
 commons = { git = "https://github.com/heroku/buildpacks-ruby", branch = "main" }
 indoc = "2"
+
+[dev-dependencies]
+libcnb-test = "=0.22.0"
+ureq = "2"
+test_support.workspace = true

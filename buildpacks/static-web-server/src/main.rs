@@ -45,8 +45,7 @@ impl Buildpack for StaticWebServerBuildpack {
     // Similar to detect, this method will be called when the CNB lifecycle executes the
     // build phase (`bin/build`).
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
-        println!("Hello World Wide Web!");
-        println!("The build is running on: {} ({})!", context.target.os, context.target.arch);
+        println!("Static Web Server");
 
         BuildResultBuilder::new()
             .launch(
