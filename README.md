@@ -23,9 +23,7 @@ This repository contains multiple buildpacks:
 cargo libcnb package
 
 pack build my-cnb-website \
-  --buildpack packaged/x86_64-unknown-linux-musl/debug/heroku_static-web-server \
   --buildpack packaged/x86_64-unknown-linux-musl/debug/heroku_website \
-  --buildpack packaged/x86_64-unknown-linux-musl/debug/heroku_website-public-html \
   --builder heroku/builder:22 \
   --path buildpacks/website-public-html/tests/fixtures/public_html
 
