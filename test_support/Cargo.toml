@@ -1,0 +1,12 @@
+[package]
+name = "test_support"
+rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+libcnb = "=0.22.0"
+libcnb-test = "=0.22.0"
+ureq = "2"

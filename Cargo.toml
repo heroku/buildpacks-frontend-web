@@ -24,6 +24,7 @@ missing_panics_doc = "allow"
 module_name_repetitions = "allow"
 
 [workspace.dependencies]
+test_support = { path = "./test_support" }
 
 [profile.release]
 strip = true

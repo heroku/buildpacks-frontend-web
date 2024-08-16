@@ -1,9 +1,18 @@
+mod errors;
+mod install_web_server;
+
+use crate::errors::StaticWebServerBuildpackError;
+use install_web_server::install_web_server;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
 use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
-use libcnb::generic::{GenericError, GenericMetadata, GenericPlatform};
+use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack};
+use libherokubuildpack::log::log_header;
+
+const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
+const WEB_SERVER_BIN_DIR: &str = "bin";
 
 pub(crate) struct StaticWebServerBuildpack;
 
@@ -27,7 +36,7 @@ impl Buildpack for StaticWebServerBuildpack {
     //
     // Common errors that happen during buildpack execution such as I/O errors while
     // writing CNB TOML files are handled by libcnb.rs itself.
-    type Error = GenericError;
+    type Error = StaticWebServerBuildpackError;
 
     // This method will be called when the CNB lifecycle executes the detect phase (`bin/detect`).
     // Use the `DetectContext` to access CNB data such as the operating system this buildpack is currently
@@ -45,21 +54,28 @@ impl Buildpack for StaticWebServerBuildpack {
     // Similar to detect, this method will be called when the CNB lifecycle executes the
     // build phase (`bin/build`).
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
-        println!("Hello World Wide Web!");
-        println!("The build is running on: {} ({})!", context.target.os, context.target.arch);
-
+        log_header(BUILDPACK_NAME);
+        install_web_server(&context)?;
         BuildResultBuilder::new()
             .launch(
                 LaunchBuilder::new()
                     .process(
-                        ProcessBuilder::new(process_type!("web"), ["echo"])
-                            .arg("Hello World Wide Web!")
-                            .default(true)
-                            .build(),
+                        ProcessBuilder::new(
+                            process_type!("web"), 
+                            ["caddy", "run", "--config", "/layers/heroku_static-web-server/web_server/caddy.json"]
+                        )
+                        .default(true)
+                        .build(),
                     )
                     .build(),
             )
             .build()
+    }
+}
+
+impl From<StaticWebServerBuildpackError> for libcnb::Error<StaticWebServerBuildpackError> {
+    fn from(value: StaticWebServerBuildpackError) -> Self {
+        libcnb::Error::BuildpackError(value)
     }
 }
 
