@@ -12,7 +12,8 @@ use libcnb::{buildpack_main, Buildpack};
 use libherokubuildpack::log::log_header;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
-const WEB_SERVER_BIN_DIR: &str = "bin";
+const WEB_SERVER_NAME: &str = "caddy";
+const WEB_SERVER_VERSION: &str = "2.8.4";
 
 pub(crate) struct StaticWebServerBuildpack;
 
@@ -28,7 +29,7 @@ impl Buildpack for StaticWebServerBuildpack {
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
 
-        let web_server_layer = install_web_server(&context)?;
+        let web_server_layer = install_web_server(&context, WEB_SERVER_NAME, WEB_SERVER_VERSION)?;
         let config_path_buff = web_server_layer.path().join("caddy.json");
         let config_path = config_path_buff.to_str()
             .expect("should provide path to layers directory");

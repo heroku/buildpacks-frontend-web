@@ -921,6 +921,8 @@ dependencies = [
  "libcnb 0.22.0",
  "libcnb-test",
  "libherokubuildpack 0.22.0",
+ "serde",
+ "serde_json",
  "tempfile",
  "test_support",
  "ureq",
