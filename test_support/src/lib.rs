@@ -86,12 +86,15 @@ pub fn retry<T, E>(
 }
 
 pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContext, &SocketAddr)) {
-    ctx.start_container(ContainerConfig::new().expose_port(PORT), |container| {
-        let socket_addr = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-            std::panic::catch_unwind(|| container.address_for_port(PORT))
-        })
-        .unwrap();
-        in_container(&container, &socket_addr);
+    ctx.start_container(ContainerConfig::new()
+        .env("PORT", PORT.to_string())
+        .expose_port(PORT), 
+        |container| {
+            let socket_addr = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                std::panic::catch_unwind(|| container.address_for_port(PORT))
+            })
+            .unwrap();
+            in_container(&container, &socket_addr);
     });
 }
 

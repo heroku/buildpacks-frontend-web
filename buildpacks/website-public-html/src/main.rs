@@ -1,8 +1,6 @@
 mod errors;
-mod import_doc_root;
 
 use crate::errors::WebsitePublicHTMLBuildpackError;
-use import_doc_root::import_doc_root;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
@@ -10,7 +8,6 @@ use libcnb::{buildpack_main, Buildpack};
 use libherokubuildpack::log::log_header;
 
 const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
-const DOC_ROOT: &str = "public";
 const PUBLIC_HTML_PATH: &str = "public/index.html";
 
 pub(crate) struct WebsitePublicHTMLBuildpack;
@@ -64,9 +61,8 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
 
     // Similar to detect, this method will be called when the CNB lifecycle executes the
     // build phase (`bin/build`).
-    fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
+    fn build(&self, _context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
-        import_doc_root(&context)?;
         BuildResultBuilder::new().build()
     }
 }

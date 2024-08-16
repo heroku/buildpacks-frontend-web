@@ -13,7 +13,6 @@ fs_extra = "1.3.0"
 libherokubuildpack = { version = "=0.22.0", default-features = false, features = ["fs", "log"] }
 indoc = "2"
 
-
 [dev-dependencies]
 libcnb-test = "=0.22.0"
 ureq = "2"
