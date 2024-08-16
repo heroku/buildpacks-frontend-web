@@ -1,7 +1,7 @@
 use std::fs;
 
 use libcnb::layer::{
-    CachedLayerDefinition, InvalidMetadataAction, LayerRef,LayerState, RestoredLayerAction,
+    CachedLayerDefinition, EmptyLayerCause, InvalidMetadataAction, LayerRef, LayerState, RestoredLayerAction
 };
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libcnb::data::layer_name;
@@ -46,54 +46,68 @@ pub(crate) fn install_web_server(
             },
         },
     )?;
+    match layer_ref.state {
+        LayerState::Restored { .. } => {
+            log_info("Using cached web server");
+        }
+        LayerState::Empty { ref cause } => {
+            layer_ref.write_metadata(new_metadata)?;
 
-    let artifact_url = format!(
-        "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_{}_{}.tar.gz", 
-        context.target.os, context.target.arch
-    );
+            if let EmptyLayerCause::RestoredLayerAction { cause } = cause {
+                log_info(format!(
+                    "Invalidating cached web server ({} changed)",
+                    cause.join(", ")
+                ));
+            }
 
-    let default_caddy_config = r#"
-    {
-        "apps": {
-            "http": {
-                "servers": {
-                    "public": {
-                        "listen": [":{env.PORT}"],
-                        "routes": [
-                            {
-                                "handle": [
+            let artifact_url = format!(
+                "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_{}_{}.tar.gz", 
+                context.target.os, context.target.arch
+            );
+
+            let default_caddy_config = r#"
+            {
+                "apps": {
+                    "http": {
+                        "servers": {
+                            "public": {
+                                "listen": [":{env.PORT}"],
+                                "routes": [
                                     {
-                                        "handler": "file_server",
-                                        "root": "public/"
+                                        "handle": [
+                                            {
+                                                "handler": "file_server",
+                                                "root": "public/"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
-                        ]
+                        }
                     }
                 }
             }
+            "#;
+
+            let web_server_tgz = NamedTempFile::new()
+                .map_err(StaticWebServerBuildpackError::File)?;
+            let web_server_dir = layer_ref.path().join("bin");
+            fs::create_dir_all(&web_server_dir)
+                .map_err(StaticWebServerBuildpackError::File)?;
+            
+            log_info(format!(
+                "Downloading web server from {}",
+                artifact_url
+            ));
+            download_file(artifact_url, web_server_tgz.path())
+                .map_err(StaticWebServerBuildpackError::Download)?;
+            decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
+                .map_err(StaticWebServerBuildpackError::File)?;
+            
+            fs::write(layer_ref.path().join("caddy.json"), default_caddy_config)
+                .map_err(StaticWebServerBuildpackError::File)?;
         }
     }
-    "#;
-
-    let web_server_tgz = NamedTempFile::new()
-        .map_err(StaticWebServerBuildpackError::File)?;
-    let web_server_dir = layer_ref.path().join("bin");
-    fs::create_dir_all(&web_server_dir)
-        .map_err(StaticWebServerBuildpackError::File)?;
-    
-    log_info(format!(
-        "Downloading web server from {}",
-        artifact_url
-    ));
-    download_file(artifact_url, web_server_tgz.path())
-        .map_err(StaticWebServerBuildpackError::Download)?;
-    decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
-        .map_err(StaticWebServerBuildpackError::File)?;
-    
-    fs::write(layer_ref.path().join("caddy.json"), default_caddy_config)
-        .map_err(StaticWebServerBuildpackError::File)?;
-
     Ok(layer_ref)
 }
 
