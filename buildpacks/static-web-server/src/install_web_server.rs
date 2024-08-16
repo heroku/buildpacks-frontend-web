@@ -51,10 +51,12 @@ pub(crate) fn install_web_server(
     }
     "#;
 
-    let web_server_tgz = NamedTempFile::new().unwrap();
+    let web_server_tgz = NamedTempFile::new()
+        .map_err(StaticWebServerBuildpackError::File)?;
     let web_server_dir = layer_ref.path()
         .join(WEB_SERVER_BIN_DIR);
-    fs::create_dir_all(&web_server_dir).unwrap();
+    fs::create_dir_all(&web_server_dir)
+        .map_err(StaticWebServerBuildpackError::File)?;
     
     log_info(format!(
         "Downloading web server from {}",
@@ -62,10 +64,11 @@ pub(crate) fn install_web_server(
     ));
     download_file(artifact_url, web_server_tgz.path())
         .map_err(StaticWebServerBuildpackError::Download)?;
-
-    decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir).unwrap();
-
-    fs::write(layer_ref.path().join("caddy.json"), default_caddy_config).unwrap();
+    decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
+        .map_err(StaticWebServerBuildpackError::File)?;
+    
+    fs::write(layer_ref.path().join("caddy.json"), default_caddy_config)
+        .map_err(StaticWebServerBuildpackError::File)?;
 
     Ok(())
 }

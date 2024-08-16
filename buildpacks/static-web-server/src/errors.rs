@@ -16,8 +16,8 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 
 #[derive(Debug)]
 pub(crate) enum StaticWebServerBuildpackError {
-    Detect(io::Error),
     Download(libherokubuildpack::download::DownloadError),
+    File(io::Error),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
@@ -32,19 +32,16 @@ pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
 
 fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
-        StaticWebServerBuildpackError::Detect(e) => on_detect_error(&e, logger),
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
+        StaticWebServerBuildpackError::File(e) => on_build_error(&e, logger),
     }
 }
 
-fn on_detect_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
+fn on_build_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
     print_error_details(logger, &error)
         .announce()
         .error(&formatdoc! {"
-            Unable to complete buildpack detection.
-
-            An unexpected error occurred while determining if the {buildpack_name} should be \
-            run for this application. See the log output above for more information. 
+            Error during build of {buildpack_name}.
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
