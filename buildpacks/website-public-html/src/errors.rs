@@ -17,7 +17,6 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum WebsitePublicHTMLBuildpackError {
     Detect(io::Error),
-    DocRoot(fs_extra::error::Error),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
@@ -33,7 +32,6 @@ pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
 fn on_buildpack_error(error: WebsitePublicHTMLBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
         WebsitePublicHTMLBuildpackError::Detect(e) => on_detect_error(&e, logger),
-        WebsitePublicHTMLBuildpackError::DocRoot(e) => on_doc_root_error(&e, logger),
     }
 }
 
@@ -45,17 +43,6 @@ fn on_detect_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
 
             An unexpected error occurred while determining if the {buildpack_name} should be \
             run for this application. See the log output above for more information. 
-        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
-}
-
-fn on_doc_root_error(
-    error: &fs_extra::error::Error,
-    logger: Box<dyn StartedLogger>,
-) {
-    print_error_details(logger, &error)
-        .announce()
-        .error(&formatdoc! {"
-            Error importing the document root for {buildpack_name}. 
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
