@@ -28,8 +28,8 @@ pub(crate) fn install_web_server(
         os: context.target.os.clone(),
     };
 
-    let web_server_layer = context.cached_layer(
-        layer_name!("web-server"),
+    let installation_layer = context.cached_layer(
+        layer_name!("installation"),
         CachedLayerDefinition {
             build: false,
             launch: true,
@@ -46,12 +46,12 @@ pub(crate) fn install_web_server(
             },
         },
     )?;
-    match web_server_layer.state {
+    match installation_layer.state {
         LayerState::Restored { .. } => {
             log_info("Using cached web server");
         }
         LayerState::Empty { ref cause } => {
-            web_server_layer.write_metadata(new_metadata)?;
+            installation_layer.write_metadata(new_metadata)?;
 
             if let EmptyLayerCause::RestoredLayerAction { cause } = cause {
                 log_info(format!(
@@ -65,33 +65,9 @@ pub(crate) fn install_web_server(
                 web_server_version, web_server_version, context.target.os, context.target.arch
             );
 
-            let default_caddy_config = r#"
-            {
-                "apps": {
-                    "http": {
-                        "servers": {
-                            "public": {
-                                "listen": [":{env.PORT}"],
-                                "routes": [
-                                    {
-                                        "handle": [
-                                            {
-                                                "handler": "file_server",
-                                                "root": "public/"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            }
-            "#;
-
             let web_server_tgz = NamedTempFile::new()
                 .map_err(StaticWebServerBuildpackError::File)?;
-            let web_server_dir = web_server_layer.path().join("bin");
+            let web_server_dir = installation_layer.path().join("bin");
             fs::create_dir_all(&web_server_dir)
                 .map_err(StaticWebServerBuildpackError::File)?;
             
@@ -103,12 +79,9 @@ pub(crate) fn install_web_server(
                 .map_err(StaticWebServerBuildpackError::Download)?;
             decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
                 .map_err(StaticWebServerBuildpackError::File)?;
-            
-            fs::write(web_server_layer.path().join("caddy.json"), default_caddy_config)
-                .map_err(StaticWebServerBuildpackError::File)?;
         }
     }
-    Ok(web_server_layer)
+    Ok(installation_layer)
 }
 
 fn changed_metadata_fields(

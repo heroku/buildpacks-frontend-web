@@ -13,7 +13,6 @@ libherokubuildpack = { version = "=0.22.0", default-features = false, features =
 indoc = "2"
 serde = "1"
 tempfile = "3"
-ureq = "2"
 
 [dev-dependencies]
 libcnb-test = "=0.22.0"
