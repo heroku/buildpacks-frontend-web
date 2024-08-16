@@ -27,14 +27,19 @@ impl Buildpack for StaticWebServerBuildpack {
 
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
-        install_web_server(&context)?;
+
+        let web_server_layer = install_web_server(&context)?;
+        let config_path_buff = web_server_layer.path().join("caddy.json");
+        let config_path = config_path_buff.to_str()
+            .expect("should provide path to layers directory");
+
         BuildResultBuilder::new()
             .launch(
                 LaunchBuilder::new()
                     .process(
                         ProcessBuilder::new(
                             process_type!("web"), 
-                            ["caddy", "run", "--config", "/layers/heroku_static-web-server/web_server/caddy.json"]
+                            ["caddy", "run", "--config", config_path]
                         )
                         .default(true)
                         .build(),

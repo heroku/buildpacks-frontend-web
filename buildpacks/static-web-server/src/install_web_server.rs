@@ -1,5 +1,6 @@
 use std::fs;
 
+use libcnb::layer::LayerRef;
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libcnb::data::layer_name;
 use libherokubuildpack::download::download_file;
@@ -12,10 +13,10 @@ use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, WEB_SERVER_
 
 pub(crate) fn install_web_server(
     context: &BuildContext<StaticWebServerBuildpack>,
-) -> Result<(), libcnb::Error<StaticWebServerBuildpackError>> {
+) -> Result<LayerRef<StaticWebServerBuildpack, (), ()>, libcnb::Error<StaticWebServerBuildpackError>> {
     
     let layer_ref = context.uncached_layer(
-        layer_name!("web_server"),
+        layer_name!("web-server"),
         UncachedLayerDefinition {
             build: true,
             launch: true,
@@ -70,5 +71,5 @@ pub(crate) fn install_web_server(
     fs::write(layer_ref.path().join("caddy.json"), default_caddy_config)
         .map_err(StaticWebServerBuildpackError::File)?;
 
-    Ok(())
+    Ok(layer_ref)
 }
