@@ -26,9 +26,10 @@ pub(crate) fn config_web_server(
         },
     )?;
 
-    let project_toml_data = read_toml_file(context.app_dir.join("project.toml"))
-        .map_err(StaticWebServerBuildpackError::ReadTOMLFile)?;
-    let project_toml: toml::Value = project_toml_data;
+    let project_toml: toml::Value = read_toml_file(context.app_dir.join("project.toml"))
+        .unwrap_or_else(|_| 
+            toml::Value::try_from(toml::Table::new())
+                .expect("should return the TOML Value of an empty TOML Table"));
 
     let doc_root = toml_select_value(
         vec!["_", "metadata", "web-server", "root"], 
@@ -44,9 +45,13 @@ pub(crate) fn config_web_server(
                         listen: vec![":{env.PORT}".to_owned()], 
                         routes: vec![
                             CaddyHTTPServerRouteHandle {
-                                handler: "file_server".to_owned(),
-                                root: doc_root.to_string(),
-                            }
+                                handle: vec![
+                                    CaddyHTTPServerRouteHandleHandler {
+                                        handler: "file_server".to_owned(),
+                                        root: doc_root.to_string(),
+                                    }
+                                ],
+                            },
                         ]
                     }
                 }
@@ -113,6 +118,11 @@ struct CaddyConfigHTTPServerPublic {
 
 #[derive(Serialize, Deserialize)]
 struct CaddyHTTPServerRouteHandle {
+    handle: Vec<CaddyHTTPServerRouteHandleHandler>
+}
+
+#[derive(Serialize, Deserialize)]
+struct CaddyHTTPServerRouteHandleHandler {
     handler: String,
     root: String
 }

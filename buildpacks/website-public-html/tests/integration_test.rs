@@ -8,7 +8,7 @@ use test_support::{
 };
 
 #[test]
-#[ignore]
+#[ignore = "integration test"]
 fn public_html() {
     website_integration_test("./fixtures/public_html", |ctx| {
         assert_contains!(ctx.pack_stdout, "Website (Public HTML)");

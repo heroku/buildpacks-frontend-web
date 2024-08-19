@@ -21,6 +21,25 @@ fn get_integration_test_builder() -> String {
     std::env::var("INTEGRATION_TEST_CNB_BUILDER").unwrap_or(DEFAULT_BUILDER.to_string())
 }
 
+pub fn static_web_server_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    static_web_server_integration_test_with_config(fixture, |_| {}, test_body);
+}
+
+pub fn static_web_server_integration_test_with_config(
+    fixture: &str,
+    with_config: fn(&mut BuildConfig),
+    test_body: fn(TestContext),
+) {
+    integration_test_with_config(
+        fixture,
+        with_config,
+        test_body,
+        &[BuildpackReference::WorkspaceBuildpack(buildpack_id!(
+            "heroku/static-web-server"
+        ))],
+    );
+}
+
 pub fn website_integration_test(fixture: &str, test_body: fn(TestContext)) {
     website_integration_test_with_config(fixture, |_| {}, test_body);
 }
