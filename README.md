@@ -15,6 +15,19 @@ This repository contains multiple buildpacks:
 | `heroku/website-public-html` | Website (Public HTML)       | [Readme](buildpacks/website-public-html/README.md) |
 | `heroku/static-web-server`   | Static Web Server           | [Readme](buildpacks/static-web-server/README.md)   |
 
+## Configuration
+
+In the app source code, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) for custom configuration.
+
+### Document Root
+
+The filesystem directory to serve over HTTP defaults to the `public` directory in the app's source code. This root can be overriden for other use-cases, for example:
+
+```toml
+[_.metadata.web-server]
+root = "my_docroot"
+```
+
 ## Dev Notes
 
 ### Local Usage

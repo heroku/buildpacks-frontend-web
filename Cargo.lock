@@ -622,6 +622,7 @@ dependencies = [
  "tar",
  "termcolor",
  "thiserror",
+ "toml",
  "ureq",
 ]
 
@@ -925,6 +926,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "test_support",
+ "toml",
 ]
 
 [[package]]
