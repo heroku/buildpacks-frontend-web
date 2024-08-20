@@ -28,6 +28,14 @@ The filesystem directory to serve over HTTP defaults to the `public` directory i
 root = "my_docroot"
 ```
 
+### Response Headers
+
+```toml
+[_.metadata.web-server.headers]
+X-Foo = "Bar"
+X-Baz = "Buz"
+```
+
 ## Dev Notes
 
 ### Local Usage

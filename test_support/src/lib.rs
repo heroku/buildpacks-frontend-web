@@ -128,6 +128,18 @@ pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static s
     });
 }
 
+pub fn assert_web_response_header(ctx: &TestContext, expected_response_header_name: &'static str, expected_response_header_value: &'static str) {
+    start_container(ctx, |_container, socket_addr| {
+        let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+            ureq::get(&format!("http://{socket_addr}/")).call()
+        })
+        .unwrap();
+        let resp_value = response.header(&expected_response_header_name).unwrap_or_default();
+        
+        assert_contains!(resp_value, expected_response_header_value);
+    });
+}
+
 pub fn wait_for<F>(condition: F, max_wait_time: Duration)
 where
     F: Fn() + panic::RefUnwindSafe,

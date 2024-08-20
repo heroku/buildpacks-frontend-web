@@ -1,0 +1,3 @@
+[_.metadata.web-server.headers]
+X-Foo = "Bar"
+X-Baz = "Buz"

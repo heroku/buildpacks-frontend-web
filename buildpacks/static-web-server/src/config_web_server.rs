@@ -8,6 +8,7 @@ use libcnb::read_toml_file;
 use libherokubuildpack::log::log_info;
 use libherokubuildpack::toml::toml_select_value;
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 use toml::toml;
 
 const DEFAULT_DOC_ROOT: &str = "public";
@@ -37,22 +38,62 @@ pub(crate) fn config_web_server(
         .and_then(toml::Value::as_str)
         .unwrap_or(DEFAULT_DOC_ROOT);
 
+    // Default router is just the static file server. 
+    // This vector will contain all routes in order of request processing,
+    // while response processing is reverse direction.
+    let mut routes: Vec<CaddyHTTPServerRoute> = vec![
+        CaddyHTTPServerRoute {
+            r#match: None,
+            handle: vec![
+                CaddyHTTPServerRouteHandler::FileServer {
+                    handler: "file_server".to_owned(),
+                    root: doc_root.to_string(),
+                },
+            ]
+        },
+    ];
+
+    let default_toml = toml::Table::new();
+
+    // Get configured response headers.
+    let response_headers = toml_select_value(
+        vec!["_", "metadata", "web-server", "headers"], 
+        &project_toml)
+        .and_then(toml::Value::as_table)
+        .unwrap_or(&default_toml);
+    // Get configured response headers.
+    response_headers.iter().for_each(|(k, v)| {
+        let mut kv = Map::new();
+        kv.insert(
+            k.to_string(),
+            Value::Array(vec![
+                Value::String(v.as_str().unwrap_or_default().to_string())
+            ]),  
+        );
+        let new_route = CaddyHTTPServerRoute {
+            r#match: None,
+            handle: vec![
+                CaddyHTTPServerRouteHandler::Headers {
+                    handler: "headers".to_owned(),
+                    response: HeadersResponse {
+                        set: kv,
+                        deferred: true,
+                    },
+                },
+            ]
+        };
+        routes.insert(0, new_route);
+    });
+
+    // Assemble into the caddy.json structure
+    // https://caddyserver.com/docs/json/
     let caddy_config = CaddyConfig {
         apps: CaddyConfigApps { 
             http: CaddyConfigAppHTTP { 
                 servers: CaddyConfigHTTPServers { 
                     public: CaddyConfigHTTPServerPublic { 
                         listen: vec![":{env.PORT}".to_owned()], 
-                        routes: vec![
-                            CaddyHTTPServerRouteHandle {
-                                handle: vec![
-                                    CaddyHTTPServerRouteHandleHandler {
-                                        handler: "file_server".to_owned(),
-                                        root: doc_root.to_string(),
-                                    }
-                                ],
-                            },
-                        ]
+                        routes: routes,
                     }
                 }
             }
@@ -113,16 +154,41 @@ struct CaddyConfigHTTPServers {
 #[derive(Serialize, Deserialize)]
 struct CaddyConfigHTTPServerPublic {
     listen: Vec<String>,
-    routes: Vec<CaddyHTTPServerRouteHandle>
+    routes: Vec<CaddyHTTPServerRoute>
 }
 
 #[derive(Serialize, Deserialize)]
-struct CaddyHTTPServerRouteHandle {
-    handle: Vec<CaddyHTTPServerRouteHandleHandler>
+struct CaddyHTTPServerRoute {
+    r#match: Option<Vec<CaddyHTTPServerRouteMatcher>>,
+    handle: Vec<CaddyHTTPServerRouteHandler>
 }
 
 #[derive(Serialize, Deserialize)]
-struct CaddyHTTPServerRouteHandleHandler {
-    handler: String,
-    root: String
+#[serde(untagged)]
+enum CaddyHTTPServerRouteMatcher {
+    // https://caddyserver.com/docs/json/apps/http/servers/routes/match/path/
+    Path { 
+        path: String
+    },
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+enum CaddyHTTPServerRouteHandler {
+    // https://caddyserver.com/docs/json/apps/http/servers/routes/handle/file_server/
+    FileServer {
+        handler: String,
+        root: String,
+    },
+    // https://caddyserver.com/docs/json/apps/http/servers/routes/handle/headers/
+    Headers {
+        handler: String,
+        response: HeadersResponse,
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct HeadersResponse {
+    set: Map<String, Value>,
+    deferred: bool
 }
