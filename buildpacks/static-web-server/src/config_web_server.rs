@@ -338,5 +338,7 @@ mod tests {
         let expected_value = Value::Array(vec![
             Value::String("Bar".to_string())
         ]);
+        assert!(generated_headers_to_set.get(expected_key) == Some(&expected_value),
+            "should contain header value Bar");
     }
 }
