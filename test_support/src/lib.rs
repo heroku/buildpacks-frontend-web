@@ -113,6 +113,12 @@ pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContex
                 std::panic::catch_unwind(|| container.address_for_port(PORT))
             })
             .unwrap();
+            let container_logs = container.logs_now();
+            println!("
+------ begin container logs (stdout) ------
+{}------ end (stdout) & begin (stderr) ------
+{}------ end container logs ------", 
+                container_logs.stdout, container_logs.stderr);
             in_container(&container, &socket_addr);
     });
 }
