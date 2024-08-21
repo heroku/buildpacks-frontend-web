@@ -1,10 +1,10 @@
 // Required due to: https://github.com/rust-lang/rust/issues/95513
 #![allow(unused_crate_dependencies)]
+#![allow(clippy::unwrap_used)]
 
 use libcnb_test::{assert_contains};
 use test_support::{
-    assert_web_response, assert_web_response_header, static_web_server_integration_test,
-    wait_for, PORT,
+    assert_web_response, retry, start_container, static_web_server_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY
 };
 
 #[test]
@@ -12,7 +12,35 @@ use test_support::{
 fn no_project_toml() {
     static_web_server_integration_test("./fixtures/no_project_toml", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
-        assert_web_response(&ctx, "Welcome to CNB Static Web Server Test!");
+        start_container(&ctx, |_container, socket_addr| {
+            // Test for successful response
+            let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/")).call()
+                }).unwrap();
+            let response_status = response.status();
+            assert_eq!(response_status, 200);
+            let response_body = response.into_string().unwrap();
+            assert_contains!(response_body, "Welcome to CNB Static Web Server Test!");
+
+            // Test for default Not Found response
+            let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+                });
+            match response_result {
+                Err(ureq::Error::Status(code, response)) => {
+                    assert_eq!(code, 404);
+                    let response_body = response.into_string().unwrap();
+                    assert_contains!(response_body, "404 Not Found");
+                }
+                Ok(_) => { 
+                    assert!(false, "should respond 404 Not Found, but got 200 ok")
+                },
+                Err(_) => {
+                    assert!(false, "should respond 404 Not Found, but got other error")
+                }
+            }
+            
+        });
     });
 }
 
@@ -30,9 +58,22 @@ fn custom_doc_root() {
 fn custom_headers() {
     static_web_server_integration_test("./fixtures/custom_headers", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
-        assert_web_response(&ctx, "Welcome to CNB Static Web Server Response Headers Test!");
-        assert_web_response_header(&ctx, "/", "X-Global", "Hello");
-        assert_web_response_header(&ctx, "/", "X-Only-Default", "Hiii");
-        assert_web_response_header(&ctx, "/page2.html", "X-Only-HTML", "Hi");
+        start_container(&ctx, |_container, socket_addr| {
+            let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/")).call()
+                }).unwrap();
+            let h = response.header("X-Global").unwrap_or_default();
+            assert_contains!(h, "Hello");
+            let h = response.header("X-Only-Default").unwrap_or_default();
+            assert_contains!(h, "Hiii");
+            assert!(!response.headers_names().contains(&String::from("X-Only-HTML")), "should not include X-Only-HTML header");
+
+            let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/page2.html")).call()
+                }).unwrap();
+            let h = response.header("X-Only-HTML").unwrap_or_default();
+            assert_contains!(h, "Hi");
+            assert!(!response.headers_names().contains(&String::from("X-Only-Default")), "should not include X-Only-Default header");
+        });
     });
 }

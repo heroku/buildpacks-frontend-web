@@ -63,6 +63,12 @@ Content-Disposition = "attachment"
 
 ## Dev Notes
 
+### Run Tests
+
+```bash
+cargo test -- --include-ignored
+```
+
 ### Local Usage
 
 ```bash

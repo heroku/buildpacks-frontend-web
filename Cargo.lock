@@ -927,6 +927,7 @@ dependencies = [
  "tempfile",
  "test_support",
  "toml",
+ "ureq",
 ]
 
 [[package]]

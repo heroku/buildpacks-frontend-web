@@ -113,13 +113,13 @@ pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContex
                 std::panic::catch_unwind(|| container.address_for_port(PORT))
             })
             .unwrap();
+            in_container(&container, &socket_addr);
             let container_logs = container.logs_now();
             println!("
------- begin container logs (stdout) ------
-{}------ end (stdout) & begin (stderr) ------
+------ begin container logs (stderr) ------
+{}------ end (stderr) & begin (stdout) ------
 {}------ end container logs ------", 
-                container_logs.stdout, container_logs.stderr);
-            in_container(&container, &socket_addr);
+                container_logs.stderr, container_logs.stdout);
     });
 }
 
@@ -131,18 +131,6 @@ pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static s
         .unwrap();
         let response_body = response.into_string().unwrap();
         assert_contains!(response_body, expected_response_body);
-    });
-}
-
-pub fn assert_web_response_header(ctx: &TestContext, request_path: &'static str, expected_response_header_name: &'static str, expected_response_header_value: &'static str) {
-    start_container(ctx, |_container, socket_addr| {
-        let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-            ureq::get(&format!("http://{socket_addr}{request_path}")).call()
-        })
-        .unwrap();
-        let resp_value = response.header(&expected_response_header_name).unwrap_or_default();
-        
-        assert_contains!(resp_value, expected_response_header_value);
     });
 }
 
