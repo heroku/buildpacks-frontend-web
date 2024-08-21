@@ -8,8 +8,7 @@ use libcnb::read_toml_file;
 use libherokubuildpack::log::log_info;
 use libherokubuildpack::toml::toml_select_value;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
-use toml::{toml, Table};
+use toml::toml;
 
 const DEFAULT_DOC_ROOT: &str = "public";
 
@@ -73,7 +72,7 @@ pub(crate) fn config_web_server(
     let caddy_config_json = serde_json::to_string(&caddy_config)
         .map_err(StaticWebServerBuildpackError::JSON)?;
 
-    println!("caddy.json {:?}", caddy_config_json);
+    log_info(format!("caddy.json {:?}", caddy_config_json));
 
     fs::write(configuration_layer.path().join("caddy.json"), caddy_config_json)
         .map_err(StaticWebServerBuildpackError::File)?;
@@ -110,12 +109,12 @@ fn generate_response_headers_routes(project_toml: toml::Value, routes: &mut Vec<
         } else {
             headers_for_match.to_owned()
         };
-        let mut header_values = Map::new();
+        let mut header_values = serde_json::Map::new();
         header_values_to_config.iter().for_each(|(kk, vv)| {
             header_values.insert(
                 kk.to_string(),
-                Value::Array(vec![
-                    Value::String(vv.as_str().unwrap_or_default().to_string())
+                serde_json::Value::Array(vec![
+                    serde_json::Value::String(vv.as_str().unwrap_or_default().to_string())
                 ]),  
             );
         });
@@ -226,7 +225,7 @@ struct Headers {
 
 #[derive(Serialize, Deserialize)]
 struct HeadersResponse {
-    set: Map<String, Value>,
+    set: serde_json::Map<String, serde_json::Value>,
     deferred: bool,
 }
 
@@ -267,8 +266,8 @@ mod tests {
             "should contain header X-Baz");
 
         let expected_key = "X-Baz";
-        let expected_value = Value::Array(vec![
-            Value::String("Buz".to_string())
+        let expected_value = serde_json::Value::Array(vec![
+            serde_json::Value::String("Buz".to_string())
         ]);
         
         // Second route
@@ -291,15 +290,15 @@ mod tests {
             "should contain header X-Foo");
 
         let expected_key = "X-Foo";
-        let expected_value = Value::Array(vec![
-            Value::String("Bar".to_string())
+        let expected_value = serde_json::Value::Array(vec![
+            serde_json::Value::String("Bar".to_string())
         ]);
         assert!(generated_headers_to_set.get(expected_key) == Some(&expected_value),
             "should contain header value Bar");
         
         let expected_key = "X-Zuu";
-        let expected_value = Value::Array(vec![
-            Value::String("Zem".to_string())
+        let expected_value = serde_json::Value::Array(vec![
+            serde_json::Value::String("Zem".to_string())
         ]);
         assert!(generated_headers_to_set.get(expected_key) == Some(&expected_value),
             "should contain header value Zem");
@@ -335,8 +334,8 @@ mod tests {
             "should contain header X-Foo");
 
         let expected_key = "X-Foo";
-        let expected_value = Value::Array(vec![
-            Value::String("Bar".to_string())
+        let expected_value = serde_json::Value::Array(vec![
+            serde_json::Value::String("Bar".to_string())
         ]);
         assert!(generated_headers_to_set.get(expected_key) == Some(&expected_value),
             "should contain header value Bar");
