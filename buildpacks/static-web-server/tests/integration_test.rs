@@ -31,7 +31,8 @@ fn custom_headers() {
     static_web_server_integration_test("./fixtures/custom_headers", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         assert_web_response(&ctx, "Welcome to CNB Static Web Server Response Headers Test!");
-        assert_web_response_header(&ctx, "X-Foo", "Bar");
-        assert_web_response_header(&ctx, "X-Baz", "Buz");
+        assert_web_response_header(&ctx, "/", "X-Global", "Hello");
+        assert_web_response_header(&ctx, "/", "X-Only-Default", "Hiii");
+        assert_web_response_header(&ctx, "/page2.html", "X-Only-HTML", "Hi");
     });
 }

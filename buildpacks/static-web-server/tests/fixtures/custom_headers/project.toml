@@ -1,3 +1,5 @@
 [_.metadata.web-server.headers]
-X-Foo = "Bar"
-X-Baz = "Buz"
+X-Global = "Hello"
+"/".X-Only-Default = "Hiii"
+"*.html".X-Only-HTML = "Hi"
+"/images/*".X-Only-Images = "HAI"

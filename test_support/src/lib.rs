@@ -128,10 +128,10 @@ pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static s
     });
 }
 
-pub fn assert_web_response_header(ctx: &TestContext, expected_response_header_name: &'static str, expected_response_header_value: &'static str) {
+pub fn assert_web_response_header(ctx: &TestContext, request_path: &'static str, expected_response_header_name: &'static str, expected_response_header_value: &'static str) {
     start_container(ctx, |_container, socket_addr| {
         let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-            ureq::get(&format!("http://{socket_addr}/")).call()
+            ureq::get(&format!("http://{socket_addr}{request_path}")).call()
         })
         .unwrap();
         let resp_value = response.header(&expected_response_header_name).unwrap_or_default();
