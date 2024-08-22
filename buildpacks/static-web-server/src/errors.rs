@@ -7,9 +7,6 @@ use libcnb::TomlFileError;
 use std::fmt::Display;
 use std::io::stdout;
 
-const USE_DEBUG_INFORMATION_AND_RETRY_BUILD: &str = "\
-Use the debug information above to troubleshoot and retry your build.";
-
 const SUBMIT_AN_ISSUE: &str = "\
 If the issue persists and you think you found a bug in the buildpack then reproduce the issue \
 locally with a minimal example and open an issue in the buildpack's GitHub repository with the details.";
@@ -17,7 +14,8 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum StaticWebServerBuildpackError {
     Download(libherokubuildpack::download::DownloadError),
-    JSON(serde_json::Error),
+    Json(serde_json::Error),
+    CannotParseHerokuWebServerConfiguration(toml::de::Error),
     CannotReadProjectToml(TomlFileError),
     CannotWriteCaddyConfiguration(std::io::Error),
     CannotReadCustom404File(std::io::Error),
@@ -39,8 +37,11 @@ pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
 fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
-        StaticWebServerBuildpackError::JSON(e) => on_json_error(&e, logger),
-        StaticWebServerBuildpackError::CannotReadProjectToml(error) => {
+        StaticWebServerBuildpackError::Json(e) => on_json_error(&e, logger),
+        StaticWebServerBuildpackError::CannotReadProjectToml(_error) => {
+            // TODO: Print error
+        }
+        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(_error) => {
             // TODO: Print error
         }
         StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error)
@@ -48,12 +49,12 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
         | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)
         | StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error)
         | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
-            on_unexpected_io_error(error, logger)
+            on_unexpected_io_error(&error, logger);
         }
     }
 }
 
-fn on_unexpected_io_error(error: std::io::Error, logger: Box<dyn StartedLogger>) {
+fn on_unexpected_io_error(error: &std::io::Error, logger: Box<dyn StartedLogger>) {
     print_error_details(logger, &error)
         .announce()
         .error(&formatdoc! {"

@@ -2,7 +2,7 @@
 #![allow(unused_crate_dependencies)]
 
 use libcnb_test::assert_contains;
-use test_support::{assert_web_response, wait_for, website_integration_test, PORT};
+use test_support::{assert_web_response, website_integration_test};
 
 #[test]
 #[ignore = "integration test"]

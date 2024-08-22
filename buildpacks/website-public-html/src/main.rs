@@ -1,10 +1,10 @@
 mod errors;
 
-use crate::errors::WebsitePublicHTMLBuildpackError;
+use crate::errors::{on_error, WebsitePublicHTMLBuildpackError};
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
-use libcnb::{buildpack_main, Buildpack};
+use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
 
 const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
@@ -38,6 +38,10 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     fn build(&self, _context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
         BuildResultBuilder::new().build()
+    }
+
+    fn on_error(&self, error: Error<Self::Error>) {
+        on_error(error);
     }
 }
 
