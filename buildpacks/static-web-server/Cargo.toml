@@ -17,6 +17,7 @@ tempfile = "3"
 toml = { version = "0.8", features = ["preserve_order"] }
 ureq = "2"
 itertools = "0.13"
+indexmap = "2"
 
 [dev-dependencies]
 libcnb-test = "=0.22.0"

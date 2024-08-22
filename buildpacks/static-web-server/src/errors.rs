@@ -40,12 +40,14 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
     match error {
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
         StaticWebServerBuildpackError::JSON(e) => on_json_error(&e, logger),
+        StaticWebServerBuildpackError::CannotReadProjectToml(error) => {
+            // TODO: Print error
+        }
         StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error)
         | StaticWebServerBuildpackError::CannotReadCustom404File(error)
         | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)
         | StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error)
-        | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error)
-        | StaticWebServerBuildpackError::CannotReadProjectToml(error) => {
+        | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
             on_unexpected_io_error(error, logger)
         }
     }

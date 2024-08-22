@@ -12,13 +12,13 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) headers: Vec<Header>,
 }
 
-#[derive(Deserialize, Eq, PartialEq, Debug)]
+#[derive(Deserialize, Eq, PartialEq, Debug, Default)]
 pub(crate) struct ErrorsConfig {
     #[serde(rename = "404")]
     pub(crate) custom_404_page: Option<PathBuf>,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub(crate) enum HeaderPathMatcher {
     Global,
     Path(String),
