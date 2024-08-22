@@ -73,12 +73,8 @@ pub(crate) fn config_web_server(
     log_info(format!("caddy.json {:?}", caddy_config_json));
 
     let config_path = configuration_layer.path().join("caddy.json");
-    fs::write(&config_path, caddy_config_json).map_err(|e| {
-        StaticWebServerBuildpackError::Message(format!(
-            "{}, when writing config file {:?}",
-            e, &config_path
-        ))
-    })?;
+    fs::write(&config_path, caddy_config_json)
+        .map_err(StaticWebServerBuildpackError::CannotWriteCaddyConfiguration)?;
 
     Ok(configuration_layer)
 }
@@ -169,12 +165,8 @@ fn generate_error_404_route(
             .to_string()
     } else {
         let custom_error_path = app_dir.join(custom_404);
-        fs::read_to_string(&custom_error_path).map_err(|e| {
-            StaticWebServerBuildpackError::Message(format!(
-                "{}, when opening 404 error file {:?}",
-                e, &custom_error_path
-            ))
-        })?
+        fs::read_to_string(&custom_error_path)
+            .map_err(StaticWebServerBuildpackError::CannotReadCustom404File)?
     };
 
     let new_routes = vec![CaddyHTTPServerRoute {
