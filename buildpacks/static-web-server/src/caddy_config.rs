@@ -1,16 +1,10 @@
 use crate::errors::StaticWebServerBuildpackError;
 use crate::errors::StaticWebServerBuildpackError::CannotReadCustom404File;
 use crate::heroku_web_server_config::{Header, HeaderPathMatcher, HerokuWebServerConfig};
-use commons::output::fmt::value;
 use indexmap::IndexMap;
-use itertools::Itertools;
-use libherokubuildpack::log::log_info;
 use serde::{Deserialize, Serialize};
-use std::collections::btree_map::Entry;
-use std::collections::BTreeMap;
+use std::fs;
 use std::path::PathBuf;
-use std::{env, fs};
-use toml::toml;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CaddyConfig {
@@ -151,8 +145,8 @@ fn generate_response_headers_routes(headers: &[Header]) -> Vec<CaddyHTTPServerRo
     // by "when-first-seen".
     let mut groups = IndexMap::<HeaderPathMatcher, Vec<&Header>>::new();
     for header in headers {
-        if let Some(mut headers) = groups.get_mut(&header.path_matcher) {
-            headers.push(header)
+        if let Some(headers) = groups.get_mut(&header.path_matcher) {
+            headers.push(header);
         } else {
             groups.insert(header.path_matcher.clone(), vec![header]);
         }
@@ -199,9 +193,9 @@ fn generate_error_404_route(
         .errors
         .as_ref()
         .and_then(|errors| errors.custom_404_page.clone())
-        .map(|path| fs::read_to_string(path).map_err(CannotReadCustom404File))
-        .unwrap_or({
-            let default = r#"<!DOCTYPE html>
+        .map_or(
+            {
+                let default = r#"<!DOCTYPE html>
                 <html lang="en">
                   <head>
                     <meta charset="utf-8">
@@ -212,8 +206,10 @@ fn generate_error_404_route(
                   </body>
                 </html>"#;
 
-            Ok(String::from(default))
-        })?;
+                Ok(String::from(default))
+            },
+            |path| fs::read_to_string(path).map_err(CannotReadCustom404File),
+        )?;
 
     Ok(CaddyHTTPServerRoute {
         r#match: None,
@@ -221,7 +217,7 @@ fn generate_error_404_route(
             StaticResponse {
                 handler: "static_response".to_owned(),
                 status_code: "404".to_string(),
-                headers: Some((|| {
+                headers: Some({
                     let mut h = serde_json::Map::new();
                     h.insert(
                         "Content-Type".to_string(),
@@ -230,7 +226,7 @@ fn generate_error_404_route(
                         )]),
                     );
                     h
-                })()),
+                }),
                 body: not_found_response_content,
             },
         )],

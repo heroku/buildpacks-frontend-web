@@ -1,4 +1,4 @@
-use serde::de::{Error, MapAccess, SeqAccess, Visitor};
+use serde::de::{MapAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 use std::fmt::Formatter;
@@ -44,7 +44,7 @@ impl<'de> Visitor<'de> for HeadersVisitor {
     type Value = Vec<Header>;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-        todo!()
+        write!(formatter, "a Heroku HTTP header map")
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
@@ -75,7 +75,7 @@ impl<'de> Visitor<'de> for HeadersVisitor {
                             path_matcher: HeaderPathMatcher::Path(key.clone()),
                             key: header_key,
                             value: header_value,
-                        })
+                        });
                     }
                 }
             }

@@ -4,7 +4,7 @@ mod errors;
 mod heroku_web_server_config;
 mod install_web_server;
 
-use crate::errors::StaticWebServerBuildpackError;
+use crate::errors::{on_error, StaticWebServerBuildpackError};
 use config_web_server::config_web_server;
 use install_web_server::install_web_server;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
@@ -12,8 +12,12 @@ use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
 use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
-use libcnb::{buildpack_main, Buildpack};
+use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
+
+// Silence unused dependency warning for
+// dependencies only used in tests
+use ureq as _;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
 const WEB_SERVER_NAME: &str = "caddy";
@@ -60,6 +64,10 @@ impl Buildpack for StaticWebServerBuildpack {
                     .build(),
             )
             .build()
+    }
+
+    fn on_error(&self, error: Error<Self::Error>) {
+        on_error(error);
     }
 }
 

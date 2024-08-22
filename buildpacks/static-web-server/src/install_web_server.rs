@@ -1,11 +1,11 @@
 use std::fs;
 
+use libcnb::build::BuildContext;
 use libcnb::data::layer_name;
 use libcnb::layer::{
     CachedLayerDefinition, EmptyLayerCause, InvalidMetadataAction, LayerRef, LayerState,
     RestoredLayerAction,
 };
-use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::download::download_file;
 use libherokubuildpack::log::log_info;
 use libherokubuildpack::tar::decompress_tarball;
@@ -72,7 +72,7 @@ pub(crate) fn install_web_server(
             fs::create_dir_all(&web_server_dir)
                 .map_err(StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir)?;
 
-            log_info(format!("Downloading web server from {}", artifact_url));
+            log_info(format!("Downloading web server from {artifact_url}"));
             download_file(artifact_url, web_server_tgz.path())
                 .map_err(StaticWebServerBuildpackError::Download)?;
             decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)

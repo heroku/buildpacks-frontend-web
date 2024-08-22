@@ -7,9 +7,6 @@ use std::fmt::Display;
 use std::io;
 use std::io::stdout;
 
-const USE_DEBUG_INFORMATION_AND_RETRY_BUILD: &str = "\
-Use the debug information above to troubleshoot and retry your build.";
-
 const SUBMIT_AN_ISSUE: &str = "\
 If the issue persists and you think you found a bug in the buildpack then reproduce the issue \
 locally with a minimal example and open an issue in the buildpack's GitHub repository with the details.";
