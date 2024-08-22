@@ -105,7 +105,7 @@ mod tests {
             Some(ErrorsConfig {
                 custom_404_page: Some(PathBuf::from("public/error-404.html"))
             })
-        )
+        );
     }
 
     #[test]
@@ -117,7 +117,7 @@ mod tests {
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.root, Some(PathBuf::from("files/web")));
         assert!(parsed_config.headers.is_empty());
-        assert_eq!(parsed_config.errors, None)
+        assert_eq!(parsed_config.errors, None);
     }
 
     #[test]

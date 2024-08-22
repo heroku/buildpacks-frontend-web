@@ -233,10 +233,13 @@ fn generate_error_404_route(
     })
 }
 
+const DEFAULT_DOC_ROOT: &str = "public";
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::heroku_web_server_config::ErrorsConfig;
+    use libherokubuildpack::log::log_info;
     use std::path::PathBuf;
 
     #[test]
@@ -272,19 +275,14 @@ mod tests {
             .r#match
             .as_ref()
             .expect("route should contain match");
-        let expected_matcher = if let CaddyHTTPServerRouteMatcher::Path(m) = &generated_match[0] {
-            m
-        } else {
-            unreachable!()
-        };
+        let CaddyHTTPServerRouteMatcher::Path(expected_matcher) = &generated_match[0];
         assert_eq!(expected_matcher.path[0], "*", "should have match path *");
 
-        let generated_handler =
-            if let CaddyHTTPServerRouteHandler::Headers(h) = &generated_route.handle[0] {
-                h
-            } else {
-                unreachable!()
-            };
+        let CaddyHTTPServerRouteHandler::Headers(generated_handler) = &generated_route.handle[0]
+        else {
+            unreachable!()
+        };
+
         assert_eq!(
             generated_handler.handler, "headers",
             "should be a headers route"
@@ -320,22 +318,17 @@ mod tests {
             .r#match
             .as_ref()
             .expect("route should contain match");
-        let expected_matcher = if let CaddyHTTPServerRouteMatcher::Path(m) = &generated_match[0] {
-            m
-        } else {
-            unreachable!()
-        };
+        let CaddyHTTPServerRouteMatcher::Path(expected_matcher) = &generated_match[0];
         assert_eq!(
             expected_matcher.path[0], "*.html",
             "should have match path *.html"
         );
 
-        let generated_handler =
-            if let CaddyHTTPServerRouteHandler::Headers(h) = &generated_route.handle[0] {
-                h
-            } else {
-                unreachable!()
-            };
+        let CaddyHTTPServerRouteHandler::Headers(generated_handler) = &generated_route.handle[0]
+        else {
+            unreachable!()
+        };
+
         assert_eq!(
             generated_handler.handler, "headers",
             "should be a headers route"
@@ -346,10 +339,6 @@ mod tests {
             generated_headers_to_set.contains_key("X-Baz"),
             "should contain header X-Baz"
         );
-
-        let expected_key = "X-Baz";
-        let expected_value =
-            serde_json::Value::Array(vec![serde_json::Value::String("Buz".to_string())]);
     }
 
     #[test]
@@ -371,19 +360,15 @@ mod tests {
             .r#match
             .as_ref()
             .expect("route should contain match");
-        let expected_matcher = if let CaddyHTTPServerRouteMatcher::Path(m) = &generated_match[0] {
-            m
-        } else {
-            unreachable!()
-        };
+
+        let CaddyHTTPServerRouteMatcher::Path(expected_matcher) = &generated_match[0];
+
         assert_eq!(expected_matcher.path[0], "*", "should have match path *");
 
-        let generated_handler =
-            if let CaddyHTTPServerRouteHandler::Headers(h) = &generated_route.handle[0] {
-                h
-            } else {
-                unreachable!()
-            };
+        let CaddyHTTPServerRouteHandler::Headers(generated_handler) = &generated_route.handle[0]
+        else {
+            unreachable!()
+        };
         assert_eq!(
             generated_handler.handler, "headers",
             "should be a headers route"
@@ -412,19 +397,17 @@ mod tests {
                 custom_404_page: Some(PathBuf::from(
                     "tests/fixtures/custom_errors/public/error-404.html",
                 )),
-                ..ErrorsConfig::default()
             }),
             ..HerokuWebServerConfig::default()
         };
 
         let routes = generate_error_404_route(&heroku_config).unwrap();
 
-        let generated_handler =
-            if let CaddyHTTPServerRouteHandler::StaticResponse(h) = &routes.handle[0] {
-                h
-            } else {
-                unreachable!()
-            };
+        let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
+        else {
+            unreachable!()
+        };
+
         assert_eq!(
             generated_handler.handler, "static_response",
             "should be a static_response route"
@@ -445,21 +428,17 @@ mod tests {
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
                 custom_404_page: Some(PathBuf::from("non-existent-path")),
-                ..ErrorsConfig::default()
             }),
             ..HerokuWebServerConfig::default()
         };
 
         match generate_error_404_route(&heroku_config) {
             Ok(_) => {
-                assert!(false, "should fail to find custom 404 file")
+                panic!("should fail to find custom 404 file");
             }
             Err(e) => {
-                log_info(format!("Missing 404 file error: {:?}", e));
-                assert!(true)
+                log_info(format!("Missing 404 file error: {e:?}"));
             }
         };
     }
 }
-
-const DEFAULT_DOC_ROOT: &str = "public";

@@ -14,5 +14,4 @@ indoc = "2"
 
 [dev-dependencies]
 libcnb-test = "=0.22.0"
-ureq = "2"
 test_support.workspace = true
