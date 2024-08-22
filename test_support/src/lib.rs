@@ -105,9 +105,10 @@ pub fn retry<T, E>(
 }
 
 pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContext, &SocketAddr)) {
-    ctx.start_container(ContainerConfig::new()
-        .env("PORT", PORT.to_string())
-        .expose_port(PORT), 
+    ctx.start_container(
+        ContainerConfig::new()
+            .env("PORT", PORT.to_string())
+            .expose_port(PORT),
         |container| {
             let socket_addr = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                 std::panic::catch_unwind(|| container.address_for_port(PORT))
@@ -115,12 +116,15 @@ pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContex
             .unwrap();
             in_container(&container, &socket_addr);
             let container_logs = container.logs_now();
-            println!("
+            println!(
+                "
 ------ begin container logs (stderr) ------
 {}------ end (stderr) & begin (stdout) ------
-{}------ end container logs ------", 
-                container_logs.stderr, container_logs.stdout);
-    });
+{}------ end container logs ------",
+                container_logs.stderr, container_logs.stdout
+            );
+        },
+    );
 }
 
 pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static str) {

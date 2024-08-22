@@ -40,7 +40,10 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
     }
 }
 
-fn on_download_error(error: &libherokubuildpack::download::DownloadError, logger: Box<dyn StartedLogger>) {
+fn on_download_error(
+    error: &libherokubuildpack::download::DownloadError,
+    logger: Box<dyn StartedLogger>,
+) {
     print_error_details(logger, &error)
         .announce()
         .error(&formatdoc! {"

@@ -2,9 +2,10 @@
 #![allow(unused_crate_dependencies)]
 #![allow(clippy::unwrap_used)]
 
-use libcnb_test::{assert_contains};
+use libcnb_test::assert_contains;
 use test_support::{
-    assert_web_response, retry, start_container, static_web_server_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY
+    assert_web_response, retry, start_container, static_web_server_integration_test,
+    DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
 };
 
 #[test]
@@ -15,8 +16,9 @@ fn no_project_toml() {
         start_container(&ctx, |_container, socket_addr| {
             // Test for successful response
             let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
-                }).unwrap();
+                ureq::get(&format!("http://{socket_addr}/")).call()
+            })
+            .unwrap();
             let response_status = response.status();
             assert_eq!(response_status, 200);
             let response_body = response.into_string().unwrap();
@@ -24,8 +26,8 @@ fn no_project_toml() {
 
             // Test for default Not Found response
             let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
-                });
+                ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+            });
             match response_result {
                 Err(ureq::Error::Status(code, response)) => {
                     assert_eq!(code, 404);
@@ -34,14 +36,13 @@ fn no_project_toml() {
                     let response_body = response.into_string().unwrap();
                     assert_contains!(response_body, "404 Not Found");
                 }
-                Ok(_) => { 
+                Ok(_) => {
                     assert!(false, "should respond 404 Not Found, but got 200 ok")
-                },
+                }
                 Err(_) => {
                     assert!(false, "should respond 404 Not Found, but got other error")
                 }
             }
-            
         });
     });
 }
@@ -62,20 +63,32 @@ fn custom_headers() {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(&ctx, |_container, socket_addr| {
             let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
-                }).unwrap();
+                ureq::get(&format!("http://{socket_addr}/")).call()
+            })
+            .unwrap();
             let h = response.header("X-Global").unwrap_or_default();
             assert_contains!(h, "Hello");
             let h = response.header("X-Only-Default").unwrap_or_default();
             assert_contains!(h, "Hiii");
-            assert!(!response.headers_names().contains(&String::from("X-Only-HTML")), "should not include X-Only-HTML header");
+            assert!(
+                !response
+                    .headers_names()
+                    .contains(&String::from("X-Only-HTML")),
+                "should not include X-Only-HTML header"
+            );
 
             let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/page2.html")).call()
-                }).unwrap();
+                ureq::get(&format!("http://{socket_addr}/page2.html")).call()
+            })
+            .unwrap();
             let h = response.header("X-Only-HTML").unwrap_or_default();
             assert_contains!(h, "Hi");
-            assert!(!response.headers_names().contains(&String::from("X-Only-Default")), "should not include X-Only-Default header");
+            assert!(
+                !response
+                    .headers_names()
+                    .contains(&String::from("X-Only-Default")),
+                "should not include X-Only-Default header"
+            );
         });
     });
 }
@@ -87,8 +100,8 @@ fn custom_errors() {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(&ctx, |_container, socket_addr| {
             let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
-                });
+                ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+            });
             match response_result {
                 Err(ureq::Error::Status(code, response)) => {
                     assert_eq!(code, 404);
@@ -97,9 +110,9 @@ fn custom_errors() {
                     let response_body = response.into_string().unwrap();
                     assert_contains!(response_body, "Custom 404");
                 }
-                Ok(_) => { 
+                Ok(_) => {
                     assert!(false, "should respond 404 Not Found, but got 200 ok")
-                },
+                }
                 Err(_) => {
                     assert!(false, "should respond 404 Not Found, but got other error")
                 }
