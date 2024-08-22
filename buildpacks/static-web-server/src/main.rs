@@ -1,6 +1,7 @@
 mod caddy_config;
 mod config_web_server;
 mod errors;
+mod heroku_web_server_config;
 mod install_web_server;
 
 use crate::errors::StaticWebServerBuildpackError;
