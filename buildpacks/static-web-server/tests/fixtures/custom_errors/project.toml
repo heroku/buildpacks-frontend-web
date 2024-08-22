@@ -1,0 +1,2 @@
+[_.metadata.web-server.errors]
+404 = "public/error-404.html"

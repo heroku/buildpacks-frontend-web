@@ -61,6 +61,15 @@ Cache-Control = "public, max-age=604800"
 Content-Disposition = "attachment"
 ```
 
+### Custom Errors
+
+Respond with a custom Not Found HTML page.
+
+```toml
+[_.metadata.web-server.errors]
+404 = "public/error-404.html"
+```
+
 ## Dev Notes
 
 ### Run Tests

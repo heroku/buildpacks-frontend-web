@@ -18,8 +18,8 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum StaticWebServerBuildpackError {
     Download(libherokubuildpack::download::DownloadError),
-    File(io::Error),
     JSON(serde_json::Error),
+    Message(String),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
@@ -35,17 +35,9 @@ pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
 fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
-        StaticWebServerBuildpackError::File(e) => on_build_error(&e, logger),
         StaticWebServerBuildpackError::JSON(e) => on_json_error(&e, logger),
+        StaticWebServerBuildpackError::Message(m) => on_message_error(&m, logger),
     }
-}
-
-fn on_build_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
-    print_error_details(logger, &error)
-        .announce()
-        .error(&formatdoc! {"
-            Error during build of {buildpack_name}.
-        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
 fn on_download_error(error: &libherokubuildpack::download::DownloadError, logger: Box<dyn StartedLogger>) {
@@ -61,6 +53,14 @@ fn on_json_error(error: &serde_json::Error, logger: Box<dyn StartedLogger>) {
         .announce()
         .error(&formatdoc! {"
             JSON error from {buildpack_name}. 
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_message_error(message: &String, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &message)
+        .announce()
+        .error(&formatdoc! {"
+            Error during build of {buildpack_name}.
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 

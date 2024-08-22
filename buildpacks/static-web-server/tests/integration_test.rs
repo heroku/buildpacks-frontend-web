@@ -29,6 +29,8 @@ fn no_project_toml() {
             match response_result {
                 Err(ureq::Error::Status(code, response)) => {
                     assert_eq!(code, 404);
+                    let h = response.header("Content-Type").unwrap_or_default();
+                    assert_contains!(h, "text/html");
                     let response_body = response.into_string().unwrap();
                     assert_contains!(response_body, "404 Not Found");
                 }
@@ -74,6 +76,34 @@ fn custom_headers() {
             let h = response.header("X-Only-HTML").unwrap_or_default();
             assert_contains!(h, "Hi");
             assert!(!response.headers_names().contains(&String::from("X-Only-Default")), "should not include X-Only-Default header");
+        });
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
+fn custom_errors() {
+    static_web_server_integration_test("./fixtures/custom_errors", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(&ctx, |_container, socket_addr| {
+            let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+                });
+            match response_result {
+                Err(ureq::Error::Status(code, response)) => {
+                    assert_eq!(code, 404);
+                    let h = response.header("Content-Type").unwrap_or_default();
+                    assert_contains!(h, "text/html");
+                    let response_body = response.into_string().unwrap();
+                    assert_contains!(response_body, "Custom 404");
+                }
+                Ok(_) => { 
+                    assert!(false, "should respond 404 Not Found, but got 200 ok")
+                },
+                Err(_) => {
+                    assert!(false, "should respond 404 Not Found, but got other error")
+                }
+            }
         });
     });
 }
