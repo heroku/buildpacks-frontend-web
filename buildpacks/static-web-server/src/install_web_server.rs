@@ -66,26 +66,17 @@ pub(crate) fn install_web_server(
                 web_server_version, web_server_version, context.target.os, context.target.arch
             );
 
-            let web_server_tgz = NamedTempFile::new().map_err(|e| {
-                StaticWebServerBuildpackError::Message(format!("{}, when creating tempfile", e))
-            })?;
+            let web_server_tgz = NamedTempFile::new()
+                .map_err(StaticWebServerBuildpackError::CannotCreateCaddyTarballFile)?;
             let web_server_dir = installation_layer.path().join("bin");
-            fs::create_dir_all(&web_server_dir).map_err(|e| {
-                StaticWebServerBuildpackError::Message(format!(
-                    "{}, when creating installation directory {:?}",
-                    e, &web_server_dir
-                ))
-            })?;
+            fs::create_dir_all(&web_server_dir)
+                .map_err(StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir)?;
 
             log_info(format!("Downloading web server from {}", artifact_url));
             download_file(artifact_url, web_server_tgz.path())
                 .map_err(StaticWebServerBuildpackError::Download)?;
-            decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir).map_err(|e| {
-                StaticWebServerBuildpackError::Message(format!(
-                    "{}, when unpacking web server archive",
-                    e
-                ))
-            })?;
+            decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
+                .map_err(StaticWebServerBuildpackError::CannotUnpackCaddyTarball)?;
         }
     }
     Ok(installation_layer)

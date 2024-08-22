@@ -3,9 +3,7 @@ use commons::output::build_log::{BuildLog, Logger, StartedLogger};
 use commons::output::fmt;
 use commons::output::fmt::DEBUG_INFO;
 use indoc::formatdoc;
-use libcnb::TomlFileError;
 use std::fmt::Display;
-use std::io;
 use std::io::stdout;
 
 const USE_DEBUG_INFORMATION_AND_RETRY_BUILD: &str = "\
@@ -19,7 +17,11 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 pub(crate) enum StaticWebServerBuildpackError {
     Download(libherokubuildpack::download::DownloadError),
     JSON(serde_json::Error),
-    Message(String),
+    CannotWriteCaddyConfiguration(std::io::Error),
+    CannotReadCustom404File(std::io::Error),
+    CannotUnpackCaddyTarball(std::io::Error),
+    CannotCreateCaddyInstallationDir(std::io::Error),
+    CannotCreateCaddyTarballFile(std::io::Error),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
@@ -36,8 +38,26 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
     match error {
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
         StaticWebServerBuildpackError::JSON(e) => on_json_error(&e, logger),
-        StaticWebServerBuildpackError::Message(m) => on_message_error(&m, logger),
+        StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error)
+        | StaticWebServerBuildpackError::CannotReadCustom404File(error)
+        | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)
+        | StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error)
+        | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
+            on_unexpected_io_error(error, logger)
+        }
     }
+}
+
+fn on_unexpected_io_error(error: std::io::Error, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+        Unexpected IO Error
+
+        An unexpected IO error occurred. Please try again.
+
+        {SUBMIT_AN_ISSUE}
+    "});
 }
 
 fn on_download_error(
@@ -56,14 +76,6 @@ fn on_json_error(error: &serde_json::Error, logger: Box<dyn StartedLogger>) {
         .announce()
         .error(&formatdoc! {"
             JSON error from {buildpack_name}. 
-        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
-}
-
-fn on_message_error(message: &String, logger: Box<dyn StartedLogger>) {
-    print_error_details(logger, &message)
-        .announce()
-        .error(&formatdoc! {"
-            Error during build of {buildpack_name}.
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
