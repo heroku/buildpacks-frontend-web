@@ -37,10 +37,10 @@ fn no_project_toml() {
                     assert_contains!(response_body, "404 Not Found");
                 }
                 Ok(_) => {
-                    assert!(false, "should respond 404 Not Found, but got 200 ok");
+                    panic!("should respond 404 Not Found, but got 200 ok");
                 }
-                Err(_) => {
-                    assert!(false, "should respond 404 Not Found, but got other error");
+                Err(error) => {
+                    panic!("should respond 404 Not Found, but got other error: {error:?}");
                 }
             }
         });
@@ -111,10 +111,10 @@ fn custom_errors() {
                     assert_contains!(response_body, "Custom 404");
                 }
                 Ok(_) => {
-                    assert!(false, "should respond 404 Not Found, but got 200 ok");
+                    panic!("should respond 404 Not Found, but got 200 ok");
                 }
-                Err(_) => {
-                    assert!(false, "should respond 404 Not Found, but got other error");
+                Err(error) => {
+                    panic!("should respond 404 Not Found, but got other error: {error:?}");
                 }
             }
         });
