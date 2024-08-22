@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fmt::Formatter;
 use std::path::PathBuf;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 pub(crate) struct HerokuWebServerConfig {
     pub(crate) root: Option<PathBuf>,
     pub(crate) errors: Option<ErrorsConfig>,
@@ -15,7 +15,7 @@ pub(crate) struct HerokuWebServerConfig {
 #[derive(Deserialize, Eq, PartialEq, Debug)]
 pub(crate) struct ErrorsConfig {
     #[serde(rename = "404")]
-    custom_404_page: Option<PathBuf>,
+    pub(crate) custom_404_page: Option<PathBuf>,
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
