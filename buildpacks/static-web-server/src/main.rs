@@ -1,3 +1,4 @@
+mod caddy_config;
 mod config_web_server;
 mod errors;
 mod install_web_server;
