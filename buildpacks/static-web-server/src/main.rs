@@ -35,10 +35,6 @@ impl Buildpack for StaticWebServerBuildpack {
             install_web_server(&context, WEB_SERVER_NAME, WEB_SERVER_VERSION)?;
 
         let configuration_layer = config_web_server(&context)?;
-        let config_path_buff = configuration_layer.path().join("caddy.json");
-        let config_path = config_path_buff
-            .to_str()
-            .expect("should provide path to layers directory");
 
         BuildResultBuilder::new()
             .launch(
@@ -46,7 +42,15 @@ impl Buildpack for StaticWebServerBuildpack {
                     .process(
                         ProcessBuilder::new(
                             process_type!("web"),
-                            ["caddy", "run", "--config", config_path],
+                            [
+                                "caddy",
+                                "run",
+                                "--config",
+                                &configuration_layer
+                                    .path()
+                                    .join("caddy.json")
+                                    .to_string_lossy(),
+                            ],
                         )
                         .default(true)
                         .build(),
