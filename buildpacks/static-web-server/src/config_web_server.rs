@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
+use crate::caddy_config::*;
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError};
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
@@ -198,117 +199,6 @@ fn generate_error_404_route(
     }];
     // Append the new routes, so they come after existing routes (file server)
     Ok(routes.into_iter().chain(new_routes.into_iter()).collect())
-}
-
-// Caddy JSON config:
-// {
-//     "apps": {
-//         "http": {
-//             "servers": {
-//                 "public": {
-//                     "listen": [":{env.PORT}"],
-//                     "routes": [
-//                         {
-//                             "handle": [
-//                                 {
-//                                     "handler": "file_server",
-//                                     "root": "public/"
-//                                 }
-//                             ]
-//                         }
-//                     ]
-//                 }
-//             }
-//         }
-//     }
-// }
-
-#[derive(Serialize, Deserialize)]
-struct CaddyConfig {
-    apps: CaddyConfigApps,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CaddyConfigApps {
-    http: CaddyConfigAppHTTP,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CaddyConfigAppHTTP {
-    servers: CaddyConfigHTTPServers,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CaddyConfigHTTPServers {
-    public: CaddyConfigHTTPServerPublic,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CaddyConfigHTTPServerPublic {
-    listen: Vec<String>,
-    routes: Vec<CaddyHTTPServerRoute>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CaddyHTTPServerRoute {
-    r#match: Option<Vec<CaddyHTTPServerRouteMatcher>>,
-    handle: Vec<CaddyHTTPServerRouteHandler>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CaddyHTTPServerErrors {
-    routes: Vec<CaddyHTTPServerRoute>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum CaddyHTTPServerRouteMatcher {
-    // https://caddyserver.com/docs/json/apps/http/servers/routes/match/path/
-    Path(MatchPath),
-}
-
-// https://caddyserver.com/docs/json/apps/http/servers/routes/match/path/
-#[derive(Serialize, Deserialize)]
-struct MatchPath {
-    path: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum CaddyHTTPServerRouteHandler {
-    FileServer(FileServer),
-    Headers(Headers),
-    StaticResponse(StaticResponse),
-}
-
-// https://caddyserver.com/docs/json/apps/http/servers/routes/handle/file_server/
-#[derive(Serialize, Deserialize)]
-struct FileServer {
-    handler: String,
-    root: String,
-    pass_thru: bool,
-}
-
-// https://caddyserver.com/docs/json/apps/http/servers/routes/handle/headers/
-#[derive(Serialize, Deserialize)]
-struct Headers {
-    handler: String,
-    response: HeadersResponse,
-}
-
-#[derive(Serialize, Deserialize)]
-struct HeadersResponse {
-    set: serde_json::Map<String, serde_json::Value>,
-    deferred: bool,
-}
-
-// https://caddyserver.com/docs/json/apps/http/servers/routes/handle/static_response/
-#[derive(Serialize, Deserialize)]
-struct StaticResponse {
-    handler: String,
-    status_code: String,
-    headers: Option<serde_json::Map<String, serde_json::Value>>,
-    body: String,
 }
 
 #[cfg(test)]
