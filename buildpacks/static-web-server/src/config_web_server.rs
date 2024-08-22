@@ -1,7 +1,10 @@
+use itertools::Itertools;
 use std::fs;
 use std::path::PathBuf;
 
 use crate::caddy_config::*;
+use crate::errors::StaticWebServerBuildpackError::CannotReadCustom404File;
+use crate::heroku_web_server_config::{Header, HeaderPathMatcher, HerokuWebServerConfig};
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError};
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
@@ -9,8 +12,6 @@ use libcnb::read_toml_file;
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use libherokubuildpack::toml::toml_select_value;
-use serde::{Deserialize, Serialize};
-use toml::toml;
 
 const DEFAULT_DOC_ROOT: &str = "public";
 
@@ -26,31 +27,45 @@ pub(crate) fn config_web_server(
         },
     )?;
 
-    let project_toml: toml::Value = read_toml_file(context.app_dir.join("project.toml"))
-        .unwrap_or_else(|_| {
-            toml::Value::try_from(toml::Table::new())
-                .expect("should return the TOML Value of an empty TOML Table")
-        });
+    let project_toml_path = context.app_dir.join("project.toml");
 
-    let doc_root = toml_select_value(vec!["_", "metadata", "web-server", "root"], &project_toml)
-        .and_then(toml::Value::as_str)
-        .unwrap_or(DEFAULT_DOC_ROOT);
+    let heroku_config = if project_toml_path.is_file() {
+        let project_toml = read_toml_file::<toml::Value>(project_toml_path)
+            .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?;
+
+        toml_select_value(vec!["_", "metadata", "web-server"], &project_toml)
+            .unwrap()
+            .clone()
+            .try_into()
+            .unwrap()
+    } else {
+        HerokuWebServerConfig::default()
+    };
+
+    let mut routes = vec![];
+
+    // Header routes come first so headers will be added to any response down the chain.
+    routes.extend(generate_response_headers_routes(&heroku_config.headers));
 
     // Default router is just the static file server.
     // This vector will contain all routes in order of request processing,
     // while response processing is reverse direction.
-    let mut routes: Vec<CaddyHTTPServerRoute> = vec![CaddyHTTPServerRoute {
+    routes.push(CaddyHTTPServerRoute {
         r#match: None,
         handle: vec![CaddyHTTPServerRouteHandler::FileServer(FileServer {
             handler: "file_server".to_owned(),
-            root: doc_root.to_string(),
+            root: heroku_config
+                .root
+                .clone()
+                .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT))
+                .to_string_lossy()
+                .to_string(),
             // Any not found request paths continue to the next handler.
             pass_thru: true,
         })],
-    }];
+    });
 
-    routes = generate_response_headers_routes(&project_toml, routes);
-    routes = generate_error_404_route(&project_toml, &context.app_dir, routes)?;
+    routes.push(generate_error_404_route(&heroku_config, &context.app_dir)?);
 
     // Assemble into the caddy.json structure
     // https://caddyserver.com/docs/json/
@@ -79,97 +94,67 @@ pub(crate) fn config_web_server(
     Ok(configuration_layer)
 }
 
-fn generate_response_headers_routes(
-    project_toml: &toml::Value,
-    routes: Vec<CaddyHTTPServerRoute>,
-) -> Vec<CaddyHTTPServerRoute> {
-    let default_toml = toml::Table::new();
-    let response_headers = toml_select_value(
-        vec!["_", "metadata", "web-server", "headers"],
-        &project_toml,
-    )
-    .and_then(toml::Value::as_table)
-    .unwrap_or(&default_toml);
-    let mut new_routes: Vec<CaddyHTTPServerRoute> = vec![];
+fn generate_response_headers_routes(headers: &[Header]) -> Vec<CaddyHTTPServerRoute> {
+    headers
+        .into_iter()
+        .chunk_by(|header| header.path_matcher.clone())
+        .into_iter()
+        .map(|(matcher, headers)| {
+            let match_path = match matcher {
+                HeaderPathMatcher::Global => String::from("*"),
+                HeaderPathMatcher::Path(path) => path,
+            };
 
-    response_headers.iter().for_each(|(k, v)| {
-        // Detect when header is defined without a path matcher (the value is not a table, probably a string)
-        let headers_for_match = v.as_table().unwrap_or(&default_toml);
-        // Default to * path matcher, when missing, otherwise use the current key as path matcher
-        let header_match = if headers_for_match.is_empty() {
-            vec![CaddyHTTPServerRouteMatcher::Path(MatchPath {
-                path: vec!["*".to_string()],
-            })]
-        } else {
-            vec![CaddyHTTPServerRouteMatcher::Path(MatchPath {
-                path: vec![k.to_string()],
-            })]
-        };
-        // When header is defined without path matcher, reset to configure header directly with key & value
-        let header_values_to_config = if headers_for_match.is_empty() {
-            let mut t = toml::Table::new();
-            t.insert(k.to_string(), v.to_owned());
-            t
-        } else {
-            headers_for_match.to_owned()
-        };
-        let mut header_values = serde_json::Map::new();
-        header_values_to_config.iter().for_each(|(kk, vv)| {
-            header_values.insert(
-                kk.to_string(),
-                serde_json::Value::Array(vec![serde_json::Value::String(
-                    vv.as_str().unwrap_or_default().to_string(),
-                )]),
-            );
-        });
-        let new_route = CaddyHTTPServerRoute {
-            r#match: Some(header_match),
-            handle: vec![CaddyHTTPServerRouteHandler::Headers(Headers {
-                handler: "headers".to_owned(),
-                response: HeadersResponse {
-                    set: header_values,
-                    deferred: true,
-                },
-            })],
-        };
-        // Append each new route, maintaining order of TOML config
-        new_routes.push(new_route);
-    });
-    // Prepend the new routes, so they come before existing routes (file server)
-    new_routes.into_iter().chain(routes.into_iter()).collect()
+            CaddyHTTPServerRoute {
+                r#match: Some(vec![CaddyHTTPServerRouteMatcher::Path(MatchPath {
+                    path: vec![match_path],
+                })]),
+                handle: vec![CaddyHTTPServerRouteHandler::Headers(Headers {
+                    handler: "headers".to_owned(),
+                    response: HeadersResponse {
+                        set: headers
+                            .map(|header| {
+                                (
+                                    header.key.clone(),
+                                    serde_json::Value::Array(vec![serde_json::Value::String(
+                                        header.value.clone(),
+                                    )]),
+                                )
+                            })
+                            .collect::<serde_json::Map<String, serde_json::Value>>(),
+                        deferred: true,
+                    },
+                })],
+            }
+        })
+        .collect()
 }
 
 fn generate_error_404_route(
-    project_toml: &toml::Value,
+    heroku_web_server_config: &HerokuWebServerConfig,
     app_dir: &PathBuf,
-    routes: Vec<CaddyHTTPServerRoute>,
-) -> Result<Vec<CaddyHTTPServerRoute>, StaticWebServerBuildpackError> {
-    let default_toml = toml::Table::new();
-    let custom_404 = toml_select_value(
-        vec!["_", "metadata", "web-server", "errors", "404"],
-        &project_toml,
-    )
-    .and_then(toml::Value::as_str)
-    .unwrap_or("");
-    let response_body = if custom_404.is_empty() {
-        r#"<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>404 Not Found</title>
-  </head>
-  <body>
-    <h1>404 Not Found</h1>
-  </body>
-</html>"#
-            .to_string()
-    } else {
-        let custom_error_path = app_dir.join(custom_404);
-        fs::read_to_string(&custom_error_path)
-            .map_err(StaticWebServerBuildpackError::CannotReadCustom404File)?
-    };
+) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
+    let not_found_response_content = heroku_web_server_config
+        .errors
+        .as_ref()
+        .and_then(|errors| errors.custom_404_page.clone())
+        .map(|path| fs::read_to_string(app_dir.join(path)).map_err(CannotReadCustom404File))
+        .unwrap_or({
+            let default = r#"<!DOCTYPE html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <title>404 Not Found</title>
+                  </head>
+                  <body>
+                    <h1>404 Not Found</h1>
+                  </body>
+                </html>"#;
 
-    let new_routes = vec![CaddyHTTPServerRoute {
+            Ok(String::from(default))
+        })?;
+
+    Ok(CaddyHTTPServerRoute {
         r#match: None,
         handle: vec![CaddyHTTPServerRouteHandler::StaticResponse(
             StaticResponse {
@@ -185,30 +170,30 @@ fn generate_error_404_route(
                     );
                     h
                 })()),
-                body: response_body,
+                body: not_found_response_content,
             },
         )],
-    }];
-    // Append the new routes, so they come after existing routes (file server)
-    Ok(routes.into_iter().chain(new_routes.into_iter()).collect())
+    })
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{env, path::PathBuf};
-
     use super::*;
+    use std::{env, path::PathBuf};
+    use toml::toml;
 
     #[test]
     fn generates_matched_response_headers_routes() {
         let project_toml = toml::Value::Table(toml! {
-            ["_".metadata.web-server.headers]
+            [headers]
             "*".X-Foo = "Bar"
             "*.html".X-Baz = "Buz"
             "*".X-Zuu = "Zem"
         });
-        let mut routes: Vec<CaddyHTTPServerRoute> = vec![];
-        routes = generate_response_headers_routes(&project_toml, routes);
+
+        let heroku_config = project_toml.try_into::<HerokuWebServerConfig>().unwrap();
+
+        let routes = generate_response_headers_routes(&heroku_config.headers);
         assert!(routes.len() == 2, "should generate two routes");
 
         // First route
@@ -298,11 +283,12 @@ mod tests {
     #[test]
     fn generates_global_response_headers_routes() {
         let project_toml = toml::Value::Table(toml! {
-            ["_".metadata.web-server.headers]
+            [headers]
             X-Foo = "Bar"
         });
-        let mut routes: Vec<CaddyHTTPServerRoute> = vec![];
-        routes = generate_response_headers_routes(&project_toml, routes);
+
+        let heroku_config = project_toml.try_into::<HerokuWebServerConfig>().unwrap();
+        let routes = generate_response_headers_routes(&heroku_config.headers);
         assert!(routes.len() == 1, "should generate one route");
 
         let generated_route = &routes[0];
@@ -346,18 +332,19 @@ mod tests {
     #[test]
     fn generates_custom_404_error_route() {
         let project_toml = toml::Value::Table(toml! {
-            ["_".metadata.web-server.errors]
+            [errors]
             404 = "public/error-404.html"
         });
+
+        let heroku_config = project_toml.try_into::<HerokuWebServerConfig>().unwrap();
+
         let app_dir =
             PathBuf::from(env::current_dir().unwrap()).join("tests/fixtures/custom_errors");
-        let mut routes: Vec<CaddyHTTPServerRoute> = vec![];
-        routes = generate_error_404_route(&project_toml, &app_dir, routes).unwrap();
-        assert!(routes.len() == 1, "should generate one route");
 
-        let generated_route = &routes[0];
+        let routes = generate_error_404_route(&heroku_config, &app_dir).unwrap();
+
         let generated_handler =
-            if let CaddyHTTPServerRouteHandler::StaticResponse(h) = &generated_route.handle[0] {
+            if let CaddyHTTPServerRouteHandler::StaticResponse(h) = &routes.handle[0] {
                 h
             } else {
                 unreachable!()
@@ -380,13 +367,16 @@ mod tests {
     #[test]
     fn missing_custom_404_error_file() {
         let project_toml = toml::Value::Table(toml! {
-            ["_".metadata.web-server.errors]
+            [errors]
             404 = "non-existent-path"
         });
+
+        let heroku_config = project_toml.try_into::<HerokuWebServerConfig>().unwrap();
+
         let app_dir =
             PathBuf::from(env::current_dir().unwrap()).join("tests/fixtures/custom_errors");
-        let mut routes: Vec<CaddyHTTPServerRoute> = vec![];
-        match generate_error_404_route(&project_toml, &app_dir, routes) {
+
+        match generate_error_404_route(&heroku_config, &app_dir) {
             Ok(_) => {
                 assert!(false, "should fail to find custom 404 file")
             }

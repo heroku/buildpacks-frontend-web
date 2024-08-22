@@ -3,6 +3,7 @@ use commons::output::build_log::{BuildLog, Logger, StartedLogger};
 use commons::output::fmt;
 use commons::output::fmt::DEBUG_INFO;
 use indoc::formatdoc;
+use libcnb::TomlFileError;
 use std::fmt::Display;
 use std::io::stdout;
 
@@ -17,6 +18,7 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 pub(crate) enum StaticWebServerBuildpackError {
     Download(libherokubuildpack::download::DownloadError),
     JSON(serde_json::Error),
+    CannotReadProjectToml(TomlFileError),
     CannotWriteCaddyConfiguration(std::io::Error),
     CannotReadCustom404File(std::io::Error),
     CannotUnpackCaddyTarball(std::io::Error),
@@ -42,7 +44,8 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
         | StaticWebServerBuildpackError::CannotReadCustom404File(error)
         | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)
         | StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error)
-        | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
+        | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error)
+        | StaticWebServerBuildpackError::CannotReadProjectToml(error) => {
             on_unexpected_io_error(error, logger)
         }
     }
