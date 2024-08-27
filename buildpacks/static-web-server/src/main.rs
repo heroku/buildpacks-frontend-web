@@ -46,7 +46,15 @@ impl Buildpack for StaticWebServerBuildpack {
                     .process(
                         ProcessBuilder::new(
                             process_type!("web"),
-                            ["caddy", "run", "--config", config_path],
+                            [
+                                "caddy",
+                                "run",
+                                "--config",
+                                &configuration_layer
+                                    .path()
+                                    .join("caddy.json")
+                                    .to_string_lossy(),
+                            ],
                         )
                         .default(true)
                         .build(),
