@@ -1,11 +1,8 @@
 // Required due to: https://github.com/rust-lang/rust/issues/95513
 #![allow(unused_crate_dependencies)]
 
-use libcnb_test::{assert_contains};
-use test_support::{
-    assert_web_response, website_integration_test,
-    wait_for, PORT,
-};
+use libcnb_test::assert_contains;
+use test_support::{assert_web_response, wait_for, website_integration_test, PORT};
 
 #[test]
 #[ignore = "integration test"]

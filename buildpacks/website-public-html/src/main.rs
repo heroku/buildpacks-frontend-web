@@ -18,13 +18,15 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     type Error = WebsitePublicHTMLBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let public_html = context
-            .app_dir
-            .join(PUBLIC_HTML_PATH);
+        let public_html = context.app_dir.join(PUBLIC_HTML_PATH);
         let public_html_exists = public_html
             .try_exists()
             .map_err(WebsitePublicHTMLBuildpackError::Detect)?;
-        println!("Detected path: {} ({})", public_html_exists, public_html.display());
+        println!(
+            "Detected path: {} ({})",
+            public_html_exists,
+            public_html.display()
+        );
 
         if public_html_exists {
             DetectResultBuilder::pass().build()

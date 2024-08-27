@@ -1,10 +1,10 @@
+mod config_web_server;
 mod errors;
 mod install_web_server;
-mod config_web_server;
 
 use crate::errors::StaticWebServerBuildpackError;
-use install_web_server::install_web_server;
 use config_web_server::config_web_server;
+use install_web_server::install_web_server;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
 use libcnb::data::process_type;
@@ -31,11 +31,13 @@ impl Buildpack for StaticWebServerBuildpack {
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
 
-        let _installation_layer = install_web_server(&context, WEB_SERVER_NAME, WEB_SERVER_VERSION)?;
-        
+        let _installation_layer =
+            install_web_server(&context, WEB_SERVER_NAME, WEB_SERVER_VERSION)?;
+
         let configuration_layer = config_web_server(&context)?;
         let config_path_buff = configuration_layer.path().join("caddy.json");
-        let config_path = config_path_buff.to_str()
+        let config_path = config_path_buff
+            .to_str()
             .expect("should provide path to layers directory");
 
         BuildResultBuilder::new()
@@ -43,8 +45,8 @@ impl Buildpack for StaticWebServerBuildpack {
                 LaunchBuilder::new()
                     .process(
                         ProcessBuilder::new(
-                            process_type!("web"), 
-                            ["caddy", "run", "--config", config_path]
+                            process_type!("web"),
+                            ["caddy", "run", "--config", config_path],
                         )
                         .default(true)
                         .build(),
