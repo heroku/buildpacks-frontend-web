@@ -1,5 +1,5 @@
 [_.metadata.web-server.headers]
-X-Global = "Hello"
+"*".X-Global = "Hello"
 "/".X-Only-Default = "Hiii"
 "*.html".X-Only-HTML = "Hi"
 "/images/*".X-Only-Images = "HAI"

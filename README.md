@@ -32,30 +32,31 @@ root = "my_docroot"
 
 #### Global Headers
 
-Respond with custom headers for every request.
+Respond with custom headers for any request path, the wildcard `*`.
 
 ```toml
-[_.metadata.web-server.headers]
+[_.metadata.web-server.headers."*"]
 X-Server = "hot stuff"
 ```
 
 #### Path-matched Headers
 
-Respond with custom headers. These match against the request URL's path.
+Respond with custom headers. These match exactly against the request URL's path.
 
 ```toml
-[_.metadata.web-server.headers]
-
 # The index page (index.html is not specified in the URL).
-"/".Cache-Control = "max-age=604800, stale-while-revalidate=86400, stale-if-error=86400"
+[_.metadata.web-server.headers."/"]
+Cache-Control = "max-age=604800, stale-while-revalidate=86400, stale-if-error=86400"
 
 # HTML pages.
-"/*.html".Cache-Control = "max-age=604800, stale-while-revalidate=86400, stale-if-error=86400"
+[_.metadata.web-server.headers."/*.html"]
+Cache-Control = "max-age=604800, stale-while-revalidate=86400, stale-if-error=86400"
 
-# A subdirectory.
-"/images/*".Cache-Control = "max-age=31536000, immutable"
+# Contents of a subdirectory.
+[_.metadata.web-server.headers."/images/*"]
+Cache-Control = "max-age=31536000, immutable"
 
-# Multiple headers for a subdirectory.
+# Set multiple headers for a match.
 [_.metadata.web-server.headers."/downloads/*"]
 Cache-Control = "public, max-age=604800"
 Content-Disposition = "attachment"

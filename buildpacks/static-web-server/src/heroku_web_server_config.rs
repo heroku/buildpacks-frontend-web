@@ -9,7 +9,7 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) root: Option<PathBuf>,
     pub(crate) errors: Option<ErrorsConfig>,
     #[serde(default, deserialize_with = "deserialize_headers")]
-    pub(crate) headers: Vec<Header>,
+    pub(crate) headers: Option<Vec<Header>>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default)]
@@ -18,24 +18,24 @@ pub(crate) struct ErrorsConfig {
     pub(crate) custom_404_page: Option<PathBuf>,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
-pub(crate) enum HeaderPathMatcher {
-    Global,
-    Path(String),
-}
-
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Deserialize, Eq, PartialEq, Debug, Default)]
 pub(crate) struct Header {
-    pub(crate) path_matcher: HeaderPathMatcher,
+    pub(crate) path_matcher: String,
     pub(crate) key: String,
     pub(crate) value: String,
 }
 
-fn deserialize_headers<'de, D>(d: D) -> Result<Vec<Header>, D::Error>
+fn deserialize_headers<'de, D>(d: D) -> Result<Option<Vec<Header>>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    d.deserialize_map(HeadersVisitor)
+    let deserialized = d.deserialize_map(HeadersVisitor)?;
+
+    if deserialized.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(deserialized))
+    }
 }
 
 struct HeadersVisitor;
@@ -51,33 +51,14 @@ impl<'de> Visitor<'de> for HeadersVisitor {
     where
         A: MapAccess<'de>,
     {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum StringOrMap {
-            String(String),
-            Map(
-                // Ensure key/value order is maintained by using a b-tree
-                BTreeMap<String, String>,
-            ),
-        }
-
         let mut result = vec![];
-        while let Some((key, value)) = map.next_entry::<String, StringOrMap>()? {
-            match value {
-                StringOrMap::String(string) => result.push(Header {
-                    path_matcher: HeaderPathMatcher::Global,
-                    key,
-                    value: string,
-                }),
-                StringOrMap::Map(key_values) => {
-                    for (header_key, header_value) in key_values {
-                        result.push(Header {
-                            path_matcher: HeaderPathMatcher::Path(key.clone()),
-                            key: header_key,
-                            value: header_value,
-                        });
-                    }
-                }
+        while let Some((key, value)) = map.next_entry::<String, BTreeMap<String, String>>()? {
+            for (header_key, header_value) in value {
+                result.push(Header {
+                    path_matcher: key.clone(),
+                    key: header_key,
+                    value: header_value,
+                });
             }
         }
 
@@ -99,7 +80,7 @@ mod tests {
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.root, None);
-        assert!(parsed_config.headers.is_empty());
+        assert!(parsed_config.headers.is_none());
         assert_eq!(
             parsed_config.errors,
             Some(ErrorsConfig {
@@ -116,7 +97,7 @@ mod tests {
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.root, Some(PathBuf::from("files/web")));
-        assert!(parsed_config.headers.is_empty());
+        assert!(parsed_config.headers.is_none());
         assert_eq!(parsed_config.errors, None);
     }
 
@@ -124,7 +105,7 @@ mod tests {
     fn custom_headers() {
         let toml_config = toml! {
             [headers]
-            X-Global = "Hello"
+            "*".X-Global = "Hello"
             "/".X-Only-Default = "Hiii"
             "*.html".X-Only-HTML = "Hi"
             "/images/*".X-Only-Images = "HAI"
@@ -136,28 +117,28 @@ mod tests {
 
         assert_eq!(
             parsed_config.headers,
-            vec![
+            Some(vec![
                 Header {
-                    path_matcher: HeaderPathMatcher::Global,
+                    path_matcher: String::from("*"),
                     key: String::from("X-Global"),
                     value: String::from("Hello")
                 },
                 Header {
-                    path_matcher: HeaderPathMatcher::Path(String::from("/")),
+                    path_matcher: String::from("/"),
                     key: String::from("X-Only-Default"),
                     value: String::from("Hiii")
                 },
                 Header {
-                    path_matcher: HeaderPathMatcher::Path(String::from("*.html")),
+                    path_matcher: String::from("*.html"),
                     key: String::from("X-Only-HTML"),
                     value: String::from("Hi")
                 },
                 Header {
-                    path_matcher: HeaderPathMatcher::Path(String::from("/images/*")),
+                    path_matcher: String::from("/images/*"),
                     key: String::from("X-Only-Images"),
                     value: String::from("HAI")
                 },
-            ]
+            ])
         );
     }
 }

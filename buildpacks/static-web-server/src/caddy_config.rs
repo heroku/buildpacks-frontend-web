@@ -1,6 +1,6 @@
 use crate::errors::StaticWebServerBuildpackError;
 use crate::errors::StaticWebServerBuildpackError::CannotReadCustom404File;
-use crate::heroku_web_server_config::{Header, HeaderPathMatcher, HerokuWebServerConfig};
+use crate::heroku_web_server_config::{ErrorsConfig, Header, HerokuWebServerConfig};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -101,7 +101,10 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
         let mut routes = vec![];
 
         // Header routes come first so headers will be added to any response down the chain.
-        routes.extend(generate_response_headers_routes(&value.headers));
+        if value.headers.is_some() {
+            let h = value.headers.unwrap_or_default();
+            routes.extend(generate_response_headers_routes(&h));
+        }
 
         // Default router is just the static file server.
         // This vector will contain all routes in order of request processing,
@@ -121,7 +124,7 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             })],
         });
 
-        routes.push(generate_error_404_route(&value)?);
+        routes.push(generate_error_404_route(&value.errors)?);
 
         // Assemble into the caddy.json structure
         // https://caddyserver.com/docs/json/
@@ -140,10 +143,10 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
     }
 }
 
-fn generate_response_headers_routes(headers: &[Header]) -> Vec<CaddyHTTPServerRoute> {
+fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServerRoute> {
     // Group headers with the same matcher while preserving the order of the matchers
     // by "when-first-seen".
-    let mut groups = IndexMap::<HeaderPathMatcher, Vec<&Header>>::new();
+    let mut groups = IndexMap::<String, Vec<&Header>>::new();
     for header in headers {
         if let Some(headers) = groups.get_mut(&header.path_matcher) {
             headers.push(header);
@@ -154,43 +157,35 @@ fn generate_response_headers_routes(headers: &[Header]) -> Vec<CaddyHTTPServerRo
 
     groups
         .into_iter()
-        .map(|(matcher, headers)| {
-            let match_path = match matcher {
-                HeaderPathMatcher::Global => String::from("*"),
-                HeaderPathMatcher::Path(path) => path,
-            };
-
-            CaddyHTTPServerRoute {
-                r#match: Some(vec![CaddyHTTPServerRouteMatcher::Path(MatchPath {
-                    path: vec![match_path],
-                })]),
-                handle: vec![CaddyHTTPServerRouteHandler::Headers(Headers {
-                    handler: "headers".to_owned(),
-                    response: HeadersResponse {
-                        set: headers
-                            .into_iter()
-                            .map(|header| {
-                                (
-                                    header.key.clone(),
-                                    serde_json::Value::Array(vec![serde_json::Value::String(
-                                        header.value.clone(),
-                                    )]),
-                                )
-                            })
-                            .collect::<serde_json::Map<String, serde_json::Value>>(),
-                        deferred: true,
-                    },
-                })],
-            }
+        .map(|(matcher, headers)| CaddyHTTPServerRoute {
+            r#match: Some(vec![CaddyHTTPServerRouteMatcher::Path(MatchPath {
+                path: vec![matcher],
+            })]),
+            handle: vec![CaddyHTTPServerRouteHandler::Headers(Headers {
+                handler: "headers".to_owned(),
+                response: HeadersResponse {
+                    set: headers
+                        .into_iter()
+                        .map(|header| {
+                            (
+                                header.key.clone(),
+                                serde_json::Value::Array(vec![serde_json::Value::String(
+                                    header.value.clone(),
+                                )]),
+                            )
+                        })
+                        .collect::<serde_json::Map<String, serde_json::Value>>(),
+                    deferred: true,
+                },
+            })],
         })
         .collect()
 }
 
 fn generate_error_404_route(
-    heroku_web_server_config: &HerokuWebServerConfig,
+    errors: &Option<ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
-    let not_found_response_content = heroku_web_server_config
-        .errors
+    let not_found_response_content = errors
         .as_ref()
         .and_then(|errors| errors.custom_404_page.clone())
         .map_or(
@@ -245,27 +240,27 @@ mod tests {
     #[test]
     fn generates_matched_response_headers_routes() {
         let heroku_config = HerokuWebServerConfig {
-            headers: vec![
+            headers: Some(vec![
                 Header {
-                    path_matcher: HeaderPathMatcher::Path(String::from("*")),
+                    path_matcher: String::from("*"),
                     key: String::from("X-Foo"),
                     value: String::from("Bar"),
                 },
                 Header {
-                    path_matcher: HeaderPathMatcher::Path(String::from("*.html")),
+                    path_matcher: String::from("*.html"),
                     key: String::from("X-Baz"),
                     value: String::from("Buz"),
                 },
                 Header {
-                    path_matcher: HeaderPathMatcher::Path(String::from("*")),
+                    path_matcher: String::from("*"),
                     key: String::from("X-Zuu"),
                     value: String::from("Zem"),
                 },
-            ],
+            ]),
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_response_headers_routes(&heroku_config.headers);
+        let routes = generate_response_headers_routes(&heroku_config.headers.unwrap());
 
         assert_eq!(routes.len(), 2, "should generate two routes");
 
@@ -344,15 +339,15 @@ mod tests {
     #[test]
     fn generates_global_response_headers_routes() {
         let heroku_config = HerokuWebServerConfig {
-            headers: vec![Header {
-                path_matcher: HeaderPathMatcher::Global,
+            headers: Some(vec![Header {
+                path_matcher: String::from("*"),
                 key: String::from("X-Foo"),
                 value: String::from("Bar"),
-            }],
+            }]),
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_response_headers_routes(&heroku_config.headers);
+        let routes = generate_response_headers_routes(&heroku_config.headers.unwrap());
         assert_eq!(routes.len(), 1, "should generate one route");
 
         let generated_route = &routes[0];
@@ -401,7 +396,7 @@ mod tests {
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_error_404_route(&heroku_config).unwrap();
+        let routes = generate_error_404_route(&heroku_config.errors).unwrap();
 
         let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
         else {
@@ -432,7 +427,7 @@ mod tests {
             ..HerokuWebServerConfig::default()
         };
 
-        match generate_error_404_route(&heroku_config) {
+        match generate_error_404_route(&heroku_config.errors) {
             Ok(_) => {
                 panic!("should fail to find custom 404 file");
             }
