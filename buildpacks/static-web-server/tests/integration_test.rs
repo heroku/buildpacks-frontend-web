@@ -7,6 +7,7 @@ use test_support::{
     assert_web_response, retry, start_container, static_web_server_integration_test,
     DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
 };
+use ureq::Response;
 
 #[test]
 #[ignore = "integration test"]
@@ -115,6 +116,34 @@ fn custom_errors() {
                 }
                 Err(error) => {
                     panic!("should respond 404 Not Found, but got other error: {error:?}");
+                }
+            }
+        });
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
+fn client_side_routing() {
+    static_web_server_integration_test("./fixtures/client_side_routing", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(&ctx, |_container, socket_addr| {
+            let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+            });
+            match response_result {
+                Ok(response) => {
+                    assert_eq!(response.status(), 200);
+                    let h = response.header("Content-Type").unwrap_or_default();
+                    assert_contains!(h, "text/html");
+                    let response_body = response.into_string().unwrap();
+                    assert_contains!(
+                        response_body,
+                        "Welcome to CNB Static Web Server Client Side Routing Test!"
+                    );
+                }
+                Err(error) => {
+                    panic!("should respond 200 ok, but got other error: {error:?}");
                 }
             }
         });

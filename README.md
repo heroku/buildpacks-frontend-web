@@ -67,8 +67,18 @@ Content-Disposition = "attachment"
 Respond with a custom Not Found HTML page.
 
 ```toml
-[com.heroku.static-web-server.errors]
-404 = "public/error-404.html"
+[com.heroku.static-web-server.errors.404]
+file_path = "public/error-404.html"
+```
+
+#### Replacement Status Code
+
+For single-page app (SPA) client-side routing, where not found request URLs should respond with a single page (the app), configure a replacement status code.
+
+```toml
+[com.heroku.static-web-server.errors.404]
+file_path = "public/index.html"
+status = 200
 ```
 
 ## Dev Notes

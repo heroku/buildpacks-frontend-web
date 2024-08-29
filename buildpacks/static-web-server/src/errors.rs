@@ -39,7 +39,9 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
         StaticWebServerBuildpackError::Json(e) => on_json_error(&e, logger),
         StaticWebServerBuildpackError::CannotReadProjectToml(e) => on_toml_error(&e, logger),
-        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => on_config_error(&e, logger),
+        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => {
+            on_config_error(&e, logger);
+        }
         StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error)
         | StaticWebServerBuildpackError::CannotReadCustom404File(error)
         | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)

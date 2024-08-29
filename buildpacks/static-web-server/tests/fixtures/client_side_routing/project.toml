@@ -1,0 +1,3 @@
+[com.heroku.static-web-server.errors.404]
+file_path = "public/index.html"
+status = 200

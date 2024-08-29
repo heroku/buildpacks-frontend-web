@@ -12,10 +12,16 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) headers: Option<Vec<Header>>,
 }
 
-#[derive(Deserialize, Eq, PartialEq, Debug, Default)]
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
 pub(crate) struct ErrorsConfig {
     #[serde(rename = "404")]
-    pub(crate) custom_404_page: Option<PathBuf>,
+    pub(crate) custom_404_page: Option<ErrorConfig>,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct ErrorConfig {
+    pub(crate) file_path: PathBuf,
+    pub(crate) status: Option<u16>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default)]
@@ -75,7 +81,7 @@ mod tests {
     fn custom_errors() {
         let toml_config = toml! {
             [errors]
-            404 = "public/error-404.html"
+            404.file_path = "public/error-404.html"
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
@@ -84,7 +90,10 @@ mod tests {
         assert_eq!(
             parsed_config.errors,
             Some(ErrorsConfig {
-                custom_404_page: Some(PathBuf::from("public/error-404.html"))
+                custom_404_page: Some(ErrorConfig {
+                    file_path: PathBuf::from("public/error-404.html"),
+                    status: None,
+                })
             })
         );
     }

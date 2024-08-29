@@ -185,9 +185,13 @@ fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServe
 fn generate_error_404_route(
     errors: &Option<ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
-    let not_found_response_content = errors
+    let error_config = errors
         .as_ref()
-        .and_then(|errors| errors.custom_404_page.clone())
+        .and_then(|errors| errors.custom_404_page.clone());
+
+    let not_found_response_content = error_config
+        .as_ref()
+        .map(|error| error.file_path.clone())
         .map_or(
             {
                 let default = r#"<!DOCTYPE html>
@@ -206,12 +210,17 @@ fn generate_error_404_route(
             |path| fs::read_to_string(path).map_err(CannotReadCustom404File),
         )?;
 
+    let status_code = error_config
+        .as_ref()
+        .map_or(404, |error| error.status.unwrap_or(404))
+        .to_string();
+
     Ok(CaddyHTTPServerRoute {
         r#match: None,
         handle: vec![CaddyHTTPServerRouteHandler::StaticResponse(
             StaticResponse {
                 handler: "static_response".to_owned(),
-                status_code: "404".to_string(),
+                status_code: status_code.clone(),
                 headers: Some({
                     let mut h = serde_json::Map::new();
                     h.insert(
@@ -222,7 +231,7 @@ fn generate_error_404_route(
                     );
                     h
                 }),
-                body: not_found_response_content,
+                body: not_found_response_content.clone(),
             },
         )],
     })
@@ -233,7 +242,7 @@ const DEFAULT_DOC_ROOT: &str = "public";
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::heroku_web_server_config::ErrorsConfig;
+    use crate::heroku_web_server_config::{ErrorConfig, ErrorsConfig};
     use libherokubuildpack::log::log_info;
     use std::path::PathBuf;
 
@@ -389,9 +398,10 @@ mod tests {
     fn generates_custom_404_error_route() {
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
-                custom_404_page: Some(PathBuf::from(
-                    "tests/fixtures/custom_errors/public/error-404.html",
-                )),
+                custom_404_page: Some(ErrorConfig {
+                    file_path: PathBuf::from("tests/fixtures/custom_errors/public/error-404.html"),
+                    status: None,
+                }),
             }),
             ..HerokuWebServerConfig::default()
         };
@@ -419,10 +429,49 @@ mod tests {
     }
 
     #[test]
+    fn generates_custom_404_to_200_error_route() {
+        let heroku_config = HerokuWebServerConfig {
+            errors: Some(ErrorsConfig {
+                custom_404_page: Some(ErrorConfig {
+                    file_path: PathBuf::from(
+                        "tests/fixtures/client_side_routing/public/index.html",
+                    ),
+                    status: Some(200),
+                }),
+            }),
+            ..HerokuWebServerConfig::default()
+        };
+
+        let routes = generate_error_404_route(&heroku_config.errors).unwrap();
+
+        let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
+        else {
+            unreachable!()
+        };
+
+        assert_eq!(
+            generated_handler.handler, "static_response",
+            "should be a static_response route"
+        );
+
+        let generated_status = &generated_handler.status_code;
+        assert!(generated_status.eq("200"), "status_code should by 200");
+
+        let generated_body = &generated_handler.body;
+        assert!(
+            generated_body.contains("Client Side Routing Test"),
+            "body should contain Client Side Routing Test"
+        );
+    }
+
+    #[test]
     fn missing_custom_404_error_file() {
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
-                custom_404_page: Some(PathBuf::from("non-existent-path")),
+                custom_404_page: Some(ErrorConfig {
+                    file_path: PathBuf::from("non-existent-path"),
+                    status: None,
+                }),
             }),
             ..HerokuWebServerConfig::default()
         };
