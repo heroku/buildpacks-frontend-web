@@ -38,12 +38,8 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
     match error {
         StaticWebServerBuildpackError::Download(e) => on_download_error(&e, logger),
         StaticWebServerBuildpackError::Json(e) => on_json_error(&e, logger),
-        StaticWebServerBuildpackError::CannotReadProjectToml(_error) => {
-            // TODO: Print error
-        }
-        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(_error) => {
-            // TODO: Print error
-        }
+        StaticWebServerBuildpackError::CannotReadProjectToml(e) => on_toml_error(&e, logger),
+        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => on_config_error(&e, logger),
         StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error)
         | StaticWebServerBuildpackError::CannotReadCustom404File(error)
         | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)
@@ -82,6 +78,22 @@ fn on_json_error(error: &serde_json::Error, logger: Box<dyn StartedLogger>) {
         .announce()
         .error(&formatdoc! {"
             JSON error from {buildpack_name}. 
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_toml_error(error: &TomlFileError, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            TOML error from {buildpack_name}. 
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_config_error(error: &toml::de::Error, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            Configuration error from {buildpack_name}. 
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
