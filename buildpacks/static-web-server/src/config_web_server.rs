@@ -27,7 +27,7 @@ pub(crate) fn config_web_server(
         let project_toml = read_toml_file::<toml::Value>(project_toml_path)
             .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?;
 
-        toml_select_value(vec!["_", "metadata", "web-server"], &project_toml).map_or(
+        toml_select_value(vec!["com", "heroku", "static-web-server"], &project_toml).map_or(
             Ok(HerokuWebServerConfig::default()),
             |table| {
                 table

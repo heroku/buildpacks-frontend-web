@@ -1,2 +1,2 @@
-[_.metadata.web-server]
+[com.heroku.static-web-server]
 root = "foobar"

@@ -1,2 +1,2 @@
-[_.metadata.web-server.errors]
+[com.heroku.static-web-server.errors]
 404 = "public/error-404.html"

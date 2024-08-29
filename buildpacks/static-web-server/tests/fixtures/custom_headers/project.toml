@@ -1,4 +1,4 @@
-[_.metadata.web-server.headers]
+[com.heroku.static-web-server.headers]
 "*".X-Global = "Hello"
 "/".X-Only-Default = "Hiii"
 "*.html".X-Only-HTML = "Hi"
