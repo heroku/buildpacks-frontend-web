@@ -21,7 +21,9 @@ In the app source code, create a [`project.toml`](https://buildpacks.io/docs/ref
 
 ### Document Root
 
-The filesystem directory to serve over HTTP defaults to the `public` directory in the app's source code. This root can be overriden for other use-cases, for example:
+The filesystem directory to serve over HTTP defaults to the `public` directory in the app's source code.
+
+This root can be overriden for other use-cases, for example:
 
 ```toml
 [com.heroku.static-web-server]

@@ -59,6 +59,53 @@ fn custom_doc_root() {
 
 #[test]
 #[ignore = "integration test"]
+fn top_level_doc_root() {
+    static_web_server_integration_test("./fixtures/top_level_doc_root", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(&ctx, |_container, socket_addr| {
+            let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                ureq::get(&format!("http://{socket_addr}/")).call()
+            });
+            match response_result {
+                Ok(response) => {
+                    assert_eq!(response.status(), 200);
+                    let h = response.header("Content-Type").unwrap_or_default();
+                    assert_contains!(h, "text/html");
+                    let response_body = response.into_string().unwrap();
+                    assert_contains!(
+                        response_body,
+                        "Welcome to CNB Static Web Server Top-level Doc Root Test!"
+                    );
+                }
+                Err(error) => {
+                    panic!("should respond 200 ok, but got other error: {error:?}");
+                }
+            }
+
+            let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+            });
+            match response_result {
+                Err(ureq::Error::Status(code, response)) => {
+                    assert_eq!(code, 404);
+                    let h = response.header("Content-Type").unwrap_or_default();
+                    assert_contains!(h, "text/html");
+                    let response_body = response.into_string().unwrap();
+                    assert_contains!(response_body, "Custom 404");
+                }
+                Ok(_) => {
+                    panic!("should respond 404 Not Found, but got 200 ok");
+                }
+                Err(error) => {
+                    panic!("should respond 404 Not Found, but got other error: {error:?}");
+                }
+            }
+        });
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
 fn custom_headers() {
     static_web_server_integration_test("./fixtures/custom_headers", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");

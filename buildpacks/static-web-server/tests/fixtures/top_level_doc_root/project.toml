@@ -1,0 +1,6 @@
+# This blank `root` setting is not recommended, not documented, because it will serve everything from the top-level directory.
+[com.heroku.static-web-server]
+root = ""
+
+[com.heroku.static-web-server.errors.404]
+file_path = "error-404.html"
