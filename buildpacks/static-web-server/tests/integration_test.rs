@@ -7,7 +7,6 @@ use test_support::{
     assert_web_response, retry, start_container, static_web_server_integration_test,
     DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
 };
-use ureq::Response;
 
 #[test]
 #[ignore = "integration test"]
@@ -54,6 +53,15 @@ fn custom_doc_root() {
     static_web_server_integration_test("./fixtures/custom_doc_root", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         assert_web_response(&ctx, "Welcome to CNB Static Web Server Doc Root Test!");
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
+fn custom_index() {
+    static_web_server_integration_test("./fixtures/custom_index", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        assert_web_response(&ctx, "Welcome to CNB Static Web Server Custom Index Test!");
     });
 }
 

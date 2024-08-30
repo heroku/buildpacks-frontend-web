@@ -21,16 +21,29 @@ In the app source code, create a [`project.toml`](https://buildpacks.io/docs/ref
 
 ### Document Root
 
-The filesystem directory to serve over HTTP defaults to the `public` directory in the app's source code.
+*Default: `public`*
 
-This root can be overriden for other use-cases, for example:
+The directory in the app's source code to serve over HTTP.
 
 ```toml
 [com.heroku.static-web-server]
 root = "my_docroot"
 ```
 
+### Index Document
+
+*Default: `index.html`*
+
+The file to respond with, when a request does not specify a document, such as requests to a bare hostame like `https://example.com`.
+
+```toml
+[com.heroku.static-web-server]
+index = "main.html"
+```
+
 ### Response Headers
+
+*Default: (server's built-in headers)*
 
 #### Global Headers
 
@@ -66,6 +79,10 @@ Content-Disposition = "attachment"
 
 ### Custom Errors
 
+*Default: (server's built-in errors)*
+
+#### 404 Not Found
+
 Respond with a custom Not Found HTML page.
 
 The path to this file is relative to the [Document Root](#document-root). The file should be inside the doc root.
@@ -77,7 +94,9 @@ file_path = "error-404.html"
 
 #### Replacement Status Code
 
-For single-page app (SPA) client-side routing, where not found request URLs should respond with a single page (the app), configure a replacement status code.
+Change the error response's HTTP status code.
+
+Single-page app (SPA) client-side routing, where not found request URLs should respond with a single page (the app),
 
 ```toml
 [com.heroku.static-web-server.errors.404]

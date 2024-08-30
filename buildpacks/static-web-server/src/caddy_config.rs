@@ -1,6 +1,6 @@
 use crate::errors::StaticWebServerBuildpackError;
 use crate::errors::StaticWebServerBuildpackError::CannotReadCustom404File;
-use crate::heroku_web_server_config::{ErrorsConfig, Header, HerokuWebServerConfig};
+use crate::heroku_web_server_config::{ErrorsConfig, Header, HerokuWebServerConfig, DEFAULT_DOC_ROOT, DEFAULT_DOC_INDEX};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -69,6 +69,7 @@ pub(crate) enum CaddyHTTPServerRouteHandler {
 pub(crate) struct FileServer {
     pub(crate) handler: String,
     pub(crate) root: String,
+    pub(crate) index_names: Vec<String>,
     pub(crate) pass_thru: bool,
 }
 
@@ -111,6 +112,11 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             .clone()
             .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT));
 
+        let doc_index = value
+            .index
+            .clone()
+            .unwrap_or(String::from(DEFAULT_DOC_INDEX));
+
         // Default router is just the static file server.
         // This vector will contain all routes in order of request processing,
         // while response processing is reverse direction.
@@ -121,6 +127,7 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
                 root: doc_root
                     .to_string_lossy()
                     .to_string(),
+                index_names: vec![doc_index],
                 // Any not found request paths continue to the next handler.
                 pass_thru: true,
             })],
@@ -239,8 +246,6 @@ fn generate_error_404_route(
         )],
     })
 }
-
-const DEFAULT_DOC_ROOT: &str = "public";
 
 #[cfg(test)]
 mod tests {

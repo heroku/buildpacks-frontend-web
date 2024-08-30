@@ -4,9 +4,13 @@ use std::collections::BTreeMap;
 use std::fmt::Formatter;
 use std::path::PathBuf;
 
+pub(crate) const DEFAULT_DOC_ROOT: &str = "public";
+pub(crate) const DEFAULT_DOC_INDEX: &str = "index.html";
+
 #[derive(Deserialize, Default)]
 pub(crate) struct HerokuWebServerConfig {
     pub(crate) root: Option<PathBuf>,
+    pub(crate) index: Option<String>,
     pub(crate) errors: Option<ErrorsConfig>,
     #[serde(default, deserialize_with = "deserialize_headers")]
     pub(crate) headers: Option<Vec<Header>>,
@@ -81,17 +85,18 @@ mod tests {
     fn custom_errors() {
         let toml_config = toml! {
             [errors]
-            404.file_path = "public/error-404.html"
+            404.file_path = "error-404.html"
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.root, None);
-        assert!(parsed_config.headers.is_none());
+        assert_eq!(parsed_config.index, None);
+        assert_eq!(parsed_config.headers, None);
         assert_eq!(
             parsed_config.errors,
             Some(ErrorsConfig {
                 custom_404_page: Some(ErrorConfig {
-                    file_path: PathBuf::from("public/error-404.html"),
+                    file_path: PathBuf::from("error-404.html"),
                     status: None,
                 })
             })
@@ -106,7 +111,21 @@ mod tests {
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.root, Some(PathBuf::from("files/web")));
-        assert!(parsed_config.headers.is_none());
+        assert_eq!(parsed_config.index, None);
+        assert_eq!(parsed_config.headers, None);
+        assert_eq!(parsed_config.errors, None);
+    }
+
+    #[test]
+    fn custom_index() {
+        let toml_config = toml! {
+            index = "main.html"
+        };
+
+        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.root, None);
+        assert_eq!(parsed_config.index, Some("main.html".to_string()));
+        assert_eq!(parsed_config.headers, None);
         assert_eq!(parsed_config.errors, None);
     }
 
@@ -122,6 +141,7 @@ mod tests {
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.root, None);
+        assert_eq!(parsed_config.index, None);
         assert_eq!(parsed_config.errors, None);
 
         assert_eq!(
