@@ -106,6 +106,11 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             routes.extend(generate_response_headers_routes(&h));
         }
 
+        let doc_root = value
+            .root
+            .clone()
+            .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT));
+
         // Default router is just the static file server.
         // This vector will contain all routes in order of request processing,
         // while response processing is reverse direction.
@@ -113,10 +118,7 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             r#match: None,
             handle: vec![CaddyHTTPServerRouteHandler::FileServer(FileServer {
                 handler: "file_server".to_owned(),
-                root: value
-                    .root
-                    .clone()
-                    .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT))
+                root: doc_root
                     .to_string_lossy()
                     .to_string(),
                 // Any not found request paths continue to the next handler.
@@ -124,7 +126,7 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             })],
         });
 
-        routes.push(generate_error_404_route(&value.errors)?);
+        routes.push(generate_error_404_route(&doc_root, &value.errors)?);
 
         // Assemble into the caddy.json structure
         // https://caddyserver.com/docs/json/
@@ -183,6 +185,7 @@ fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServe
 }
 
 fn generate_error_404_route(
+    doc_root: &PathBuf,
     errors: &Option<ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
     let error_config = errors
@@ -207,7 +210,7 @@ fn generate_error_404_route(
 
                 Ok(String::from(default))
             },
-            |path| fs::read_to_string(path).map_err(CannotReadCustom404File),
+            |file| fs::read_to_string(doc_root.join(file)).map_err(CannotReadCustom404File),
         )?;
 
     let status_code = error_config
@@ -396,17 +399,19 @@ mod tests {
 
     #[test]
     fn generates_custom_404_error_route() {
+        let doc_root = PathBuf::from("tests/fixtures/custom_errors/public");
+
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
                 custom_404_page: Some(ErrorConfig {
-                    file_path: PathBuf::from("tests/fixtures/custom_errors/public/error-404.html"),
+                    file_path: PathBuf::from("error-404.html"),
                     status: None,
                 }),
             }),
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_error_404_route(&heroku_config.errors).unwrap();
+        let routes = generate_error_404_route(&doc_root, &heroku_config.errors).unwrap();
 
         let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
         else {
@@ -430,11 +435,13 @@ mod tests {
 
     #[test]
     fn generates_custom_404_to_200_error_route() {
+        let doc_root = PathBuf::from("tests/fixtures/client_side_routing/public");
+
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from(
-                        "tests/fixtures/client_side_routing/public/index.html",
+                        "index.html",
                     ),
                     status: Some(200),
                 }),
@@ -442,7 +449,7 @@ mod tests {
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_error_404_route(&heroku_config.errors).unwrap();
+        let routes = generate_error_404_route(&doc_root, &heroku_config.errors).unwrap();
 
         let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
         else {
@@ -466,6 +473,8 @@ mod tests {
 
     #[test]
     fn missing_custom_404_error_file() {
+        let doc_root = PathBuf::from(DEFAULT_DOC_ROOT);
+
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
                 custom_404_page: Some(ErrorConfig {
@@ -476,7 +485,7 @@ mod tests {
             ..HerokuWebServerConfig::default()
         };
 
-        match generate_error_404_route(&heroku_config.errors) {
+        match generate_error_404_route(&doc_root, &heroku_config.errors) {
             Ok(_) => {
                 panic!("should fail to find custom 404 file");
             }

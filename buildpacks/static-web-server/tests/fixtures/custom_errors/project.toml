@@ -1,2 +1,2 @@
 [com.heroku.static-web-server.errors.404]
-file_path = "public/error-404.html"
+file_path = "error-404.html"
