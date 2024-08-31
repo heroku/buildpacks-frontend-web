@@ -19,6 +19,19 @@ This repository contains multiple buildpacks:
 
 In the app source code, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) for custom configuration.
 
+### Build Command
+
+*Default: (none)*
+
+A command to execute during build, such as a JavaScript compiler/bundler.
+
+```toml
+[com.heroku.static-web-server]
+build = "npm build"
+```
+
+Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm for JavaScript.
+
 ### Document Root
 
 *Default: `public`*

@@ -8,6 +8,7 @@ use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use libherokubuildpack::toml::toml_select_value;
 use std::fs;
+use std::process::{Command, Output};
 
 pub(crate) fn config_web_server(
     context: &BuildContext<StaticWebServerBuildpack>,
@@ -40,16 +41,31 @@ pub(crate) fn config_web_server(
         HerokuWebServerConfig::default()
     };
 
+    let build_command_opt = heroku_config.build.clone();
+
     let caddy_config = CaddyConfig::try_from(heroku_config)?;
 
     let caddy_config_json =
         serde_json::to_string(&caddy_config).map_err(StaticWebServerBuildpackError::Json)?;
 
-    log_info(format!("caddy.json {caddy_config_json:?}"));
-
     let config_path = configuration_layer.path().join("caddy.json");
     fs::write(config_path, caddy_config_json)
         .map_err(StaticWebServerBuildpackError::CannotWriteCaddyConfiguration)?;
+
+    build_command_opt.map(|build_command| -> Result<Output, StaticWebServerBuildpackError> {
+        log_info(format!("Executing build command: {build_command}"));
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", &build_command.to_string()]);
+        let output = cmd
+            .output()
+            .map_err(StaticWebServerBuildpackError::BuildCommandFailed)?;
+
+        log_info(format!("status: {}", output.status));
+        log_info(format!("stdout: {}", String::from_utf8_lossy(&output.stdout)));
+        log_info(format!("stderr: {}", String::from_utf8_lossy(&output.stderr)));
+
+        Ok(output)
+    });
 
     Ok(configuration_layer)
 }

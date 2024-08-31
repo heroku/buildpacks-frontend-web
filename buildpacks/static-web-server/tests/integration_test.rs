@@ -10,8 +10,8 @@ use test_support::{
 
 #[test]
 #[ignore = "integration test"]
-fn no_project_toml() {
-    static_web_server_integration_test("./fixtures/no_project_toml", |ctx| {
+fn build_command() {
+    static_web_server_integration_test("./fixtures/build_command", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(&ctx, |_container, socket_addr| {
             // Test for successful response
@@ -22,27 +22,17 @@ fn no_project_toml() {
             let response_status = response.status();
             assert_eq!(response_status, 200);
             let response_body = response.into_string().unwrap();
-            assert_contains!(response_body, "Welcome to CNB Static Web Server Test!");
+            assert_contains!(response_body, "Welcome to CNB Static Web Server Build Command Test!");
 
             // Test for default Not Found response
-            let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
-            });
-            match response_result {
-                Err(ureq::Error::Status(code, response)) => {
-                    assert_eq!(code, 404);
-                    let h = response.header("Content-Type").unwrap_or_default();
-                    assert_contains!(h, "text/html");
-                    let response_body = response.into_string().unwrap();
-                    assert_contains!(response_body, "404 Not Found");
-                }
-                Ok(_) => {
-                    panic!("should respond 404 Not Found, but got 200 ok");
-                }
-                Err(error) => {
-                    panic!("should respond 404 Not Found, but got other error: {error:?}");
-                }
-            }
+            let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                ureq::get(&format!("http://{socket_addr}/test-output.txt")).call()
+            })
+            .unwrap();
+            let response_status = response.status();
+            assert_eq!(response_status, 200);
+            let response_body = response.into_string().unwrap();
+            assert_contains!(response_body, "Build Command Output Test!");
         });
     });
 }

@@ -22,6 +22,7 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotUnpackCaddyTarball(std::io::Error),
     CannotCreateCaddyInstallationDir(std::io::Error),
     CannotCreateCaddyTarballFile(std::io::Error),
+    BuildCommandFailed(std::io::Error),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
@@ -49,6 +50,7 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
         | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
             on_unexpected_io_error(&error, logger);
         }
+        StaticWebServerBuildpackError::BuildCommandFailed(e) => on_build_command_error(&e, logger),
     }
 }
 
@@ -97,6 +99,14 @@ fn on_config_error(error: &toml::de::Error, logger: Box<dyn StartedLogger>) {
         .error(&formatdoc! {"
             Configuration error from {buildpack_name}. 
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_build_command_error(error: &std::io::Error, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            The custom build command [com.heroku.static-web-server.build] exited with failure. 
+        "});
 }
 
 fn on_framework_error(

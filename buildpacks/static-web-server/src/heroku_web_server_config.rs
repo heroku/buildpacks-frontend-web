@@ -9,6 +9,7 @@ pub(crate) const DEFAULT_DOC_INDEX: &str = "index.html";
 
 #[derive(Deserialize, Default)]
 pub(crate) struct HerokuWebServerConfig {
+    pub(crate) build: Option<String>,
     pub(crate) root: Option<PathBuf>,
     pub(crate) index: Option<String>,
     pub(crate) errors: Option<ErrorsConfig>,
@@ -89,6 +90,7 @@ mod tests {
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.index, None);
         assert_eq!(parsed_config.headers, None);
@@ -104,12 +106,27 @@ mod tests {
     }
 
     #[test]
+    fn build_command() {
+        let toml_config = toml! {
+            build = "echo 'Hello world'"
+        };
+
+        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, Some("echo 'Hello world'".to_string()));
+        assert_eq!(parsed_config.root, None);
+        assert_eq!(parsed_config.index, None);
+        assert_eq!(parsed_config.headers, None);
+        assert_eq!(parsed_config.errors, None);
+    }
+
+    #[test]
     fn custom_root() {
         let toml_config = toml! {
             root = "files/web"
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, Some(PathBuf::from("files/web")));
         assert_eq!(parsed_config.index, None);
         assert_eq!(parsed_config.headers, None);
@@ -123,6 +140,7 @@ mod tests {
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.index, Some("main.html".to_string()));
         assert_eq!(parsed_config.headers, None);
@@ -140,6 +158,7 @@ mod tests {
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.index, None);
         assert_eq!(parsed_config.errors, None);
