@@ -2,10 +2,12 @@ mod errors;
 
 use crate::errors::{on_error, WebsitePublicHTMLBuildpackError};
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
+use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
+use toml::toml;
 
 const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
 const PUBLIC_HTML_PATH: &str = "public/index.html";
@@ -28,8 +30,18 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
             public_html.display()
         );
 
+        let mut static_web_server_req = Require::new("static-web-server");
+        let _ = static_web_server_req.metadata(toml! {
+            root = "public"
+            index = "index.html"
+        });
+        let plan_builder = BuildPlanBuilder::new()
+            .requires(static_web_server_req);
+
         if public_html_exists {
-            DetectResultBuilder::pass().build()
+            DetectResultBuilder::pass()
+                .build_plan(plan_builder.build())
+                .build()
         } else {
             DetectResultBuilder::fail().build()
         }

@@ -1188,6 +1188,7 @@ dependencies = [
  "libcnb-test",
  "libherokubuildpack 0.22.0",
  "test_support",
+ "toml",
 ]
 
 [[package]]
