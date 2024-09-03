@@ -7,9 +7,9 @@ use std::path::PathBuf;
 pub(crate) const DEFAULT_DOC_ROOT: &str = "public";
 pub(crate) const DEFAULT_DOC_INDEX: &str = "index.html";
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize,Debug, Default, Clone)]
 pub(crate) struct HerokuWebServerConfig {
-    pub(crate) build: Option<String>,
+    pub(crate) build: Option<Executable>,
     pub(crate) root: Option<PathBuf>,
     pub(crate) index: Option<String>,
     pub(crate) errors: Option<ErrorsConfig>,
@@ -29,7 +29,13 @@ pub(crate) struct ErrorConfig {
     pub(crate) status: Option<u16>,
 }
 
-#[derive(Deserialize, Eq, PartialEq, Debug, Default)]
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct Executable {
+    pub(crate) command: String,
+    pub(crate) args: Option<Vec<String>>,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
 pub(crate) struct Header {
     pub(crate) path_matcher: String,
     pub(crate) key: String,
@@ -108,11 +114,16 @@ mod tests {
     #[test]
     fn build_command() {
         let toml_config = toml! {
-            build = "echo 'Hello world'"
+            [build]
+            command = "echo"
+            args = ["Hello world"]
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
-        assert_eq!(parsed_config.build, Some("echo 'Hello world'".to_string()));
+        assert_eq!(parsed_config.build, Some(Executable {
+            command: "echo".to_string(),
+            args: Some(vec!["Hello world".to_string()]),
+        }));
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.index, None);
         assert_eq!(parsed_config.headers, None);

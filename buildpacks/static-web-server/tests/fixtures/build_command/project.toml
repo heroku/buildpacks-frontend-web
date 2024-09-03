@@ -1,2 +1,6 @@
-[com.heroku.static-web-server]
-build = "echo 'Build Command Output Test!' > public/test-output.txt"
+[com.heroku.static-web-server.build]
+command = "sh"
+args = [
+  "-c",
+  "echo 'Build Command Output Test!' > public/test-output.txt"
+]

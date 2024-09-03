@@ -52,10 +52,10 @@ pub(crate) fn config_web_server(
     fs::write(config_path, caddy_config_json)
         .map_err(StaticWebServerBuildpackError::CannotWriteCaddyConfiguration)?;
 
-    build_command_opt.map(|build_command| -> Result<Output, StaticWebServerBuildpackError> {
-        log_info(format!("Executing build command: {build_command}"));
-        let mut cmd = Command::new("sh");
-        cmd.args(["-c", &build_command.to_string()]);
+    build_command_opt.map(|e| -> Result<Output, StaticWebServerBuildpackError> {
+        log_info(format!("Executing build command: {e:#?}"));
+        let mut cmd = Command::new(e.command.clone());
+        e.args.clone().map(|v| cmd.args(v) );
         let output = cmd
             .output()
             .map_err(StaticWebServerBuildpackError::BuildCommandFailed)?;

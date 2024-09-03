@@ -2,9 +2,6 @@
 
 This repository is the home of Heroku Cloud Native Buildpacks for Front-end Web apps, also known as: static websites, static web apps (SWA), single-page apps (SPA), and browser apps. These buildpacks build source code into application images that serve a website with minimal configuration.
 
-> [!IMPORTANT]
-> This repo is not yet functional, and is under active development.
-
 ## Included Buildpacks
 
 This repository contains multiple buildpacks:
@@ -23,14 +20,32 @@ In the app source code, create a [`project.toml`](https://buildpacks.io/docs/ref
 
 *Default: (none)*
 
-A command to execute during build, such as a JavaScript compiler/bundler.
+A command to execute during CNB build, such as a JavaScript compiler/bundler.
+
+For typical build tools, execute the shell `sh` with a command `-c` argument containing the build command:
 
 ```toml
 [com.heroku.static-web-server]
-build = "npm build"
+command = ["sh"]
+args = ["-c", "npm build"]
 ```
 
-Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm for JavaScript.
+Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm engines for JavaScript.
+
+### Release Build Command
+
+*Default: (none)*
+
+> [!IMPORTANT]
+> Release Phase capabilities are not yet supported. See [RFC: `heroku/release-phase` CNB](https://salesforce.quip.com/qViZA7facMoT).
+
+A build command to execute during Heroku Release Phase.
+
+```toml
+[com.heroku.release-build]
+command = ["sh"]
+args = ["-c", "npm build"]
+```
 
 ### Document Root
 
