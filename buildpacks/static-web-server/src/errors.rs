@@ -1,7 +1,7 @@
 use crate::BUILDPACK_NAME;
-use commons::output::build_log::{BuildLog, Logger, StartedLogger};
-use commons::output::fmt;
-use commons::output::fmt::DEBUG_INFO;
+use commons_ruby::output::build_log::{BuildLog, Logger, StartedLogger};
+use commons_ruby::output::fmt;
+use commons_ruby::output::fmt::DEBUG_INFO;
 use indoc::formatdoc;
 use libcnb::TomlFileError;
 use std::fmt::Display;

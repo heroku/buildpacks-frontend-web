@@ -113,8 +113,6 @@ mod tests {
 
     use crate::config_web_server::generate_config_with_inheritance;
 
-    use super::*;
-
     #[test]
     fn generate_config_default() {
         let inherit_config = toml::Table::new();

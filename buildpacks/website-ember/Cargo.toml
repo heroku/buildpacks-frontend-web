@@ -1,5 +1,5 @@
 [package]
-name = "website-public-html"
+name = "website-ember"
 rust-version.workspace = true
 edition.workspace = true
 
@@ -9,6 +9,7 @@ workspace = true
 [dependencies]
 libcnb = "0.22.0"
 commons_ruby = { git = "https://github.com/heroku/buildpacks-ruby", branch = "main", package = "commons" }
+heroku_nodejs_utils = { git = "https://github.com/heroku/buildpacks-nodejs", branch = "main", package = "heroku-nodejs-utils" }
 libherokubuildpack = { version = "=0.22.0", default-features = false, features = ["fs", "log"] }
 indoc = "2"
 toml = { version = "0.8", features = ["preserve_order"] }

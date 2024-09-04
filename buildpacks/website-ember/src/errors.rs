@@ -12,11 +12,11 @@ If the issue persists and you think you found a bug in the buildpack then reprod
 locally with a minimal example and open an issue in the buildpack's GitHub repository with the details.";
 
 #[derive(Debug)]
-pub(crate) enum WebsitePublicHTMLBuildpackError {
+pub(crate) enum WebsiteEmberBuildpackError {
     Detect(io::Error),
 }
 
-pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
+pub(crate) fn on_error(error: libcnb::Error<WebsiteEmberBuildpackError>) {
     let logger = BuildLog::new(stdout()).without_buildpack_name();
     match error {
         libcnb::Error::BuildpackError(buildpack_error) => {
@@ -26,9 +26,9 @@ pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
     }
 }
 
-fn on_buildpack_error(error: WebsitePublicHTMLBuildpackError, logger: Box<dyn StartedLogger>) {
+fn on_buildpack_error(error: WebsiteEmberBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
-        WebsitePublicHTMLBuildpackError::Detect(e) => on_detect_error(&e, logger),
+        WebsiteEmberBuildpackError::Detect(e) => on_detect_error(&e, logger),
     }
 }
 
@@ -44,7 +44,7 @@ fn on_detect_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
 }
 
 fn on_framework_error(
-    error: &libcnb::Error<WebsitePublicHTMLBuildpackError>,
+    error: &libcnb::Error<WebsiteEmberBuildpackError>,
     logger: Box<dyn StartedLogger>,
 ) {
     print_error_details(logger, &error)

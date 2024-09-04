@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "buildpacks/website-ember",
     "buildpacks/website-public-html",
     "buildpacks/static-web-server"
 ]
