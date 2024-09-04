@@ -8,12 +8,13 @@ use crate::errors::{on_error, StaticWebServerBuildpackError};
 use config_web_server::config_web_server;
 use install_web_server::install_web_server;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
+use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
 use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack, Error};
-use libherokubuildpack::log::log_header;
+use libherokubuildpack::log::{log_header};
 
 // Silence unused dependency warning for
 // dependencies only used in tests
@@ -31,7 +32,13 @@ impl Buildpack for StaticWebServerBuildpack {
     type Error = StaticWebServerBuildpackError;
 
     fn detect(&self, _context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        DetectResultBuilder::pass().build()
+        let plan_builder = BuildPlanBuilder::new()
+            .provides("static-web-server")
+            .requires(Require::new("static-web-server"));
+
+        DetectResultBuilder::pass()
+            .build_plan(plan_builder.build())
+            .build()
     }
 
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {

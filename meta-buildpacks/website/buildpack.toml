@@ -13,11 +13,11 @@ type = "MIT"
 [[order]]
 
 [[order.group]]
-id = "heroku/website-public-html"
+id = "heroku/static-web-server"
 version = "0.1.0"
 
 [[order.group]]
-id = "heroku/static-web-server"
+id = "heroku/website-public-html"
 version = "0.1.0"
 
 [[metadata.targets]]

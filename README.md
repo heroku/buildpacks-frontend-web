@@ -132,6 +132,30 @@ file_path = "index.html"
 status = 200
 ```
 
+## Inherited Configuration
+
+Other buildpacks can return a [Build Plan](https://github.com/buildpacks/spec/blob/main/buildpack.md#build-plan-toml) from `detect` for Static Web Server configuration.
+
+Configuration defined in an app's `project.toml` takes precedence over this inherited Build Plan configuration.
+
+This example sets a doc root & index, but any [configuration](#configuration) options are supported:
+
+```rust
+fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
+    let mut static_web_server_req = Require::new("static-web-server");
+    let _ = static_web_server_req.metadata(toml! {
+        root = "wwwroot"
+        index = "index.htm"
+    });
+    let plan_builder = BuildPlanBuilder::new()
+        .requires(static_web_server_req);
+
+    DetectResultBuilder::pass()
+        .build_plan(plan_builder.build())
+        .build()
+}
+```
+
 ## Dev Notes
 
 ### Run Tests
