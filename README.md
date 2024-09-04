@@ -6,11 +6,24 @@ This repository is the home of Heroku Cloud Native Buildpacks for Front-end Web 
 
 This repository contains multiple buildpacks:
 
-| ID                           | Name                        | Readme                                             |
-|------------------------------|-----------------------------|----------------------------------------------------|
-| `heroku/website`             | Website Composite Buildpack | [Readme](meta-buildpacks/website/README.md)        |
-| `heroku/website-public-html` | Website (Public HTML)       | [Readme](buildpacks/website-public-html/README.md) |
-| `heroku/static-web-server`   | Static Web Server           | [Readme](buildpacks/static-web-server/README.md)   |
+### Composite Buildpacks
+
+High-level buildpacks for zero-configuration deployment of specific static site technologies.
+
+| ID                           | Name                         | Readme                                             |
+|------------------------------|------------------------------|----------------------------------------------------|
+| `heroku/ember`               | Ember.js                     | [Readme](meta-buildpacks/ember/README.md)          |
+| `heroku/website`             | Website                      | [Readme](meta-buildpacks/website/README.md)        |
+
+### Buildpacks
+
+Lower-level buildpacks that provide specific capabilities. Typically require manual configuration.
+
+| ID                           | Name                         | Readme                                             |
+|------------------------------|------------------------------|----------------------------------------------------|
+| `heroku/static-web-server`   | Static Web Server            | [Readme](buildpacks/static-web-server/README.md)   |
+| `heroku/website-ember`       | Website (Ember.js)           | [Readme](buildpacks/website-ember/README.md)       |
+| `heroku/website-public-html` | Website (Public HTML)        | [Readme](buildpacks/website-public-html/README.md) |
 
 ## Configuration
 
