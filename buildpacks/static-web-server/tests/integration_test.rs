@@ -184,6 +184,10 @@ fn client_side_routing() {
                     let response_body = response.into_string().unwrap();
                     assert_contains!(
                         response_body,
+                        "actually a Not Found response"
+                    );
+                    assert_contains!(
+                        response_body,
                         "Welcome to CNB Static Web Server Client Side Routing Test!"
                     );
                 }

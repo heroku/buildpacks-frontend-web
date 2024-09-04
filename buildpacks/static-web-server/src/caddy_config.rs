@@ -199,6 +199,11 @@ fn generate_error_404_route(
         .as_ref()
         .and_then(|errors| errors.custom_404_page.clone());
 
+    let status_code = error_config
+        .as_ref()
+        .map_or(404, |error| error.status.unwrap_or(404))
+        .to_string();
+
     let not_found_response_content = error_config
         .as_ref()
         .map(|error| error.file_path.clone())
@@ -217,13 +222,15 @@ fn generate_error_404_route(
 
                 Ok(String::from(default))
             },
-            |file| fs::read_to_string(doc_root.join(file)).map_err(CannotReadCustom404File),
+            |file| {
+                let content = fs::read_to_string(doc_root.join(file)).map_err(CannotReadCustom404File)?;
+                if status_code == "404" {
+                    Ok(content)
+                } else {
+                    Ok(format!("<!-- This is actually a Not Found response from the static web server. -->\n{content}"))
+                }
+            },
         )?;
-
-    let status_code = error_config
-        .as_ref()
-        .map_or(404, |error| error.status.unwrap_or(404))
-        .to_string();
 
     Ok(CaddyHTTPServerRoute {
         r#match: None,
