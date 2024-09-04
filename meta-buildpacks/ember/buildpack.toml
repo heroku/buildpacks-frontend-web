@@ -1,0 +1,36 @@
+api = "0.10"
+
+[buildpack]
+id = "heroku/ember"
+version = "0.1.0"
+name = "Heroku Ember.js"
+description = "Heroku's buildpack for static Ember.js websites."
+keywords = ["ember", "static", "heroku"]
+
+[[buildpack.licenses]]
+type = "MIT"
+
+[[order]]
+
+[[order.group]]
+id = "heroku/nodejs"
+version = "3.2.12"
+
+[[order.group]]
+id = "heroku/static-web-server"
+version = "0.1.0"
+
+[[order.group]]
+id = "heroku/website-ember"
+version = "0.1.0"
+
+[[metadata.targets]]
+os = "linux"
+arch = "amd64"
+
+[[metadata.targets]]
+os = "linux"
+arch = "arm64"
+
+[metadata.release]
+image = { repository = "docker.io/heroku/buildpack-website" }
