@@ -5,10 +5,10 @@ use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
-use toml::Table;
 use static_web_server_utils::read_project_config;
 use std::fs;
 use std::process::{Command, Output};
+use toml::Table;
 
 pub(crate) fn config_web_server(
     context: &BuildContext<StaticWebServerBuildpack>,
@@ -34,7 +34,8 @@ pub(crate) fn config_web_server(
     let project_config = read_project_config(context.app_dir.as_ref())
         .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?;
 
-    let heroku_config = generate_config_with_inheritance(project_config.as_ref(), build_plan_config)?;
+    let heroku_config =
+        generate_config_with_inheritance(project_config.as_ref(), &build_plan_config)?;
 
     let build_command_opt = heroku_config.build.clone();
 
@@ -50,14 +51,20 @@ pub(crate) fn config_web_server(
     build_command_opt.map(|e| -> Result<Output, StaticWebServerBuildpackError> {
         log_info(format!("Executing build command: {e:#?}"));
         let mut cmd = Command::new(e.command.clone());
-        e.args.clone().map(|v| cmd.args(v) );
+        e.args.clone().map(|v| cmd.args(v));
         let output = cmd
             .output()
             .map_err(StaticWebServerBuildpackError::BuildCommandFailed)?;
 
         log_info(format!("status: {}", output.status));
-        log_info(format!("stdout: {}", String::from_utf8_lossy(&output.stdout)));
-        log_info(format!("stderr: {}", String::from_utf8_lossy(&output.stderr)));
+        log_info(format!(
+            "stdout: {}",
+            String::from_utf8_lossy(&output.stdout)
+        ));
+        log_info(format!(
+            "stderr: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
 
         Ok(output)
     });
@@ -67,7 +74,7 @@ pub(crate) fn config_web_server(
 
 fn generate_config_with_inheritance(
     project_config: Option<&toml::Value>,
-    config_to_inherit: toml::map::Map<String, toml::Value>
+    config_to_inherit: &toml::map::Map<String, toml::Value>,
 ) -> Result<HerokuWebServerConfig, libcnb::Error<StaticWebServerBuildpackError>> {
     // Default config is from the Build Plan metadata or empty.
     let default_config: HerokuWebServerConfig = config_to_inherit
@@ -75,24 +82,20 @@ fn generate_config_with_inheritance(
         .try_into()
         .map_err(StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration)?;
 
-    let heroku_config: HerokuWebServerConfig = project_config.map_or(
-        Ok(default_config),
-        |table| {
-            let mut config_from_project: toml::Table = table
-                .clone()
-                .try_into()
-                .unwrap_or_default();
+    let heroku_config: HerokuWebServerConfig =
+        project_config.map_or(Ok(default_config), |table| {
+            let mut config_from_project: toml::Table = table.clone().try_into().unwrap_or_default();
 
             config_to_inherit.iter().for_each(|(bpk, bpv)| {
                 if !config_from_project.contains_key(bpk) {
                     config_from_project.insert(bpk.to_owned(), bpv.to_owned());
                 }
             });
-            config_from_project.try_into()
+            config_from_project
+                .try_into()
                 .map_err(StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration)
-        },
-    )?;
-        
+        })?;
+
     Ok(heroku_config)
 }
 
@@ -107,8 +110,7 @@ mod tests {
     fn generate_config_default() {
         let inherit_config = toml::Table::new();
 
-        let parsed_config = generate_config_with_inheritance(None, inherit_config)
-            .unwrap();
+        let parsed_config = generate_config_with_inheritance(None, &inherit_config).unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.index, None);
@@ -119,11 +121,12 @@ mod tests {
     fn generate_config_with_project_toml() {
         let project_config: toml::Value = toml! {
             root = "files/web"
-        }.into();
+        }
+        .into();
         let inherit_config = toml::Table::new();
 
-        let parsed_config = generate_config_with_inheritance(Some(&project_config), inherit_config)
-            .unwrap();
+        let parsed_config =
+            generate_config_with_inheritance(Some(&project_config), &inherit_config).unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, Some(PathBuf::from("files/web")));
         assert_eq!(parsed_config.index, None);
@@ -135,8 +138,7 @@ mod tests {
         let mut inherit_config = toml::Table::new();
         inherit_config.insert("root".to_string(), "www".to_string().into());
 
-        let parsed_config = generate_config_with_inheritance(None, inherit_config)
-            .unwrap();
+        let parsed_config = generate_config_with_inheritance(None, &inherit_config).unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, Some(PathBuf::from("www")));
         assert_eq!(parsed_config.index, None);
@@ -147,15 +149,22 @@ mod tests {
     fn generate_config_with_project_precedence() {
         let project_config: toml::Value = toml! {
             root = "value/with/precedence"
-        }.into();
+        }
+        .into();
         let mut inherit_config = toml::Table::new();
-        inherit_config.insert("root".to_string(), "value/should/be/overriden".to_string().into());
+        inherit_config.insert(
+            "root".to_string(),
+            "value/should/be/overriden".to_string().into(),
+        );
         inherit_config.insert("index".to_string(), "main.html".to_string().into());
 
-        let parsed_config = generate_config_with_inheritance(Some(&project_config), inherit_config)
-            .unwrap();
+        let parsed_config =
+            generate_config_with_inheritance(Some(&project_config), &inherit_config).unwrap();
         assert_eq!(parsed_config.build, None);
-        assert_eq!(parsed_config.root, Some(PathBuf::from("value/with/precedence")));
+        assert_eq!(
+            parsed_config.root,
+            Some(PathBuf::from("value/with/precedence"))
+        );
         assert_eq!(parsed_config.index, Some(String::from("main.html")));
         assert_eq!(parsed_config.headers, None);
     }

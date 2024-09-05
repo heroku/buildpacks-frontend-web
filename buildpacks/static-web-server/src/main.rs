@@ -14,10 +14,14 @@ use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack, Error};
-use libherokubuildpack::log::{log_header};
+use libherokubuildpack::log::log_header;
 
 // Silence unused dependency warning for
 // dependencies only used in tests
+#[cfg(test)]
+use libcnb_test as _;
+#[cfg(test)]
+use test_support as _;
 use ureq as _;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";

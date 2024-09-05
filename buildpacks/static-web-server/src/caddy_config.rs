@@ -1,10 +1,12 @@
 use crate::errors::StaticWebServerBuildpackError;
 use crate::errors::StaticWebServerBuildpackError::CannotReadCustom404File;
-use crate::heroku_web_server_config::{ErrorsConfig, Header, HerokuWebServerConfig, DEFAULT_DOC_ROOT, DEFAULT_DOC_INDEX};
+use crate::heroku_web_server_config::{
+    ErrorsConfig, Header, HerokuWebServerConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
+};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CaddyConfig {
@@ -124,9 +126,7 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             r#match: None,
             handle: vec![CaddyHTTPServerRouteHandler::FileServer(FileServer {
                 handler: "file_server".to_owned(),
-                root: doc_root
-                    .to_string_lossy()
-                    .to_string(),
+                root: doc_root.to_string_lossy().to_string(),
                 index_names: vec![doc_index],
                 // Any not found request paths continue to the next handler.
                 pass_thru: true,
@@ -192,7 +192,7 @@ fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServe
 }
 
 fn generate_error_404_route(
-    doc_root: &PathBuf,
+    doc_root: &Path,
     errors: &Option<ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
     let error_config = errors
@@ -452,9 +452,7 @@ mod tests {
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
                 custom_404_page: Some(ErrorConfig {
-                    file_path: PathBuf::from(
-                        "index.html",
-                    ),
+                    file_path: PathBuf::from("index.html"),
                     status: Some(200),
                 }),
             }),

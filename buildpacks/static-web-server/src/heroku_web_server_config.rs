@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub(crate) const DEFAULT_DOC_ROOT: &str = "public";
 pub(crate) const DEFAULT_DOC_INDEX: &str = "index.html";
 
-#[derive(Deserialize,Debug, Default, Clone)]
+#[derive(Deserialize, Debug, Default, Clone)]
 pub(crate) struct HerokuWebServerConfig {
     pub(crate) build: Option<Executable>,
     pub(crate) root: Option<PathBuf>,
@@ -120,10 +120,13 @@ mod tests {
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
-        assert_eq!(parsed_config.build, Some(Executable {
-            command: "echo".to_string(),
-            args: Some(vec!["Hello world".to_string()]),
-        }));
+        assert_eq!(
+            parsed_config.build,
+            Some(Executable {
+                command: "echo".to_string(),
+                args: Some(vec!["Hello world".to_string()]),
+            })
+        );
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.index, None);
         assert_eq!(parsed_config.headers, None);
