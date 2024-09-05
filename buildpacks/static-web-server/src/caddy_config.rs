@@ -4,7 +4,7 @@ use crate::heroku_web_server_config::{ErrorsConfig, Header, HerokuWebServerConfi
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CaddyConfig {
@@ -192,7 +192,7 @@ fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServe
 }
 
 fn generate_error_404_route(
-    doc_root: &PathBuf,
+    doc_root: &Path,
     errors: &Option<ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
     let error_config = errors
