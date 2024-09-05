@@ -22,7 +22,10 @@ fn build_command() {
             let response_status = response.status();
             assert_eq!(response_status, 200);
             let response_body = response.into_string().unwrap();
-            assert_contains!(response_body, "Welcome to CNB Static Web Server Build Command Test!");
+            assert_contains!(
+                response_body,
+                "Welcome to CNB Static Web Server Build Command Test!"
+            );
 
             // Test for default Not Found response
             let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
@@ -182,10 +185,7 @@ fn client_side_routing() {
                     let h = response.header("Content-Type").unwrap_or_default();
                     assert_contains!(h, "text/html");
                     let response_body = response.into_string().unwrap();
-                    assert_contains!(
-                        response_body,
-                        "actually a Not Found response"
-                    );
+                    assert_contains!(response_body, "actually a Not Found response");
                     assert_contains!(
                         response_body,
                         "Welcome to CNB Static Web Server Client Side Routing Test!"

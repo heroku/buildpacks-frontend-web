@@ -28,24 +28,28 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     type Error = WebsitePublicHTMLBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-
         let project_config = read_project_config(context.app_dir.as_ref())
             .map_err(WebsitePublicHTMLBuildpackError::CannotReadProjectToml)?;
         let (root, index) = match project_config {
             Some(v) => {
-                v.as_table().map_or(
-                    (DEFAULT_ROOT.to_string(), DEFAULT_INDEX.to_string()),
-                    |t| {
-                        let r = t.get("root")
-                            .map(|a| a.as_str().unwrap_or_default() )
-                            .or(Some(DEFAULT_ROOT)).unwrap_or_default().to_string();
-                        let i = t.get("index")
-                            .map(|a| a.as_str().unwrap_or_default() )
-                            .or(Some(DEFAULT_INDEX)).unwrap_or_default().to_string();
+                v.as_table()
+                    .map_or((DEFAULT_ROOT.to_string(), DEFAULT_INDEX.to_string()), |t| {
+                        let r = t
+                            .get("root")
+                            .map(|a| a.as_str().unwrap_or_default())
+                            .or(Some(DEFAULT_ROOT))
+                            .unwrap_or_default()
+                            .to_string();
+                        let i = t
+                            .get("index")
+                            .map(|a| a.as_str().unwrap_or_default())
+                            .or(Some(DEFAULT_INDEX))
+                            .unwrap_or_default()
+                            .to_string();
                         (r, i)
                     })
             }
-            None => (DEFAULT_ROOT.to_string(), DEFAULT_INDEX.to_string())
+            None => (DEFAULT_ROOT.to_string(), DEFAULT_INDEX.to_string()),
         };
 
         // Check that the root + index exists in the workspace.
@@ -59,10 +63,10 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
         let mut metadata_table = toml::Table::new();
         metadata_table.insert("root".to_string(), toml::Value::String(root));
         metadata_table.insert("index".to_string(), toml::Value::String(index));
-        static_web_server_req.metadata(metadata_table)
+        static_web_server_req
+            .metadata(metadata_table)
             .map_err(WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata)?;
-        let plan_builder = BuildPlanBuilder::new()
-            .requires(static_web_server_req);
+        let plan_builder = BuildPlanBuilder::new().requires(static_web_server_req);
 
         if index_page_exists {
             DetectResultBuilder::pass()
