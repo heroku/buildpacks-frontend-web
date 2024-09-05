@@ -4,7 +4,7 @@ api = "0.10"
 id = "heroku/static-web-server"
 version = "0.1.0"
 name = "Heroku Static Web Server"
-description = "A component buildpack used Heroku's front-end web buildpacks, such as 'heroku/website' and 'heroku/ember'."
+description = "A component buildpack used by Heroku's front-end web buildpacks, such as 'heroku/website' and 'heroku/ember'."
 
 [[buildpack.licenses]]
 type = "MIT"
