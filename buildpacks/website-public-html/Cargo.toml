@@ -11,6 +11,7 @@ libcnb = "0.22.0"
 commons_ruby = { git = "https://github.com/heroku/buildpacks-ruby", branch = "main", package = "commons" }
 libherokubuildpack = { version = "=0.22.0", default-features = false, features = ["fs", "log"] }
 indoc = "2"
+static_web_server_utils = { path = "../../common/static_web_server_utils" }
 toml = { version = "0.8", features = ["preserve_order"] }
 
 [dev-dependencies]

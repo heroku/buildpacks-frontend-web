@@ -13,3 +13,23 @@ fn public_html() {
         assert_web_response(&ctx, "Welcome to CNB Website Test!");
     });
 }
+
+#[test]
+#[ignore = "integration test"]
+fn custom_root() {
+    website_integration_test("./fixtures/custom_root", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Website (Public HTML)");
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        assert_web_response(&ctx, "Welcome to CNB Website with Configured Root Test!");
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
+fn other_config() {
+    website_integration_test("./fixtures/other_config", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Website (Public HTML)");
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        assert_web_response(&ctx, "Welcome to CNB Website with Other Config Test!");
+    });
+}

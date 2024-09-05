@@ -3,11 +3,10 @@ use crate::heroku_web_server_config::HerokuWebServerConfig;
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError};
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
-use libcnb::read_toml_file;
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
-use libherokubuildpack::toml::toml_select_value;
 use toml::Table;
+use static_web_server_utils::read_project_config;
 use std::fs;
 use std::process::{Command, Output};
 
@@ -32,18 +31,10 @@ pub(crate) fn config_web_server(
         });
     });
 
-    // Load the table of [com.heroku.static-web-server] from project.toml
-    let project_toml_path = context.app_dir.join("project.toml");
-    let project_toml = if project_toml_path.is_file() {
-        read_toml_file::<toml::Value>(project_toml_path)
-            .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?
-    } else {
-        toml::Table::new().into()
-    };
-    let project_config: Option<&toml::Value> = 
-        toml_select_value(vec!["com", "heroku", "static-web-server"], &project_toml);
+    let project_config = read_project_config(context.app_dir.as_ref())
+        .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?;
 
-    let heroku_config = generate_config_with_inheritance(project_config, build_plan_config)?;
+    let heroku_config = generate_config_with_inheritance(project_config.as_ref(), build_plan_config)?;
 
     let build_command_opt = heroku_config.build.clone();
 
@@ -90,7 +81,7 @@ fn generate_config_with_inheritance(
             let mut config_from_project: toml::Table = table
                 .clone()
                 .try_into()
-                .unwrap();
+                .unwrap_or_default();
 
             config_to_inherit.iter().for_each(|(bpk, bpv)| {
                 if !config_from_project.contains_key(bpk) {
@@ -104,7 +95,6 @@ fn generate_config_with_inheritance(
         
     Ok(heroku_config)
 }
-
 
 #[cfg(test)]
 mod tests {

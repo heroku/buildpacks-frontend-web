@@ -7,10 +7,11 @@ use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
-use toml::toml;
+use static_web_server_utils::read_project_config;
 
 const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
-const PUBLIC_HTML_PATH: &str = "public/index.html";
+const DEFAULT_ROOT: &str = "public";
+const DEFAULT_INDEX: &str = "index.html";
 
 pub(crate) struct WebsitePublicHTMLBuildpack;
 
@@ -20,25 +21,43 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
     type Error = WebsitePublicHTMLBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let public_html = context.app_dir.join(PUBLIC_HTML_PATH);
-        let public_html_exists = public_html
+
+        let project_config = read_project_config(context.app_dir.as_ref())
+            .map_err(WebsitePublicHTMLBuildpackError::CannotReadProjectToml)?;
+        let (root, index) = match project_config {
+            Some(v) => {
+                v.as_table().map_or(
+                    (DEFAULT_ROOT.to_string(), DEFAULT_INDEX.to_string()),
+                    |t| {
+                        let r = t.get("root")
+                            .map(|a| a.as_str().unwrap_or_default() )
+                            .or(Some(DEFAULT_ROOT)).unwrap_or_default().to_string();
+                        let i = t.get("index")
+                            .map(|a| a.as_str().unwrap_or_default() )
+                            .or(Some(DEFAULT_INDEX)).unwrap_or_default().to_string();
+                        (r, i)
+                    })
+            }
+            None => (DEFAULT_ROOT.to_string(), DEFAULT_INDEX.to_string())
+        };
+
+        // Check that the root + index exists in the workspace.
+        let index_page = context.app_dir.join(&root).join(&index);
+        let index_page_exists = index_page
             .try_exists()
             .map_err(WebsitePublicHTMLBuildpackError::Detect)?;
-        println!(
-            "Detected path: {} ({})",
-            public_html_exists,
-            public_html.display()
-        );
 
+        // Set Build Plan metadata for Static Web Server.
         let mut static_web_server_req = Require::new("static-web-server");
-        let _ = static_web_server_req.metadata(toml! {
-            root = "public"
-            index = "index.html"
-        });
+        let mut metadata_table = toml::Table::new();
+        metadata_table.insert("root".to_string(), toml::Value::String(root));
+        metadata_table.insert("index".to_string(), toml::Value::String(index));
+        static_web_server_req.metadata(metadata_table)
+            .map_err(WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata)?;
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req);
 
-        if public_html_exists {
+        if index_page_exists {
             DetectResultBuilder::pass()
                 .build_plan(plan_builder.build())
                 .build()

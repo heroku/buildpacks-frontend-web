@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "buildpacks/website-ember",
     "buildpacks/website-public-html",
-    "buildpacks/static-web-server"
+    "buildpacks/static-web-server",
+    "common/static_web_server_utils"
 ]
 
 [workspace.package]
