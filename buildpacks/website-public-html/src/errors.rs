@@ -34,7 +34,7 @@ fn on_buildpack_error(error: WebsitePublicHTMLBuildpackError, logger: Box<dyn St
         WebsitePublicHTMLBuildpackError::Detect(e) => on_detect_error(&e, logger),
         WebsitePublicHTMLBuildpackError::CannotReadProjectToml(e) => on_toml_error(&e, logger),
         WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata(e) => {
-            on_toml_serialization_error(&e, logger)
+            on_toml_serialization_error(&e, logger);
         }
     }
 }
