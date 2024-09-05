@@ -36,3 +36,11 @@ Lower-level buildpacks that provide specific capabilities. Typically require man
 ```bash
 cargo test -- --include-ignored
 ```
+
+### Releasing A New Version
+
+[Action workflows](https://github.com/heroku/buildpacks-frontend-web/actions) are used to automate the release process:
+
+1. Run **Prepare Buildpack Releases**.
+1. Await completion of the preparation step.
+1. Run **Release Buildpacks**.
