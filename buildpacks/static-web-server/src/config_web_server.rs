@@ -34,7 +34,7 @@ pub(crate) fn config_web_server(
     let project_config = read_project_config(context.app_dir.as_ref())
         .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?;
 
-    let heroku_config = generate_config_with_inheritance(project_config.as_ref(), build_plan_config)?;
+    let heroku_config = generate_config_with_inheritance(project_config.as_ref(), &build_plan_config)?;
 
     let build_command_opt = heroku_config.build.clone();
 
@@ -67,7 +67,7 @@ pub(crate) fn config_web_server(
 
 fn generate_config_with_inheritance(
     project_config: Option<&toml::Value>,
-    config_to_inherit: toml::map::Map<String, toml::Value>
+    config_to_inherit: &toml::map::Map<String, toml::Value>
 ) -> Result<HerokuWebServerConfig, libcnb::Error<StaticWebServerBuildpackError>> {
     // Default config is from the Build Plan metadata or empty.
     let default_config: HerokuWebServerConfig = config_to_inherit
@@ -107,7 +107,7 @@ mod tests {
     fn generate_config_default() {
         let inherit_config = toml::Table::new();
 
-        let parsed_config = generate_config_with_inheritance(None, inherit_config)
+        let parsed_config = generate_config_with_inheritance(None, &inherit_config)
             .unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
@@ -122,7 +122,7 @@ mod tests {
         }.into();
         let inherit_config = toml::Table::new();
 
-        let parsed_config = generate_config_with_inheritance(Some(&project_config), inherit_config)
+        let parsed_config = generate_config_with_inheritance(Some(&project_config), &inherit_config)
             .unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, Some(PathBuf::from("files/web")));
@@ -135,7 +135,7 @@ mod tests {
         let mut inherit_config = toml::Table::new();
         inherit_config.insert("root".to_string(), "www".to_string().into());
 
-        let parsed_config = generate_config_with_inheritance(None, inherit_config)
+        let parsed_config = generate_config_with_inheritance(None, &inherit_config)
             .unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, Some(PathBuf::from("www")));
@@ -152,7 +152,7 @@ mod tests {
         inherit_config.insert("root".to_string(), "value/should/be/overriden".to_string().into());
         inherit_config.insert("index".to_string(), "main.html".to_string().into());
 
-        let parsed_config = generate_config_with_inheritance(Some(&project_config), inherit_config)
+        let parsed_config = generate_config_with_inheritance(Some(&project_config), &inherit_config)
             .unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, Some(PathBuf::from("value/with/precedence")));
