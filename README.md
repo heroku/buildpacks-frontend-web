@@ -10,10 +10,10 @@ This repository contains multiple buildpacks:
 
 High-level buildpacks for zero-configuration deployment of specific static site technologies.
 
-| ID                           | Name                                          |
-|------------------------------|-----------------------------------------------|
-| `heroku/ember`               | [Ember.js](meta-buildpacks/ember/README.md)   |
-| `heroku/website`             | [Website](meta-buildpacks/website/README.md)  |
+| ID                           | Name                                                          |
+|------------------------------|---------------------------------------------------------------|
+| `heroku/website`             | [Website](meta-buildpacks/website/README.md)                  |
+| `heroku/website-nodejs`      | [Website/Node.js](meta-buildpacks/website-nodejs/README.md)   |
 
 ### Buildpacks
 
@@ -36,3 +36,11 @@ Lower-level buildpacks that provide specific capabilities. Typically require man
 ```bash
 cargo test -- --include-ignored
 ```
+
+### Releasing A New Version
+
+[Action workflows](https://github.com/heroku/buildpacks-frontend-web/actions) are used to automate the release process:
+
+1. Run **Prepare Buildpack Releases**.
+1. Await completion of the preparation step.
+1. Run **Release Buildpacks**.

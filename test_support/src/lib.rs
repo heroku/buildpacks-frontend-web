@@ -59,11 +59,11 @@ pub fn website_integration_test_with_config(
     );
 }
 
-pub fn ember_integration_test(fixture: &str, test_body: fn(TestContext)) {
-    ember_integration_test_with_config(fixture, |_| {}, test_body);
+pub fn website_nodejs_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    website_nodejs_integration_test_with_config(fixture, |_| {}, test_body);
 }
 
-pub fn ember_integration_test_with_config(
+pub fn website_nodejs_integration_test_with_config(
     fixture: &str,
     with_config: fn(&mut BuildConfig),
     test_body: fn(TestContext),
@@ -73,7 +73,7 @@ pub fn ember_integration_test_with_config(
         with_config,
         test_body,
         &[BuildpackReference::WorkspaceBuildpack(buildpack_id!(
-            "heroku/ember"
+            "heroku/website-nodejs"
         ))],
     );
 }

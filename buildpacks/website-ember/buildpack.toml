@@ -4,3 +4,18 @@ api = "0.10"
 id = "heroku/website-ember"
 version = "0.1.0"
 name = "Heroku Website (Ember.js)"
+description = "A component of the 'heroku/website-nodejs' buildpack."
+
+[[buildpack.licenses]]
+type = "MIT"
+
+[[metadata.targets]]
+os = "linux"
+arch = "amd64"
+
+[[metadata.targets]]
+os = "linux"
+arch = "arm64"
+
+[metadata.release]
+image = { repository = "docker.io/heroku/buildpack-website-ember" }
