@@ -11,6 +11,7 @@ const SUBMIT_AN_ISSUE: &str = "\
 If the issue persists and you think you found a bug in the buildpack then reproduce the issue \
 locally with a minimal example and open an issue in the buildpack's GitHub repository with the details.";
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub(crate) enum WebsiteEmberBuildpackError {
     Detect(io::Error),
