@@ -9,6 +9,13 @@ use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
 use static_web_server_utils::read_project_config;
 
+// Silence unused dependency warning for
+// dependencies only used in tests
+#[cfg(test)]
+use libcnb_test as _;
+#[cfg(test)]
+use test_support as _;
+
 const BUILDPACK_NAME: &str = "Heroku Website (Public HTML) Buildpack";
 const DEFAULT_ROOT: &str = "public";
 const DEFAULT_INDEX: &str = "index.html";

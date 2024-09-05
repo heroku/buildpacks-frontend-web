@@ -19,6 +19,10 @@ use libherokubuildpack::log::{log_header};
 // Silence unused dependency warning for
 // dependencies only used in tests
 use ureq as _;
+#[cfg(test)]
+use libcnb_test as _;
+#[cfg(test)]
+use test_support as _;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
 const WEB_SERVER_NAME: &str = "caddy";

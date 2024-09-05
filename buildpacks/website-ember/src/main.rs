@@ -10,6 +10,13 @@ use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
 use toml::toml;
 
+// Silence unused dependency warning for
+// dependencies only used in tests
+#[cfg(test)]
+use libcnb_test as _;
+#[cfg(test)]
+use test_support as _;
+
 const BUILDPACK_NAME: &str = "Heroku Website (Ember.js) Buildpack";
 
 pub(crate) struct WebsiteEmberBuildpack;
