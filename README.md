@@ -10,10 +10,10 @@ This repository contains multiple buildpacks:
 
 High-level buildpacks for zero-configuration deployment of specific static site technologies.
 
-| ID                           | Name                                          |
-|------------------------------|-----------------------------------------------|
-| `heroku/ember`               | [Ember.js](meta-buildpacks/ember/README.md)   |
-| `heroku/website`             | [Website](meta-buildpacks/website/README.md)  |
+| ID                           | Name                                                          |
+|------------------------------|---------------------------------------------------------------|
+| `heroku/website`             | [Website](meta-buildpacks/website/README.md)                  |
+| `heroku/website-nodejs`      | [Website/Node.js](meta-buildpacks/website-nodejs/README.md)   |
 
 ### Buildpacks
 

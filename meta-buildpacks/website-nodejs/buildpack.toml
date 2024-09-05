@@ -1,10 +1,10 @@
 api = "0.10"
 
 [buildpack]
-id = "heroku/ember"
+id = "heroku/website-nodejs"
 version = "0.1.0"
-name = "Heroku Ember.js"
-description = "Heroku's buildpack for Ember.js web apps."
+name = "Heroku Website/Node.js"
+description = "Heroku's buildpack for static web apps that require Node.js for build."
 keywords = ["ember", "emberjs", "heroku"]
 
 [[buildpack.licenses]]
@@ -33,4 +33,4 @@ os = "linux"
 arch = "arm64"
 
 [metadata.release]
-image = { repository = "docker.io/heroku/buildpack-ember" }
+image = { repository = "docker.io/heroku/buildpack-website-nodejs" }

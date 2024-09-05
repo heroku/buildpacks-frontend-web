@@ -4,7 +4,7 @@ api = "0.10"
 id = "heroku/website-ember"
 version = "0.1.0"
 name = "Heroku Website (Ember.js)"
-description = "A component of the 'heroku/ember' buildpack."
+description = "A component of the 'heroku/website-nodejs' buildpack."
 
 [[buildpack.licenses]]
 type = "MIT"
