@@ -2,6 +2,11 @@ name: Release Buildpacks
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Execute the release workflow but skip any steps that publish (for testing purposes)
+        type: boolean
+        default: false
 
 jobs:
   release:
@@ -9,6 +14,7 @@ jobs:
     uses: heroku/languages-github-actions/.github/workflows/_buildpacks-release.yml@latest
     with:
       app_id: ${{ vars.GH_APP_ID }}
+      dry_run: ${{ inputs.dry_run }}
     secrets:
       app_private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       cnb_registry_token: ${{ secrets.CNB_REGISTRY_TOKEN }}
