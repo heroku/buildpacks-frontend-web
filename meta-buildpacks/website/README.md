@@ -21,7 +21,7 @@ cargo libcnb package
 
 pack build <APP_NAME> \
   --buildpack packaged/x86_64-unknown-linux-musl/debug/heroku_website \
-  --builder heroku/builder:22 \
+  --builder heroku/builder:24 \
   --path <WEBSITE_DIR>
 
 docker run --env PORT=8888 -p 8888:8888 <APP_NAME>

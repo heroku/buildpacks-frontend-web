@@ -2,7 +2,4 @@
 uri = "."
 
 [[dependencies]]
-uri = "heroku/nodejs"
-
-[[dependencies]]
 uri = "libcnb:heroku/static-web-server"
