@@ -1,6 +1,6 @@
 # Heroku Cloud Native Website (Ember.js) Buildpack
 
-Use via [heroku/website-nodejs](../../meta-buildpacks/website-nodejs/) meta-buildpack.
+Use with [heroku/website-nodejs](../../meta-buildpacks/website-nodejs/) meta-buildpack.
 
 * Detects `ember-cli` in the app's `package.json` dependencies.
 * At build:
@@ -28,7 +28,7 @@ cargo libcnb package
 
 pack build <APP_NAME> \
   --buildpack packaged/x86_64-unknown-linux-musl/debug/heroku_website_nodejs \
-  --builder heroku/builder:22 \
+  --builder heroku/builder:24 \
   --path <APP_NAME>
 
 docker run --env PORT=8888 -p 8888:8888 <APP_NAME>
