@@ -27,7 +27,7 @@ Lower-level buildpacks that provide specific capabilities. Typically require man
 
 ## Usage
 
-[Set the Front-end Web builder in `project.toml`](../builder/README.md).
+[Set the Front-end Web builder in `project.toml`](builder/README.md).
 
 ## Configuration
 
