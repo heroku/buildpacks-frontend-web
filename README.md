@@ -25,6 +25,10 @@ Lower-level buildpacks that provide specific capabilities. Typically require man
 | `heroku/website-ember`       | [Website (Ember.js)](buildpacks/website-ember/README.md)          |
 | `heroku/website-public-html` | [Website (Public HTML)](buildpacks/website-public-html/README.md) |
 
+## Usage
+
+Set the [Front-end Web builder](builder/README.md) in `project.toml`.
+
 ## Configuration
 
 [All configuration](buildpacks/static-web-server/README.md#configuration) is implemented by Static Web Server.
@@ -43,4 +47,4 @@ cargo test -- --include-ignored
 
 1. Run **Prepare Buildpack Releases**.
 1. Await completion of the preparation step.
-1. Run **Release Buildpacks**.
+1. ~~Run **Release Buildpacks**.~~ (This will not work until the repo is public, open-source. Until then, [manually pack & release the builder](builder/README.md#internal-release-process)))

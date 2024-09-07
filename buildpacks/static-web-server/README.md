@@ -16,6 +16,24 @@ This buildpack implements www hosting support for a static web app.
 
 In the app source code, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) for custom configuration.
 
+### Build Variables
+
+Set CNB build environment:
+
+```toml
+ [[io.buildpacks.build.env]]
+ name = "API_URL"
+ value = "https://test.example.com/api/v7"
+
+ [[io.buildpacks.build.env]]
+ name = "CHECK_HELLO"
+ value = "true"
+```
+
+🚧  Build env is separate from runtime env (Heroku config vars), when an app's processes are running.
+
+🤐  **Do not set secrets into website code or source code repo!**
+
 ### Build Command
 
 *Default: (none)*
