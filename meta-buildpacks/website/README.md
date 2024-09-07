@@ -6,7 +6,7 @@ Deploy a standard website (HTML/CSS/Javascript) using CNB.
 * At build:
   * Creates Build Plan `[requires.metadata]` for Static Web Server, defining the `root` and `index` values.
 * At launch:
-  * [static-web-server](../static-web-server/README.md) runs with config generated during build.
+  * [static-web-server](../../static-web-server/README.md) runs with config generated during build.
 
 ## Configuration
 

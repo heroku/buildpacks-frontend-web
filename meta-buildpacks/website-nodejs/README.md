@@ -10,4 +10,4 @@ Build & run a static web app that requires Node.js for build.
     * client-side routing
     * the framework's `build` command.
 * At launch:
-  * [static-web-server](../static-web-server/README.md) runs with config generated during build.
+  * [static-web-server](../../static-web-server/README.md) runs with config generated during build.
