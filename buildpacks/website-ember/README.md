@@ -25,7 +25,7 @@ ember new <APP_NAME>
 
 ### Heroku Fir
 
-[Set the Front-end Web builder in `project.toml`](../../builder/README.md).
+Set the [Front-end Web builder](../../builder/README.md) in `project.toml`.
 
 ### Local
 

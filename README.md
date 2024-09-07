@@ -27,7 +27,7 @@ Lower-level buildpacks that provide specific capabilities. Typically require man
 
 ## Usage
 
-[Set the Front-end Web builder in `project.toml`](builder/README.md).
+Set the [Front-end Web builder](builder/README.md) in `project.toml`.
 
 ## Configuration
 
@@ -47,4 +47,4 @@ cargo test -- --include-ignored
 
 1. Run **Prepare Buildpack Releases**.
 1. Await completion of the preparation step.
-1. ~~Run **Release Buildpacks**.~~ (This will not work until the repo is public, open-source. Until then, manually pack & release the builder)
+1. ~~Run **Release Buildpacks**.~~ (This will not work until the repo is public, open-source. Until then, [manually pack & release the builder](builder/README.md#internal-release-process)))

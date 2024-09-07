@@ -1,6 +1,6 @@
 # Heroku Front-end Web Builder
 
-*This is an early internal release, this builder configuration it temporary. Front-end Web will eventually be included in Heroku's default builder.*
+*This is an early internal release, this builder configuration is temporary. Front-end Web will eventually be included in Heroku's default builder.*
 
 Use the builder in a Heroku Fir app's `project.toml`:
 

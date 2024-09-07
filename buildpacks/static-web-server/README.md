@@ -32,7 +32,7 @@ Set CNB build environment:
 
 🚧  Build env is separate from runtime env (Heroku config vars), when an app's processes are running.
 
-🤐  **Do not set secrets into website code!** They are public. A secret may be used that it is only consumed at build time, and not written into the public website source.
+🤐  **Do not set secrets into website code or source code repo!**
 
 ### Build Command
 
