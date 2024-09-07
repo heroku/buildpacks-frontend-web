@@ -5,6 +5,8 @@ Deploy a standard website (HTML/CSS/Javascript) using CNB.
 * Detects `public/index.html` in the app source.
 * At build:
   * Creates Build Plan `[requires.metadata]` for Static Web Server, defining the `root` and `index` values.
+* At launch:
+  * [static-web-server](../static-web-server/README.md) runs with config generated during build.
 
 ## Configuration
 
@@ -13,6 +15,12 @@ The detected website directory can be customized with [`root`](../../buildpacks/
 See [all configuration](../../buildpacks/static-web-server/README.md#configuration) implemented by Static Web Server.
 
 ## Usage
+
+### Heroku Fir
+
+[Set the Front-end Web builder in `project.toml`](../../builder/README.md).
+
+### Local
 
 Build & run it locally:
 
