@@ -18,9 +18,9 @@ Then, commit and `git push heroku` to a Fir app.
 
 ## Internal Release Process
 
-*Once these Front-end Web CNBs are public, open-sourced, use the [automated release workflow}(../README.md#releasing-a-new-version).*
+*Once these Front-end Web CNBs are public, open-sourced, use the [automated release workflow](../README.md#releasing-a-new-version).*
 
-*Buildpack version numbers should be set in the follwoing commands, after running [Prepare Release workflow}(../README.md#releasing-a-new-version).*
+*Buildpack version numbers should be set in the follwoing commands, after running [Prepare Release workflow](../README.md#releasing-a-new-version).*
 
 Generate an internal preview builder for these buildpacks:
 
