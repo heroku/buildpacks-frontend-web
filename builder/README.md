@@ -9,7 +9,7 @@ Use the builder in a Heroku Fir app's `project.toml`:
 schema-version = "0.2"
 
 [io.buildpacks]
-builder = "ghcr.io/heroku/builder-test-public:frontend-web-builder-0.1.1_linux-arm64"
+builder = "ghcr.io/heroku/builder-test-public:frontend-web-builder-latest_linux-arm64"
 ```
 
 Optionally, [configure static-web-server](../buildpacks/static-web-server/README.md) for the app.
@@ -18,9 +18,9 @@ Then, commit and `git push heroku` to a Fir app.
 
 ## Internal Release Process
 
-*Once these Front-end Web CNBs are public, open-sourced, use the [automated release workflow}(../README.md#releasing-a-new-version).*
+*Once these Front-end Web CNBs are public, open-sourced, use the [automated release workflow](../README.md#releasing-a-new-version).*
 
-*Buildpack version numbers should be set in the follwoing commands, after running [Prepare Release workflow}(../README.md#releasing-a-new-version).*
+*Buildpack version numbers should be set in the follwoing commands, after running [Prepare Release workflow](../README.md#releasing-a-new-version).*
 
 Generate an internal preview builder for these buildpacks:
 
@@ -38,6 +38,12 @@ Using https://github.com/heroku/builder-test-public
 ```bash
 export CR_PAT=XXXXX
 echo $CR_PAT | docker login ghcr.io -u mars --password-stdin
+
+# push the specific version
 docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-0.1.1_linux-arm64
-docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-0.1.1_linux-arm64 
+docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-0.1.1_linux-arm64
+
+# also push as "latest"
+docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-latest_linux-arm64
+docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-latest_linux-arm64 
 ```
