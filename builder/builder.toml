@@ -19,12 +19,16 @@ mirrors = ["public.ecr.aws/heroku/heroku:24"]
   id = "heroku/website"
   uri = "../website.cnb"
 
+[[buildpacks]]
+  id = "heroku/release-phase"
+  uri = "../release-phase.cnb"
+
 [[order]]
   [[order.group]]
     id = "heroku/website-nodejs"
-    version = "0.1.1"
+    version = "0.3.0"
 
 [[order]]
   [[order.group]]
     id = "heroku/website"
-    version = "0.1.1"
+    version = "0.3.0"

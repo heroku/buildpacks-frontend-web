@@ -5,4 +5,8 @@ uri = "."
 uri = "libcnb:heroku/website-public-html"
 
 [[dependencies]]
+# Where does this come from? See /builder/README.md
+uri = "../../release-phase.cnb"
+
+[[dependencies]]
 uri = "libcnb:heroku/static-web-server"

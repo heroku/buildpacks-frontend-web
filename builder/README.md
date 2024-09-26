@@ -22,9 +22,17 @@ Then, commit and `git push heroku` to a Fir app.
 
 *Buildpack version numbers should be set in the follwoing commands, after running [Prepare Release workflow](../README.md#releasing-a-new-version).*
 
-Generate an internal preview builder for these buildpacks:
+To generate an internal preview builder for these buildpacks:
+
+Start from a working directory that contains both repo directories `buildpacks-release-phase/` & `buildpacks-frontend-web/`, checked-out to the commit to package & release.
 
 ```bash
+cd ../buildpacks-release-phase
+cargo libcnb package --release --target aarch64-unknown-linux-musl
+pack buildpack package release-phase --config packaged/aarch64-unknown-linux-musl/release/heroku_release-phase/package.toml  --target "linux/arm64" --format file
+mv release-phase.cnb ../buildpacks-frontend-web/
+
+cd ../buildpacks-frontend-web
 cargo libcnb package --release --target aarch64-unknown-linux-musl
 pack buildpack package website --config packaged/aarch64-unknown-linux-musl/release/heroku_website/package.toml  --target "linux/arm64" --format file
 pack buildpack package website-nodejs --config packaged/aarch64-unknown-linux-musl/release/heroku_website-nodejs/package.toml  --target "linux/arm64" --format file
@@ -39,9 +47,9 @@ Using https://github.com/heroku/builder-test-public
 export CR_PAT=XXXXX
 echo $CR_PAT | docker login ghcr.io -u mars --password-stdin
 
-# push the specific version
-docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-0.1.1_linux-arm64
-docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-0.1.1_linux-arm64
+# push the specific version (set this example to the correct new version)
+docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-0.2.0_linux-arm64
+docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-0.2.0_linux-arm64
 
 # also push as "latest"
 docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-latest_linux-arm64
