@@ -156,7 +156,18 @@ Other buildpacks can return a [Build Plan](https://github.com/buildpacks/spec/bl
 
 Configuration defined in an app's `project.toml` takes precedence over this inherited Build Plan configuration.
 
-This example sets a doc root & index, but any [configuration](#configuration) options are supported:
+This example sets `root` & `index` in the build plan, using supported [configuration](#configuration) options:
+
+```toml
+[[requires]]
+name = "static-web-server"
+
+[requires.metadata]
+root = "wwwroot"
+index = "index.htm"
+```
+
+Example using [libcnb.rs](https://github.com/heroku/libcnb.rs):
 
 ```rust
 fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
