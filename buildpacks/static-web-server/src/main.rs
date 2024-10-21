@@ -25,6 +25,7 @@ use test_support as _;
 use ureq as _;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
+const BUILD_PLAN_ID: &str = "static-web-server";
 const WEB_SERVER_NAME: &str = "caddy";
 const WEB_SERVER_VERSION: &str = "2.8.4";
 
@@ -37,8 +38,8 @@ impl Buildpack for StaticWebServerBuildpack {
 
     fn detect(&self, _context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
         let plan_builder = BuildPlanBuilder::new()
-            .provides("static-web-server")
-            .requires(Require::new("static-web-server"));
+            .provides(BUILD_PLAN_ID)
+            .requires(Require::new(BUILD_PLAN_ID));
 
         DetectResultBuilder::pass()
             .build_plan(plan_builder.build())

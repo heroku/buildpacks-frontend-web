@@ -1,6 +1,6 @@
 use crate::caddy_config::CaddyConfig;
 use crate::heroku_web_server_config::HerokuWebServerConfig;
-use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError};
+use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, BUILD_PLAN_ID};
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
@@ -26,9 +26,11 @@ pub(crate) fn config_web_server(
     // When a key is defined multiple times, the last one wins.
     let mut build_plan_config = Table::new();
     context.buildpack_plan.entries.iter().for_each(|e| {
-        e.metadata.iter().for_each(|(k, v)| {
-            build_plan_config.insert(k.to_owned(), v.to_owned());
-        });
+        if e.name == BUILD_PLAN_ID {
+            e.metadata.iter().for_each(|(k, v)| {
+                build_plan_config.insert(k.to_owned(), v.to_owned());
+            });
+        }
     });
 
     let project_config = read_project_config(context.app_dir.as_ref())
