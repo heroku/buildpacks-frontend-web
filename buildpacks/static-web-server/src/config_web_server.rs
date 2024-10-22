@@ -22,17 +22,7 @@ pub(crate) fn config_web_server(
         },
     )?;
 
-    // Load a table of Build Plan [requires.metadata] from context.
-    // When a key is defined multiple times, the last one wins.
-    let mut build_plan_config = Table::new();
-    context.buildpack_plan.entries.iter().for_each(|e| {
-        if e.name == BUILD_PLAN_ID {
-            e.metadata.iter().for_each(|(k, v)| {
-                build_plan_config.insert(k.to_owned(), v.to_owned());
-            });
-        }
-    });
-
+    let build_plan_config = generate_build_plan_config(context);
     let project_config = read_project_config(context.app_dir.as_ref())
         .map_err(StaticWebServerBuildpackError::CannotReadProjectToml)?;
 
@@ -74,6 +64,38 @@ pub(crate) fn config_web_server(
     Ok(configuration_layer)
 }
 
+// Load a table of Build Plan [requires.metadata] from context.
+// When a key is defined multiple times,
+// * for tables: insert the new row value to the existing table
+// * for other value types: the values overwrite, so the last one defined wins
+fn generate_build_plan_config(
+    context: &BuildContext<StaticWebServerBuildpack>,
+) -> toml::map::Map<String, toml::Value> {
+    let mut build_plan_config = Table::new();
+    context.buildpack_plan.entries.iter().for_each(|e| {
+        if e.name == BUILD_PLAN_ID {
+            e.metadata.iter().for_each(|(k, v)| {
+                if let Some(new_values) = v.as_table() {
+                    if let Some(existing_values) =
+                        build_plan_config.get(k).and_then(|ev| ev.as_table())
+                    {
+                        let mut all_values = existing_values.clone();
+                        new_values.into_iter().for_each(|(nk, nv)| {
+                            all_values.insert(nk.to_string(), nv.clone());
+                        });
+                        build_plan_config.insert(k.to_owned(), all_values.into());
+                    } else {
+                        build_plan_config.insert(k.to_owned(), v.to_owned());
+                    }
+                } else {
+                    build_plan_config.insert(k.to_owned(), v.to_owned());
+                }
+            });
+        }
+    });
+    build_plan_config
+}
+
 fn generate_config_with_inheritance(
     project_config: Option<&toml::Value>,
     config_to_inherit: &toml::map::Map<String, toml::Value>,
@@ -103,10 +125,131 @@ fn generate_config_with_inheritance(
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use libcnb::{
+        build::BuildContext,
+        data::{
+            buildpack::{Buildpack, BuildpackApi, BuildpackVersion, ComponentBuildpackDescriptor},
+            buildpack_id,
+            buildpack_plan::{BuildpackPlan, Entry},
+        },
+        generic::GenericPlatform,
+        Env, Target,
+    };
+    use std::{collections::HashSet, path::PathBuf};
     use toml::toml;
 
-    use crate::config_web_server::generate_config_with_inheritance;
+    use crate::{
+        config_web_server::{generate_build_plan_config, generate_config_with_inheritance},
+        StaticWebServerBuildpack, BUILD_PLAN_ID,
+    };
+
+    #[test]
+    fn generate_build_plan_config_from_one_entry() {
+        let test_build_plan = vec![Entry {
+            name: BUILD_PLAN_ID.to_string(),
+            metadata: toml! {
+                root = "testY"
+
+                [headers]
+                X-Server = "testX"
+            },
+        }];
+        let test_context = create_test_context(test_build_plan);
+        let result = generate_build_plan_config(&test_context);
+
+        let result_root = result
+            .get("root")
+            .expect("should contain the property: root");
+        assert_eq!(result_root, &toml::Value::String("testY".to_string()));
+
+        let result_headers = result.get("headers").expect("should contain headers");
+        let result_table = result_headers.as_table().expect("should contain atable");
+        assert_eq!(
+            result_table.get("X-Server"),
+            Some(&toml::Value::String("testX".to_string()))
+        );
+    }
+
+    #[test]
+    fn generate_build_plan_config_collects_headers_from_entries() {
+        let test_build_plan = vec![
+            Entry {
+                name: BUILD_PLAN_ID.to_string(),
+                metadata: toml! {
+                    [headers]
+                    X-Serve-1 = "test1"
+                },
+            },
+            Entry {
+                name: BUILD_PLAN_ID.to_string(),
+                metadata: toml! {
+                    [headers]
+                    X-Serve-2 = "test2"
+                    X-Serve-3 = "test3"
+                },
+            },
+            Entry {
+                name: BUILD_PLAN_ID.to_string(),
+                metadata: toml! {
+                    [headers]
+                    X-Serve-4 = "test4"
+                },
+            },
+        ];
+        let test_context = create_test_context(test_build_plan);
+        let result = generate_build_plan_config(&test_context);
+
+        let result_headers = result.get("headers").expect("should contain headers");
+        assert_eq!(
+            result_headers.get("X-Serve-1"),
+            Some(&toml::Value::String("test1".to_string()))
+        );
+        assert_eq!(
+            result_headers.get("X-Serve-2"),
+            Some(&toml::Value::String("test2".to_string()))
+        );
+        assert_eq!(
+            result_headers.get("X-Serve-3"),
+            Some(&toml::Value::String("test3".to_string()))
+        );
+        assert_eq!(
+            result_headers.get("X-Serve-4"),
+            Some(&toml::Value::String("test4".to_string()))
+        );
+    }
+
+    #[test]
+    fn generate_build_plan_config_captures_last_root_from_entries() {
+        let test_build_plan = vec![
+            Entry {
+                name: BUILD_PLAN_ID.to_string(),
+                metadata: toml! {
+                    root = "test1"
+                },
+            },
+            Entry {
+                name: BUILD_PLAN_ID.to_string(),
+                metadata: toml! {
+                    root = "test2"
+                },
+            },
+        ];
+        let test_context = create_test_context(test_build_plan);
+        let result = generate_build_plan_config(&test_context);
+
+        let result_root = result
+            .get("root")
+            .expect("should contain the property: root");
+        assert_eq!(result_root, &toml::Value::String("test2".to_string()));
+    }
+
+    #[test]
+    fn generate_build_plan_config_empty() {
+        let test_build_plan = vec![];
+        let test_context = create_test_context(test_build_plan);
+        let result = generate_build_plan_config(&test_context);
+        assert!(result.is_empty());
+    }
 
     #[test]
     fn generate_config_default() {
@@ -169,5 +312,43 @@ mod tests {
         );
         assert_eq!(parsed_config.index, Some(String::from("main.html")));
         assert_eq!(parsed_config.headers, None);
+    }
+
+    fn create_test_context(build_plan: Vec<Entry>) -> BuildContext<StaticWebServerBuildpack> {
+        let test_context: BuildContext<StaticWebServerBuildpack> = BuildContext {
+            layers_dir: PathBuf::new(),
+            app_dir: PathBuf::new(),
+            buildpack_dir: PathBuf::new(),
+            target: Target {
+                os: "test".to_string(),
+                arch: "test".to_string(),
+                arch_variant: None,
+                distro_name: "test".to_string(),
+                distro_version: "test".to_string(),
+            },
+            platform: GenericPlatform::new(<Env as std::default::Default>::default()),
+            buildpack_plan: BuildpackPlan {
+                entries: build_plan,
+            },
+            buildpack_descriptor: ComponentBuildpackDescriptor {
+                api: BuildpackApi { major: 0, minor: 0 },
+                buildpack: Buildpack {
+                    id: buildpack_id!("heroku/test"),
+                    name: None,
+                    version: BuildpackVersion::new(0, 0, 0),
+                    homepage: None,
+                    clear_env: false,
+                    description: None,
+                    keywords: vec![],
+                    licenses: vec![],
+                    sbom_formats: HashSet::new(),
+                },
+                stacks: vec![],
+                targets: vec![],
+                metadata: None,
+            },
+            store: None,
+        };
+        test_context
     }
 }
