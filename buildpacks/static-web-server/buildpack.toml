@@ -2,18 +2,18 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/static-web-server"
-version = "1.0.0"
+version = "1.0.1"
 name = "Heroku Static Web Server"
 description = "A component buildpack used by Heroku's front-end web buildpacks, such as 'heroku/website' and 'heroku/website-nodejs'."
 
 [[buildpack.licenses]]
 type = "MIT"
 
-[[metadata.targets]]
+[[targets]]
 os = "linux"
 arch = "amd64"
 
-[[metadata.targets]]
+[[targets]]
 os = "linux"
 arch = "arm64"
 

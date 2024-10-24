@@ -2,18 +2,18 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-ember"
-version = "1.0.0"
+version = "1.0.1"
 name = "Heroku Website (Ember.js)"
 description = "A component of the 'heroku/website-nodejs' buildpack."
 
 [[buildpack.licenses]]
 type = "MIT"
 
-[[metadata.targets]]
+[[targets]]
 os = "linux"
 arch = "amd64"
 
-[[metadata.targets]]
+[[targets]]
 os = "linux"
 arch = "arm64"
 
