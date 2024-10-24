@@ -123,11 +123,13 @@ pub fn retry<T, E>(
     result
 }
 
-pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContext, &SocketAddr)) {
+pub fn start_container(
+    ctx: &TestContext,
+    config: &mut ContainerConfig,
+    in_container: impl Fn(&ContainerContext, &SocketAddr),
+) {
     ctx.start_container(
-        ContainerConfig::new()
-            .env("PORT", PORT.to_string())
-            .expose_port(PORT),
+        config.env("PORT", PORT.to_string()).expose_port(PORT),
         |container| {
             let socket_addr = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                 std::panic::catch_unwind(|| container.address_for_port(PORT))
@@ -146,15 +148,38 @@ pub fn start_container(ctx: &TestContext, in_container: impl Fn(&ContainerContex
     );
 }
 
-pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static str) {
-    start_container(ctx, |_container, socket_addr| {
-        let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-            ureq::get(&format!("http://{socket_addr}/")).call()
-        })
-        .unwrap();
-        let response_body = response.into_string().unwrap();
-        assert_contains!(response_body, expected_response_body);
+pub fn start_container_entrypoint(
+    ctx: &TestContext,
+    config: &mut ContainerConfig,
+    entrypoint: &String,
+    in_container: impl Fn(&ContainerContext),
+) {
+    ctx.start_container(config.entrypoint(entrypoint), |container| {
+        let container_logs = container.logs_wait();
+        println!(
+            "
+------ begin {} logs (stderr) ------
+{}------ end (stderr) & begin (stdout) ------
+{}------ end {} logs ------",
+            entrypoint, container_logs.stderr, container_logs.stdout, entrypoint
+        );
+        in_container(&container);
     });
+}
+
+pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static str) {
+    start_container(
+        ctx,
+        &mut ContainerConfig::new(),
+        |_container, socket_addr| {
+            let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                ureq::get(&format!("http://{socket_addr}/")).call()
+            })
+            .unwrap();
+            let response_body = response.into_string().unwrap();
+            assert_contains!(response_body, expected_response_body);
+        },
+    );
 }
 
 pub fn wait_for<F>(condition: F, max_wait_time: Duration)

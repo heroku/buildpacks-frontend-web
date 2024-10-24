@@ -15,6 +15,7 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum WebsiteEmberBuildpackError {
     Detect(io::Error),
+    SettingBuildPlanMetadata(toml::ser::Error),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<WebsiteEmberBuildpackError>) {
@@ -30,6 +31,9 @@ pub(crate) fn on_error(error: libcnb::Error<WebsiteEmberBuildpackError>) {
 fn on_buildpack_error(error: WebsiteEmberBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
         WebsiteEmberBuildpackError::Detect(e) => on_detect_error(&e, logger),
+        WebsiteEmberBuildpackError::SettingBuildPlanMetadata(e) => {
+            on_toml_serialization_error(&e, logger);
+        }
     }
 }
 
@@ -41,6 +45,14 @@ fn on_detect_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
 
             An unexpected error occurred while determining if the {buildpack_name} should be \
             run for this application. See the log output above for more information. 
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_toml_serialization_error(error: &toml::ser::Error, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            TOML serialization error from {buildpack_name}. 
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
