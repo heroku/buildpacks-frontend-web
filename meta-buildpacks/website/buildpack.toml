@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website"
-version = "0.1.1"
+version = "0.4.0"
 name = "Heroku Website"
 description = "Heroku's buildpack for static websites."
 keywords = ["website", "html", "javascript", "css", "static", "heroku"]
@@ -13,12 +13,16 @@ type = "MIT"
 [[order]]
 
 [[order.group]]
+id = "heroku/release-phase"
+version = "1.0.0"
+
+[[order.group]]
 id = "heroku/static-web-server"
-version = "0.1.1"
+version = "1.0.0"
 
 [[order.group]]
 id = "heroku/website-public-html"
-version = "0.1.1"
+version = "1.0.0"
 
 [[metadata.targets]]
 os = "linux"
