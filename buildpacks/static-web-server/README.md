@@ -54,9 +54,6 @@ Any dependencies to run this build command should be installed by an earlier bui
 
 *Default: (none)*
 
-> [!IMPORTANT]
-> Release Phase capabilities are not yet supported. See [RFC: `heroku/release-phase` CNB](https://salesforce.quip.com/qViZA7facMoT).
-
 A build command to execute during Heroku Release Phase.
 
 ```toml

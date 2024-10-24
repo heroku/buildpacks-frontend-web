@@ -15,7 +15,13 @@ use toml::toml;
 #[cfg(test)]
 use libcnb_test as _;
 #[cfg(test)]
+use tempfile as _;
+#[cfg(test)]
 use test_support as _;
+#[cfg(test)]
+use ureq as _;
+#[cfg(test)]
+use uuid as _;
 
 const BUILDPACK_NAME: &str = "Heroku Website (Ember.js) Buildpack";
 
@@ -44,20 +50,45 @@ impl Buildpack for WebsiteEmberBuildpack {
             };
 
         let mut static_web_server_req = Require::new("static-web-server");
-        let _ = static_web_server_req.metadata(toml! {
-            // The package.json build script will automatically execute by heroku/nodejs buildpack.
-            // Eventually, that build execution will be made optional, so this one will take over.
-            // build.command = "sh"
-            // build.args = ["-c", "ember build --environment=production"]
+        static_web_server_req
+            .metadata(toml! {
+                // The package.json build script will automatically execute by heroku/nodejs buildpack.
+                // Eventually, that build execution will be made optional, so this one will take over.
+                // build.command = "sh"
+                // build.args = ["-c", "ember build --environment=production"]
 
-            root = "dist"
-            index = "index.html"
+                root = "/workspace/static-artifacts"
+                index = "index.html"
 
-            [errors.404]
-            file_path = "index.html"
-            status = 200
-        });
-        let plan_builder = BuildPlanBuilder::new().requires(static_web_server_req);
+                [errors.404]
+                file_path = "index.html"
+                status = 200
+            })
+            .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
+
+        let mut release_phase_req = Require::new("release-phase");
+
+        let mut release_phase_metadata = toml::Table::new();
+        let mut release_build_command = toml::Table::new();
+        release_build_command.insert("command".to_string(), "bash".to_string().into());
+        release_build_command.insert(
+            "args".to_string(),
+            vec![
+                "-c",
+                "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/",
+            ]
+            .into(),
+        );
+        release_build_command.insert("source".to_string(), BUILDPACK_NAME.to_string().into());
+
+        release_phase_metadata.insert("release-build".to_string(), release_build_command.into());
+        release_phase_req
+            .metadata(release_phase_metadata)
+            .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
+
+        let plan_builder = BuildPlanBuilder::new()
+            .requires(static_web_server_req)
+            .requires(release_phase_req);
 
         if depends_on_ember_cli {
             DetectResultBuilder::pass()

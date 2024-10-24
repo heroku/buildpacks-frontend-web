@@ -9,3 +9,6 @@ uri = "urn:cnb:registry:heroku/nodejs"
 
 [[dependencies]]
 uri = "libcnb:heroku/static-web-server"
+
+[[dependencies]]
+uri = "urn:cnb:registry:heroku/release-phase"

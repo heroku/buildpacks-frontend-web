@@ -18,7 +18,6 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotParseHerokuWebServerConfiguration(toml::de::Error),
     CannotReadProjectToml(TomlFileError),
     CannotWriteCaddyConfiguration(std::io::Error),
-    CannotReadCustom404File(std::io::Error),
     CannotUnpackCaddyTarball(std::io::Error),
     CannotCreateCaddyInstallationDir(std::io::Error),
     CannotCreateCaddyTarballFile(std::io::Error),
@@ -43,27 +42,36 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
         StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => {
             on_config_error(&e, logger);
         }
-        StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error)
-        | StaticWebServerBuildpackError::CannotReadCustom404File(error)
-        | StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error)
-        | StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error)
-        | StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
-            on_unexpected_io_error(&error, logger);
+        StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error) => {
+            print_error_details(logger, &error)
+                .announce()
+                .error(&formatdoc! {"
+                Cannot write Caddy configuration for {buildpack_name}
+            ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+        }
+        StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error) => {
+            print_error_details(logger, &error)
+                .announce()
+                .error(&formatdoc! {"
+                Cannot unpack Caddy tarball for {buildpack_name}
+            ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+        }
+        StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error) => {
+            print_error_details(logger, &error)
+                .announce()
+                .error(&formatdoc! {"
+                Cannot create Caddy installation directory for {buildpack_name}
+            ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+        }
+        StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
+            print_error_details(logger, &error)
+                .announce()
+                .error(&formatdoc! {"
+                Cannot create Caddy tarball file for {buildpack_name}
+            ", buildpack_name = fmt::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::BuildCommandFailed(e) => on_build_command_error(&e, logger),
     }
-}
-
-fn on_unexpected_io_error(error: &std::io::Error, logger: Box<dyn StartedLogger>) {
-    print_error_details(logger, &error)
-        .announce()
-        .error(&formatdoc! {"
-        Unexpected IO Error
-
-        An unexpected IO error occurred. Please try again.
-
-        {SUBMIT_AN_ISSUE}
-    "});
 }
 
 fn on_download_error(

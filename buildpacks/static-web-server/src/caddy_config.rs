@@ -1,11 +1,9 @@
 use crate::errors::StaticWebServerBuildpackError;
-use crate::errors::StaticWebServerBuildpackError::CannotReadCustom404File;
 use crate::heroku_web_server_config::{
     ErrorsConfig, Header, HerokuWebServerConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -63,6 +61,7 @@ pub(crate) struct MatchPath {
 pub(crate) enum CaddyHTTPServerRouteHandler {
     FileServer(FileServer),
     Headers(Headers),
+    Rewrite(Rewrite),
     StaticResponse(StaticResponse),
 }
 
@@ -73,6 +72,7 @@ pub(crate) struct FileServer {
     pub(crate) root: String,
     pub(crate) index_names: Vec<String>,
     pub(crate) pass_thru: bool,
+    pub(crate) status_code: Option<String>,
 }
 
 // https://caddyserver.com/docs/json/apps/http/servers/routes/handle/headers/
@@ -86,6 +86,13 @@ pub(crate) struct Headers {
 pub(crate) struct HeadersResponse {
     pub(crate) set: serde_json::Map<String, serde_json::Value>,
     pub(crate) deferred: bool,
+}
+
+// https://caddyserver.com/docs/json/apps/http/servers/routes/handle/rewrite/
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct Rewrite {
+    pub(crate) handler: String,
+    pub(crate) uri: Option<String>,
 }
 
 // https://caddyserver.com/docs/json/apps/http/servers/routes/handle/static_response/
@@ -127,13 +134,17 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             handle: vec![CaddyHTTPServerRouteHandler::FileServer(FileServer {
                 handler: "file_server".to_owned(),
                 root: doc_root.to_string_lossy().to_string(),
-                index_names: vec![doc_index],
-                // Any not found request paths continue to the next handler.
+                index_names: vec![doc_index.clone()],
                 pass_thru: true,
+                status_code: None,
             })],
         });
 
-        routes.push(generate_error_404_route(&doc_root, &value.errors)?);
+        routes.push(generate_error_404_route(
+            &doc_root,
+            &doc_index,
+            &value.errors,
+        )?);
 
         // Assemble into the caddy.json structure
         // https://caddyserver.com/docs/json/
@@ -193,6 +204,7 @@ fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServe
 
 fn generate_error_404_route(
     doc_root: &Path,
+    doc_index: &str,
     errors: &Option<ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
     let error_config = errors
@@ -204,53 +216,59 @@ fn generate_error_404_route(
         .map_or(404, |error| error.status.unwrap_or(404))
         .to_string();
 
-    let not_found_response_content = error_config
+    let not_found_response_handlers = error_config
         .as_ref()
         .map(|error| error.file_path.clone())
         .map_or(
             {
-                let default = r#"<!DOCTYPE html>
-                <html lang="en">
-                  <head>
-                    <meta charset="utf-8">
-                    <title>404 Not Found</title>
-                  </head>
-                  <body>
-                    <h1>404 Not Found</h1>
-                  </body>
-                </html>"#;
-
-                Ok(String::from(default))
+                Ok(vec![CaddyHTTPServerRouteHandler::StaticResponse(
+                    StaticResponse {
+                        handler: "static_response".to_owned(),
+                        status_code: status_code.clone(),
+                        headers: Some({
+                            let mut h = serde_json::Map::new();
+                            h.insert(
+                                "Content-Type".to_string(),
+                                serde_json::Value::Array(vec![serde_json::Value::String(
+                                    "text/html".to_string(),
+                                )]),
+                            );
+                            h
+                        }),
+                        body: r#"<!DOCTYPE html>
+                            <html lang="en">
+                            <head>
+                                <meta charset="utf-8">
+                                <title>404 Not Found</title>
+                            </head>
+                            <body>
+                                <h1>404 Not Found</h1>
+                            </body>
+                            </html>"#
+                            .to_string(),
+                    },
+                )])
             },
             |file| {
-                let content = fs::read_to_string(doc_root.join(file)).map_err(CannotReadCustom404File)?;
-                if status_code == "404" {
-                    Ok(content)
-                } else {
-                    Ok(format!("<!-- This is actually a Not Found response from the static web server. -->\n{content}"))
-                }
+                Ok(vec![
+                    CaddyHTTPServerRouteHandler::Rewrite(Rewrite {
+                        handler: "rewrite".to_owned(),
+                        uri: Some(file.to_string_lossy().to_string()),
+                    }),
+                    CaddyHTTPServerRouteHandler::FileServer(FileServer {
+                        handler: "file_server".to_owned(),
+                        root: doc_root.to_string_lossy().to_string(),
+                        status_code: Some(status_code.clone()),
+                        index_names: vec![doc_index.to_string()],
+                        pass_thru: false,
+                    }),
+                ])
             },
         )?;
 
     Ok(CaddyHTTPServerRoute {
         r#match: None,
-        handle: vec![CaddyHTTPServerRouteHandler::StaticResponse(
-            StaticResponse {
-                handler: "static_response".to_owned(),
-                status_code: status_code.clone(),
-                headers: Some({
-                    let mut h = serde_json::Map::new();
-                    h.insert(
-                        "Content-Type".to_string(),
-                        serde_json::Value::Array(vec![serde_json::Value::String(
-                            "text/html".to_string(),
-                        )]),
-                    );
-                    h
-                }),
-                body: not_found_response_content.clone(),
-            },
-        )],
+        handle: not_found_response_handlers,
     })
 }
 
@@ -258,7 +276,6 @@ fn generate_error_404_route(
 mod tests {
     use super::*;
     use crate::heroku_web_server_config::{ErrorConfig, ErrorsConfig};
-    use libherokubuildpack::log::log_info;
     use std::path::PathBuf;
 
     #[test]
@@ -412,6 +429,7 @@ mod tests {
     #[test]
     fn generates_custom_404_error_route() {
         let doc_root = PathBuf::from("tests/fixtures/custom_errors/public");
+        let doc_index = "index.html".to_string();
 
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
@@ -423,31 +441,46 @@ mod tests {
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_error_404_route(&doc_root, &heroku_config.errors).unwrap();
+        let routes =
+            generate_error_404_route(&doc_root, &doc_index, &heroku_config.errors).unwrap();
 
-        let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
+        let CaddyHTTPServerRouteHandler::Rewrite(generated_rewrite_handler) = &routes.handle[0]
         else {
             unreachable!()
         };
 
         assert_eq!(
-            generated_handler.handler, "static_response",
-            "should be a static_response route"
+            generated_rewrite_handler.handler, "rewrite",
+            "should be a rewrite handler"
         );
 
-        let generated_status = &generated_handler.status_code;
-        assert!(generated_status.eq("404"), "status_code should by 404");
+        assert_eq!(
+            generated_rewrite_handler.uri,
+            Some("error-404.html".to_string()),
+            "should rewrite to error-404.html"
+        );
 
-        let generated_body = &generated_handler.body;
+        let CaddyHTTPServerRouteHandler::FileServer(generated_fs_handler) = &routes.handle[1]
+        else {
+            unreachable!()
+        };
+
+        assert_eq!(
+            generated_fs_handler.handler, "file_server",
+            "should be a file_server handler"
+        );
+
+        let generated_status = &generated_fs_handler.status_code;
         assert!(
-            generated_body.contains("Custom 404"),
-            "body should contain Custom 404"
+            generated_status.eq(&Some("404".to_string())),
+            "status_code should be 404"
         );
     }
 
     #[test]
     fn generates_custom_404_to_200_error_route() {
         let doc_root = PathBuf::from("tests/fixtures/client_side_routing/public");
+        let doc_index = "index.html".to_string();
 
         let heroku_config = HerokuWebServerConfig {
             errors: Some(ErrorsConfig {
@@ -459,49 +492,39 @@ mod tests {
             ..HerokuWebServerConfig::default()
         };
 
-        let routes = generate_error_404_route(&doc_root, &heroku_config.errors).unwrap();
+        let routes =
+            generate_error_404_route(&doc_root, &doc_index, &heroku_config.errors).unwrap();
 
-        let CaddyHTTPServerRouteHandler::StaticResponse(generated_handler) = &routes.handle[0]
+        let CaddyHTTPServerRouteHandler::Rewrite(generated_rewrite_handler) = &routes.handle[0]
         else {
             unreachable!()
         };
 
         assert_eq!(
-            generated_handler.handler, "static_response",
-            "should be a static_response route"
+            generated_rewrite_handler.handler, "rewrite",
+            "should be a rewrite handler"
         );
 
-        let generated_status = &generated_handler.status_code;
-        assert!(generated_status.eq("200"), "status_code should by 200");
+        assert_eq!(
+            generated_rewrite_handler.uri,
+            Some("index.html".to_string()),
+            "should rewrite to index.html"
+        );
 
-        let generated_body = &generated_handler.body;
+        let CaddyHTTPServerRouteHandler::FileServer(generated_fs_handler) = &routes.handle[1]
+        else {
+            unreachable!()
+        };
+
+        assert_eq!(
+            generated_fs_handler.handler, "file_server",
+            "should be a file_server handler"
+        );
+
+        let generated_status = &generated_fs_handler.status_code;
         assert!(
-            generated_body.contains("Client Side Routing Test"),
-            "body should contain Client Side Routing Test"
+            generated_status.eq(&Some("200".to_string())),
+            "status_code should be 200"
         );
-    }
-
-    #[test]
-    fn missing_custom_404_error_file() {
-        let doc_root = PathBuf::from(DEFAULT_DOC_ROOT);
-
-        let heroku_config = HerokuWebServerConfig {
-            errors: Some(ErrorsConfig {
-                custom_404_page: Some(ErrorConfig {
-                    file_path: PathBuf::from("non-existent-path"),
-                    status: None,
-                }),
-            }),
-            ..HerokuWebServerConfig::default()
-        };
-
-        match generate_error_404_route(&doc_root, &heroku_config.errors) {
-            Ok(_) => {
-                panic!("should fail to find custom 404 file");
-            }
-            Err(e) => {
-                log_info(format!("Missing 404 file error: {e:?}"));
-            }
-        };
     }
 }
