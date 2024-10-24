@@ -22,9 +22,9 @@ mirrors = ["public.ecr.aws/heroku/heroku:24"]
 [[order]]
   [[order.group]]
     id = "heroku/website-nodejs"
-    version = "1.0.0"
+    version = "1.0.1"
 
 [[order]]
   [[order.group]]
     id = "heroku/website"
-    version = "1.0.0"
+    version = "1.0.1"
