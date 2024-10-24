@@ -52,11 +52,6 @@ impl Buildpack for WebsiteEmberBuildpack {
         let mut static_web_server_req = Require::new("static-web-server");
         static_web_server_req
             .metadata(toml! {
-                // The package.json build script will automatically execute by heroku/nodejs buildpack.
-                // Eventually, that build execution will be made optional, so this one will take over.
-                // build.command = "sh"
-                // build.args = ["-c", "ember build --environment=production"]
-
                 root = "/workspace/static-artifacts"
                 index = "index.html"
 
@@ -67,7 +62,6 @@ impl Buildpack for WebsiteEmberBuildpack {
             .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
 
         let mut release_phase_req = Require::new("release-phase");
-
         let mut release_phase_metadata = toml::Table::new();
         let mut release_build_command = toml::Table::new();
         release_build_command.insert("command".to_string(), "bash".to_string().into());
@@ -80,15 +74,24 @@ impl Buildpack for WebsiteEmberBuildpack {
             .into(),
         );
         release_build_command.insert("source".to_string(), BUILDPACK_NAME.to_string().into());
-
         release_phase_metadata.insert("release-build".to_string(), release_build_command.into());
         release_phase_req
             .metadata(release_phase_metadata)
             .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
 
+        let mut node_build_scripts_req = Require::new("node_build_scripts");
+        node_build_scripts_req.metadata = toml! {
+            // The package.json build scripts are automatically executed by the heroku/nodejs
+            // component buildpacks responsible for installing dependencies for the detected
+            // package manager (i.e.; npm, pnpm, or Yarn). This needs to be disabled so that
+            // the build process can be deferred to the release-build phase.
+            enabled = false
+        };
+
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req)
-            .requires(release_phase_req);
+            .requires(release_phase_req)
+            .requires(node_build_scripts_req);
 
         if depends_on_ember_cli {
             DetectResultBuilder::pass()

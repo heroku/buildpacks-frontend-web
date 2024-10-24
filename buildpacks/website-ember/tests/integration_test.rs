@@ -38,6 +38,11 @@ fn ember_cli_app() {
         assert_contains!(ctx.pack_stdout, "Website (Ember.js)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         assert_contains!(ctx.pack_stdout, "Release Phase");
+        assert_contains!(
+            ctx.pack_stdout,
+            "Not running `build` as it was disabled by a participating buildpack"
+        );
+
         start_container_entrypoint(
             &ctx,
             ContainerConfig::new()
