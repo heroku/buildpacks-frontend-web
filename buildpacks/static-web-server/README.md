@@ -39,7 +39,7 @@ If the output is sent to a different directory, for example `dist/`, it should b
 ```toml
 [com.heroku.release-build]
 command = ["sh"]
-args = ["-c", "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/""]
+args = ["-c", "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/"]
 ```
 
 ### Static Build Command
@@ -54,7 +54,7 @@ command = ["sh"]
 args = ["-c", "npm build"]
 ```
 
-This static build command does not have access to Heroku app config vars, but still can be configure using CNB Build variables in `project.toml`:
+This static build command does not have access to Heroku app config vars, but still can be configured using CNB Build variables in `project.toml`:
 
 ```toml
  [[io.buildpacks.build.env]]
