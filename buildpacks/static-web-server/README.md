@@ -5,10 +5,12 @@ This buildpack implements www hosting support for a static web app.
 * Defines [`project.toml` configuration](#configuration), `[com.heroku.static-web-server]`
 * At build:
   * Installs a static web server (currently [Caddy](https://caddyserver.com/)).
+  * Includes [heroku/release-phase buildpack](https://github.com/heroku/buildpacks-release-phase) to enable Release Phase Build & Static Artifacts.
   * [Inherits configuration](#inherited-configuration) from the Build Plan `[requires.metadata]` of other buildpacks.
   * Transforms the configuration into native configuration for the web server.
   * Optionally, runs a `build` command, such as `npm build` for minification & bundling of a Javascript app.
-* At launch:
+* At launch, the default `web` process:
+  * Loads static artifacts for the release using [heroku/release-phase buildpack](https://github.com/heroku/buildpacks-release-phase)
   * Starts the web server listing on the `PORT`, using the server's native config generated during build.
   * Honors process signals for graceful shutdown.
 
@@ -16,50 +18,48 @@ This buildpack implements www hosting support for a static web app.
 
 In the app source code, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) for custom configuration.
 
-### Build Variables
-
-Set CNB build environment:
-
-```toml
- [[io.buildpacks.build.env]]
- name = "API_URL"
- value = "https://test.example.com/api/v7"
-
- [[io.buildpacks.build.env]]
- name = "CHECK_HELLO"
- value = "true"
-```
-
-🚧  Build env is separate from runtime env (Heroku config vars), when an app's processes are running.
-
-🤐  **Do not set secrets into website code or source code repo!**
-
-### Build Command
-
-*Default: (none)*
-
-A command to execute during CNB build, such as a JavaScript compiler/bundler.
-
-For typical build tools, execute the shell `sh` with a command `-c` argument containing the build command:
-
-```toml
-[com.heroku.static-web-server]
-command = ["sh"]
-args = ["-c", "npm build"]
-```
-
-Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm engines for JavaScript.
-
 ### Release Build Command
 
 *Default: (none)*
 
-A build command to execute during Heroku Release Phase.
+The command to generate static artifacts for a website, such as a JavaScript compiler/bundler. It is automatically executed during [Heroku Release Phase](https://devcenter.heroku.com/articles/release-phase), for changes to config vars, pipeline promotions, and rollbacks.
+
+This command must write its output to the `static-artifacts/` directory (`/workspace/static-artifacts/` in the container). The generated `static-artifacts/` from each release are saved in an object store (AWS S3), separate from the container image itself, and loaded into `web` containers as they start-up.
+
+Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm engines for JavaScript.
 
 ```toml
 [com.heroku.release-build]
 command = ["sh"]
 args = ["-c", "npm build"]
+```
+
+If the output is sent to a different directory, for example `dist/`, it should be copied to the expected location:
+
+```toml
+[com.heroku.release-build]
+command = ["sh"]
+args = ["-c", "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/""]
+```
+
+### Static Build Command
+
+*Default: (none)*
+
+This buildpack also supports a executing a build command during CNB Build process. The output of this command is saved in the container image, and will not be re-built during release, versus the [Release Build Command](#release-build-command)).
+
+```toml
+[com.heroku.static-web-server.build]
+command = ["sh"]
+args = ["-c", "npm build"]
+```
+
+This static build command does not have access to Heroku app config vars, but still can be configure using CNB Build variables in `project.toml`:
+
+```toml
+ [[io.buildpacks.build.env]]
+ name = "API_URL"
+ value = "https://test.example.com/api/v7"
 ```
 
 ### Document Root
