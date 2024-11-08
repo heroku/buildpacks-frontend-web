@@ -41,6 +41,14 @@ Set the [Front-end Web builder](builder/README.md) in `project.toml`.
 cargo test -- --include-ignored
 ```
 
+### Updating Node.js
+
+These buildpacks include the heroku/nodejs buildpack, packaged at a specific version. To update the Bode.js buildpack:
+
+1. check the [Docker Hub listing](https://hub.docker.com/r/heroku/buildpack-nodejs/tags) for the latest version
+1. update the version specified in the website-nodejs [buildpack](meta-buildpacks/website-nodejs/buildpack.toml) & [package](meta-buildpacks/website-nodejs/package.toml) specifications
+1. ensure integration tests still pass, see [Run Tests](#run-tests)
+
 ### Releasing A New Version
 
 [Action workflows](https://github.com/heroku/buildpacks-frontend-web/actions) are used to automate the release process:
