@@ -5,7 +5,7 @@ uri = "."
 uri = "libcnb:heroku/website-ember"
 
 [[dependencies]]
-uri = "urn:cnb:registry:heroku/nodejs"
+uri = "urn:cnb:registry:heroku/nodejs@3.3.1"
 
 [[dependencies]]
 uri = "libcnb:heroku/static-web-server"
