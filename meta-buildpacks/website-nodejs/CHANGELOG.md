@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2024-11-08
+
+### Changed
+
+- Updated `heroku/static-web-server` to `1.0.2`.
+- Updated `heroku/website-ember` to `1.0.2`.
+
 ## [0.1.1] - 2024-09-05
 
 ### Changed
@@ -14,5 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `heroku/static-web-server` to `0.1.1`.
 - Updated `heroku/website-ember` to `0.1.1`.
 
-[unreleased]: https://github.com/heroku/buildpacks-frontend-web/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/heroku/buildpacks-frontend-web/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/heroku/buildpacks-frontend-web/compare/v0.1.1...v1.0.2
 [0.1.1]: https://github.com/heroku/buildpacks-frontend-web/releases/tag/v0.1.1
