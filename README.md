@@ -1,6 +1,8 @@
 # Heroku Cloud Native Buildpacks: Front-end Web
 
-This repository is the home of Heroku Cloud Native Buildpacks for Front-end Web apps, also known as: static websites, static web apps (SWA), single-page apps (SPA), and browser apps. These buildpacks build source code into application images that serve a website with minimal configuration.
+🚧 **This repo is experimental.** Use at your own risk. 🚧
+
+This repository is the home of Heroku Cloud Native Buildpacks for Front-end Web apps, also known as: static websites, static web apps (SWA), single-page apps (SPA), and browser apps.
 
 ## Included Buildpacks
 
@@ -31,7 +33,7 @@ Set the [Front-end Web builder](builder/README.md) in `project.toml`.
 
 ## Configuration
 
-[All configuration](buildpacks/static-web-server/README.md#configuration) is implemented by Static Web Server.
+[All configuration](buildpacks/static-web-server/README.md#configuration) is documented with the Static Web Server.
 
 ## Dev Notes
 
@@ -43,7 +45,7 @@ cargo test -- --include-ignored
 
 ### Updating Node.js
 
-These buildpacks include the heroku/nodejs buildpack, packaged at a specific version. To update the Bode.js buildpack:
+These buildpacks include the heroku/nodejs buildpack, packaged at a specific version. To update the Node.js buildpack:
 
 1. check the [Docker Hub listing](https://hub.docker.com/r/heroku/buildpack-nodejs/tags) for the latest version
 1. update the version specified in the website-nodejs [buildpack](meta-buildpacks/website-nodejs/buildpack.toml) & [package](meta-buildpacks/website-nodejs/package.toml) specifications
@@ -55,4 +57,4 @@ These buildpacks include the heroku/nodejs buildpack, packaged at a specific ver
 
 1. Run **Prepare Buildpack Releases**.
 1. Await completion of the preparation step.
-1. ~~Run **Release Buildpacks**.~~ (This will not work until the repo is public, open-source. Until then, [manually pack & release the builder](builder/README.md#internal-release-process)))
+1. Run **Release Buildpacks**.
