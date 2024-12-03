@@ -143,7 +143,7 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
         routes.push(generate_error_404_route(
             &doc_root,
             &doc_index,
-            &value.errors,
+            value.errors.as_ref(),
         )?);
 
         // Assemble into the caddy.json structure
@@ -205,11 +205,9 @@ fn generate_response_headers_routes(headers: &Vec<Header>) -> Vec<CaddyHTTPServe
 fn generate_error_404_route(
     doc_root: &Path,
     doc_index: &str,
-    errors: &Option<ErrorsConfig>,
+    errors: Option<&ErrorsConfig>,
 ) -> Result<CaddyHTTPServerRoute, StaticWebServerBuildpackError> {
-    let error_config = errors
-        .as_ref()
-        .and_then(|errors| errors.custom_404_page.clone());
+    let error_config = errors.and_then(|errors| errors.custom_404_page.clone());
 
     let status_code = error_config
         .as_ref()
@@ -442,7 +440,7 @@ mod tests {
         };
 
         let routes =
-            generate_error_404_route(&doc_root, &doc_index, &heroku_config.errors).unwrap();
+            generate_error_404_route(&doc_root, &doc_index, heroku_config.errors.as_ref()).unwrap();
 
         let CaddyHTTPServerRouteHandler::Rewrite(generated_rewrite_handler) = &routes.handle[0]
         else {
@@ -493,7 +491,7 @@ mod tests {
         };
 
         let routes =
-            generate_error_404_route(&doc_root, &doc_index, &heroku_config.errors).unwrap();
+            generate_error_404_route(&doc_root, &doc_index, heroku_config.errors.as_ref()).unwrap();
 
         let CaddyHTTPServerRouteHandler::Rewrite(generated_rewrite_handler) = &routes.handle[0]
         else {
