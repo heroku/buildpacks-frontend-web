@@ -28,6 +28,7 @@ Generate an internal preview builder for these buildpacks:
 cargo libcnb package --release --target aarch64-unknown-linux-musl
 pack buildpack package website --config packaged/aarch64-unknown-linux-musl/release/heroku_website/package.toml  --target "linux/arm64" --format file
 pack buildpack package website-nodejs --config packaged/aarch64-unknown-linux-musl/release/heroku_website-nodejs/package.toml  --target "linux/arm64" --format file
+pack buildpack package static-web-server --config packaged/aarch64-unknown-linux-musl/release/heroku_static-web-server/package.toml  --target "linux/arm64" --format file
 pack builder create frontend-web-builder --config builder/builder.toml --target "linux/arm64"
 ```
 
@@ -40,8 +41,8 @@ export CR_PAT=XXXXX
 echo $CR_PAT | docker login ghcr.io -u mars --password-stdin
 
 # push the specific version
-docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-1.0.2_linux-arm64
-docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-1.0.2_linux-arm64
+docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-1.1.0_linux-arm64
+docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-1.1.0_linux-arm64
 
 # also push as "latest"
 docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-latest_linux-arm64

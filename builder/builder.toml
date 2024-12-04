@@ -19,6 +19,10 @@ mirrors = ["public.ecr.aws/heroku/heroku:24"]
   id = "heroku/website"
   uri = "../website.cnb"
 
+[[buildpacks]]
+  id = "heroku/static-web-server"
+  uri = "../static-web-server.cnb"
+
 [[order]]
   [[order.group]]
     id = "heroku/website-nodejs"
