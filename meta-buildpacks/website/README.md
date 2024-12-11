@@ -8,29 +8,32 @@ Deploy a standard website (HTML/CSS/Javascript) using CNB.
 * At launch:
   * [static-web-server](../../buildpacks/static-web-server/README.md) runs with config generated during build.
 
-## Configuration
-
-The detected website directory can be customized with [`root`](../../buildpacks/static-web-server/README.md#document-root) and [`index`](../../buildpacks/static-web-server/README.md#index-document) configurations in `project.toml`.
-
-See [all configuration](../../buildpacks/static-web-server/README.md#configuration) implemented by Static Web Server.
-
 ## Usage
 
 ### Heroku Fir
 
-Set the [Front-end Web builder](../../builder/README.md) in `project.toml`.
+In the app source repo, add the buildpack to [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/):
+
+```toml
+[[io.buildpacks.group]]
+id = "heroku/website"
+```
 
 ### Local
 
 Build & run it locally:
 
 ```bash
-cargo libcnb package
-
 pack build <APP_NAME> \
-  --buildpack packaged/x86_64-unknown-linux-musl/debug/heroku_website \
+  --buildpack heroku/website \
   --builder heroku/builder:24 \
-  --path <WEBSITE_DIR>
+  --path <SOURCE_DIR>
 
 docker run --env PORT=8888 -p 8888:8888 <APP_NAME>
 ```
+
+## Configuration
+
+The detected website directory can be customized with [`root`](../../buildpacks/static-web-server/README.md#document-root) and [`index`](../../buildpacks/static-web-server/README.md#index-document) configurations in `project.toml`.
+
+[All configuration](buildpacks/static-web-server/README.md#configuration) is documented with the Static Web Server.

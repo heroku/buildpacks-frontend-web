@@ -1,3 +1,7 @@
 # Heroku Cloud Native Website (Public HTML) Buildpack
 
-Use with [heroku/website](../../meta-buildpacks/website/) meta-buildpack.
+## Usage
+
+Create a repo containing a `public/index.html` file.
+
+Then, use with [heroku/website](../../meta-buildpacks/website/) meta-buildpack.
