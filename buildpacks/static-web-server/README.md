@@ -14,9 +14,18 @@ This buildpack implements www hosting support for a static web app.
   * Starts the web server listing on the `PORT`, using the server's native config generated during build.
   * Honors process signals for graceful shutdown.
 
+## Usage
+
+In the app source repo, add the buildpack to [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/):
+
+```toml
+[[io.buildpacks.group]]
+id = "heroku/static-web-server"
+```
+
 ## Configuration
 
-In the app source code, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) for custom configuration.
+In the app source repo, set custom configuration in [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/).
 
 ### Release Build Command
 

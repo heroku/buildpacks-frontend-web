@@ -29,11 +29,7 @@ Lower-level buildpacks that provide specific capabilities. Typically require man
 
 ## Usage
 
-Set the [Front-end Web builder](builder/README.md) in `project.toml`.
-
-## Configuration
-
-[All configuration](buildpacks/static-web-server/README.md#configuration) is documented with the Static Web Server.
+See the individual buildpack documentation, linked in the above table.
 
 ## Dev Notes
 
