@@ -41,8 +41,8 @@ export CR_PAT=XXXXX
 echo $CR_PAT | docker login ghcr.io -u mars --password-stdin
 
 # push the specific version
-docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-1.1.0_linux-arm64
-docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-1.1.0_linux-arm64
+docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-1.1.1_linux-arm64
+docker push ghcr.io/heroku/builder-test-public:frontend-web-builder-1.1.1_linux-arm64
 
 # also push as "latest"
 docker tag frontend-web-builder ghcr.io/heroku/builder-test-public:frontend-web-builder-latest_linux-arm64
