@@ -40,18 +40,18 @@ pub(crate) fn config_web_server(
         .map_err(StaticWebServerBuildpackError::CannotWriteCaddyConfiguration)?;
 
     // Execute the optional build command
-    build_command_opt.map(|e| -> Result<Child, StaticWebServerBuildpackError> {
-        log_info(format!("Executing build command: {e:#?}"));
-        let mut cmd = Command::new(e.command);
-        if let Some(args) = e.args {
+    if let Some(build_command) = build_command_opt {
+        log_info(format!("Executing build command: {build_command:#?}"));
+        let mut cmd = Command::new(build_command.command);
+        if let Some(args) = build_command.args {
             cmd.args(args);
         }
 
-        cmd.stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(StaticWebServerBuildpackError::BuildCommandFailed)
-    });
+        cmd.stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .output()
+            .map_err(StaticWebServerBuildpackError::BuildCommandFailed)?;
+    }
 
     Ok(configuration_layer)
 }
