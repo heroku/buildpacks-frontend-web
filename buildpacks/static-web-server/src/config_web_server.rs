@@ -7,7 +7,7 @@ use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use static_web_server_utils::read_project_config;
 use std::fs;
-use std::process::{Command, Output};
+use std::process::{Command, Stdio};
 use toml::Table;
 
 pub(crate) fn config_web_server(
@@ -40,26 +40,18 @@ pub(crate) fn config_web_server(
         .map_err(StaticWebServerBuildpackError::CannotWriteCaddyConfiguration)?;
 
     // Execute the optional build command
-    build_command_opt.map(|e| -> Result<Output, StaticWebServerBuildpackError> {
-        log_info(format!("Executing build command: {e:#?}"));
-        let mut cmd = Command::new(e.command.clone());
-        e.args.clone().map(|v| cmd.args(v));
-        let output = cmd
+    if let Some(build_command) = build_command_opt {
+        log_info(format!("Executing build command: {build_command:#?}"));
+        let mut cmd = Command::new(build_command.command);
+        if let Some(args) = build_command.args {
+            cmd.args(args);
+        }
+
+        cmd.stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
             .output()
             .map_err(StaticWebServerBuildpackError::BuildCommandFailed)?;
-
-        log_info(format!("status: {}", output.status));
-        log_info(format!(
-            "stdout: {}",
-            String::from_utf8_lossy(&output.stdout)
-        ));
-        log_info(format!(
-            "stderr: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
-
-        Ok(output)
-    });
+    }
 
     Ok(configuration_layer)
 }
