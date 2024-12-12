@@ -7,7 +7,7 @@ use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use static_web_server_utils::read_project_config;
 use std::fs;
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
 use toml::Table;
 
 pub(crate) fn config_web_server(
