@@ -34,18 +34,30 @@ pack build <APP_NAME> \
 
 # Execute Release Build
 docker run --entrypoint release \
-  --env STATIC_ARTIFACTS_URL=file://<WEBSITE_DIR>/static-artifacts \
+  --env STATIC_ARTIFACTS_URL=file:///workspace/artifact-storage \
+  --volume <LOCAL_DIR>/artifact-storage:/workspace/artifact-storage \
   --env RELEASE_ID=v1 \
-  --volume <WEBSITE_DIR>/static-artifacts:/workspace/static-artifacts \
   <APP_NAME>
 
 # Launch Web Server
 docker run  \
-  --env STATIC_ARTIFACTS_URL=file://<WEBSITE_DIR>/static-artifacts \
-  --env RELEASE_ID=v1 \
   --env PORT=8888 -p 8888:8888 \
-  --volume <WEBSITE_DIR>/static-artifacts:/workspace/static-artifacts \
+  --env STATIC_ARTIFACTS_URL=file:///workspace/artifact-storage \
+  --volume <LOCAL_DIR>/artifact-storage:/workspace/artifact-storage \
+  --env RELEASE_ID=v1 \
   <APP_NAME>
+
+# Interactively inspect release artifacts
+docker run  \
+  --env STATIC_ARTIFACTS_URL=file:///workspace/artifact-storage \
+  --volume <LOCAL_DIR>/artifact-storage:/workspace/artifact-storage \
+  --env RELEASE_ID=v1 \
+  -it --entrypoint bash \
+  <APP_NAME>
+# Run artifact loader
+$ /layers/heroku_release-phase/main/exec.d/web/load-release-artifacts
+# Inspect artifacts
+$ ls -hal static-artifacts
 ```
 
 ## Configuration
