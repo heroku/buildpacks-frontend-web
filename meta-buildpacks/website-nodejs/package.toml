@@ -5,10 +5,10 @@ uri = "."
 uri = "libcnb:heroku/website-ember"
 
 [[dependencies]]
-uri = "urn:cnb:registry:heroku/nodejs@3.3.1"
+uri = "docker://heroku/buildpack-nodejs:3.3.5"
 
 [[dependencies]]
 uri = "libcnb:heroku/static-web-server"
 
 [[dependencies]]
-uri = "urn:cnb:registry:heroku/release-phase"
+uri = "docker://heroku/buildpack-release-phase:1.0.3"

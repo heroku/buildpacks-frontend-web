@@ -54,7 +54,7 @@ fn ember_cli_app() {
                 let log_output = container.logs_now();
                 assert_contains!(log_output.stderr, "release-phase plan");
                 assert_contains!(
-                    log_output.stdout,
+                    log_output.stderr,
                     format!("save-release-artifacts writing archive: release-{unique}.tgz")
                         .as_str()
                 );
