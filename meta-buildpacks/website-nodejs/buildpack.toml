@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-nodejs"
-version = "1.0.3"
+version = "1.0.4"
 name = "Heroku Website/Node.js"
 description = "Heroku's buildpack for static web apps that require Node.js for build."
 keywords = ["ember", "emberjs", "heroku"]
@@ -22,11 +22,11 @@ version = "3.3.5"
 
 [[order.group]]
 id = "heroku/static-web-server"
-version = "1.0.3"
+version = "1.0.4"
 
 [[order.group]]
 id = "heroku/website-ember"
-version = "1.0.3"
+version = "1.0.4"
 
 [[metadata.targets]]
 os = "linux"

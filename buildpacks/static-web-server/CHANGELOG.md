@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2024-12-12
+
+- No changes.
+
 ## [1.0.3] - 2024-12-11
 
 - No changes.
@@ -19,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No changes.
 
-[unreleased]: https://github.com/heroku/buildpacks-frontend-web/compare/v1.0.3...HEAD
+[unreleased]: https://github.com/heroku/buildpacks-frontend-web/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/heroku/buildpacks-frontend-web/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/heroku/buildpacks-frontend-web/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/heroku/buildpacks-frontend-web/compare/v0.1.1...v1.0.2
 [0.1.1]: https://github.com/heroku/buildpacks-frontend-web/releases/tag/v0.1.1
