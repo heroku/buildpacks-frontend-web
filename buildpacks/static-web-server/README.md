@@ -38,16 +38,16 @@ This command must write its output to the `static-artifacts/` directory (`/works
 Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm engines for JavaScript.
 
 ```toml
-[com.heroku.release-build]
-command = ["sh"]
+[com.heroku.phase.release-build]
+command = "sh"
 args = ["-c", "npm build"]
 ```
 
 If the output is sent to a different directory, for example `dist/`, it should be copied to the expected location:
 
 ```toml
-[com.heroku.release-build]
-command = ["sh"]
+[com.heroku.phase.release-build]
+command = "sh"
 args = ["-c", "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/"]
 ```
 
@@ -59,7 +59,7 @@ This buildpack also supports a executing a build command during CNB Build proces
 
 ```toml
 [com.heroku.static-web-server.build]
-command = ["sh"]
+command = "sh"
 args = ["-c", "npm build"]
 ```
 
