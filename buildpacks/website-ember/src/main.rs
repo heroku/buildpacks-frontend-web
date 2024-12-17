@@ -65,11 +65,18 @@ impl Buildpack for WebsiteEmberBuildpack {
         let mut release_phase_metadata = toml::Table::new();
         let mut release_build_command = toml::Table::new();
         release_build_command.insert("command".to_string(), "bash".to_string().into());
+        let pkg_mgr_build_command = if context.app_dir.join("yarn.lock").exists() {
+            "yarn run build"
+        } else if context.app_dir.join("pnpm-lock.yaml").exists() {
+            "pnpm run build"
+        } else {
+            "npm run build"
+        };
         release_build_command.insert(
             "args".to_string(),
             vec![
                 "-c",
-                "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/",
+                format!("{pkg_mgr_build_command} && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/").as_str(),
             ]
             .into(),
         );
