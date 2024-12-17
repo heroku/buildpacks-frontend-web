@@ -15,6 +15,7 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) errors: Option<ErrorsConfig>,
     #[serde(default, deserialize_with = "deserialize_headers")]
     pub(crate) headers: Option<Vec<Header>>,
+    pub(crate) redirect_to_https: Option<bool>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -202,5 +203,20 @@ mod tests {
                 },
             ])
         );
+    }
+
+    #[test]
+    fn custom_redirect_to_https() {
+        let toml_config = toml! {
+            redirect_to_https = true
+        };
+
+        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
+        assert_eq!(parsed_config.root, None);
+        assert_eq!(parsed_config.index, None);
+        assert_eq!(parsed_config.headers, None);
+        assert_eq!(parsed_config.errors, None);
+        assert_eq!(parsed_config.redirect_to_https, Some(true));
     }
 }

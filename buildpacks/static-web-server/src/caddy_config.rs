@@ -30,12 +30,20 @@ pub(crate) struct CaddyConfigHTTPServers {
 pub(crate) struct CaddyConfigHTTPServerPublic {
     pub(crate) listen: Vec<String>,
     pub(crate) routes: Vec<CaddyHTTPServerRoute>,
+    pub(crate) automatic_https: CaddyHTTPAutomaticHTTPS,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CaddyHTTPServerRoute {
     pub(crate) r#match: Option<Vec<CaddyHTTPServerRouteMatcher>>,
     pub(crate) handle: Vec<CaddyHTTPServerRouteHandler>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct CaddyHTTPAutomaticHTTPS {
+    pub(crate) disable: bool,
+    pub(crate) disable_redirects: bool,
+    pub(crate) disable_certificates: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -146,6 +154,8 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
             value.errors.as_ref(),
         )?);
 
+        let redirect_to_https = value.redirect_to_https.unwrap_or(false);
+
         // Assemble into the caddy.json structure
         // https://caddyserver.com/docs/json/
         Ok(CaddyConfig {
@@ -153,6 +163,11 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
                 http: CaddyConfigAppHTTP {
                     servers: CaddyConfigHTTPServers {
                         public: CaddyConfigHTTPServerPublic {
+                            automatic_https: CaddyHTTPAutomaticHTTPS {
+                                disable: !redirect_to_https,
+                                disable_redirects: !redirect_to_https,
+                                disable_certificates: true,
+                            },
                             listen: vec![":{env.PORT}".to_owned()],
                             routes,
                         },

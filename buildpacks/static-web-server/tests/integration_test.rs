@@ -217,3 +217,36 @@ fn client_side_routing() {
         );
     });
 }
+
+#[test]
+#[ignore = "integration test"]
+fn redirect_to_https() {
+    static_web_server_integration_test("./fixtures/redirect_to_https", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            &mut ContainerConfig::new(),
+            |container, socket_addr| {
+                eprintln!("{}", container.logs_now());
+                let current_caddy_config = container
+                    .shell_exec("cat /layers/heroku_static-web-server/configuration/caddy.json");
+                eprintln!("{current_caddy_config}");
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 301);
+                        let h = response.header("Location").unwrap_or_default();
+                        assert_contains!(h, format!("https://{socket_addr}/").as_str());
+                    }
+                    Err(error) => {
+                        panic!(
+                            "should respond 301 permanent redirect, but got other error: {error:?}"
+                        );
+                    }
+                }
+            },
+        );
+    });
+}
