@@ -38,6 +38,7 @@ fn ember_cli_app() {
         assert_contains!(ctx.pack_stdout, "Website (Ember.js)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         assert_contains!(ctx.pack_stdout, "Release Phase");
+        assert_contains!(ctx.pack_stdout, "Installing yarn CLI");
         assert_contains!(
             ctx.pack_stdout,
             "Not running `build` as it was disabled by a participating buildpack"
@@ -53,6 +54,11 @@ fn ember_cli_app() {
             |container| {
                 let log_output = container.logs_now();
                 assert_contains!(log_output.stderr, "release-phase plan");
+                assert_contains!(
+                    log_output.stderr,
+                    "release-phase executing release-build command: bash -c yarn run build"
+                );
+
                 assert_contains!(
                     log_output.stderr,
                     format!("save-release-artifacts writing archive: release-{unique}.tgz")
