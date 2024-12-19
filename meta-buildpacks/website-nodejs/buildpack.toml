@@ -14,11 +14,11 @@ type = "MIT"
 
 [[order.group]]
 id = "heroku/release-phase"
-version = "1.0.3"
+version = "1.0.4"
 
 [[order.group]]
 id = "heroku/nodejs"
-version = "3.3.5"
+version = "3.4.0"
 
 [[order.group]]
 id = "heroku/static-web-server"
