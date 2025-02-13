@@ -5,7 +5,7 @@ uri = "."
 uri = "libcnb:heroku/website-ember"
 
 [[dependencies]]
-uri = "docker://heroku/buildpack-nodejs:3.4.0"
+uri = "docker://heroku/buildpack-nodejs:3.4.7"
 
 [[dependencies]]
 uri = "libcnb:heroku/static-web-server"
