@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use `heroku/nodejs` buildplan entry for Node.js buildpack. ([#49](https://github.com/heroku/buildpacks-frontend-web/pull/49))
+
 ## [1.0.7] - 2025-02-17
 
 - No changes.
