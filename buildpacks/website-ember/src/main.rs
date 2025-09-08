@@ -86,19 +86,20 @@ impl Buildpack for WebsiteEmberBuildpack {
             .metadata(release_phase_metadata)
             .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
 
-        let mut node_build_scripts_req = Require::new("node_build_scripts");
-        node_build_scripts_req.metadata = toml! {
+        let mut nodejs_require = Require::new("heroku/nodejs");
+        nodejs_require.metadata = toml! {
             // The package.json build scripts are automatically executed by the heroku/nodejs
             // component buildpacks responsible for installing dependencies for the detected
             // package manager (i.e.; npm, pnpm, or Yarn). This needs to be disabled so that
             // the build process can be deferred to the release-build phase.
             enabled = false
+            skip_pruning = true
         };
 
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req)
             .requires(release_phase_req)
-            .requires(node_build_scripts_req);
+            .requires(nodejs_require);
 
         if depends_on_ember_cli {
             DetectResultBuilder::pass()

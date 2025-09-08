@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated `heroku/nodejs` to `5.0.0`. ([#49](https://github.com/heroku/buildpacks-frontend-web/pull/49))
+
 ## [1.0.7] - 2025-02-17
 
 ### Changed
