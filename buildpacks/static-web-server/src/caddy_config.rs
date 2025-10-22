@@ -39,11 +39,6 @@ pub(crate) struct CaddyHTTPServerRoute {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct CaddyHTTPServerErrors {
-    pub(crate) routes: Vec<CaddyHTTPServerRoute>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub(crate) enum CaddyHTTPServerRouteMatcher {
     // https://caddyserver.com/docs/json/apps/http/servers/routes/match/path/
