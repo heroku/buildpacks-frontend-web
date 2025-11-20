@@ -1,0 +1,11 @@
+[package]
+name = "env_as_html_data"
+rust-version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+html5ever = "0.36.1"
+markup5ever_rcdom = "0.36.0"
