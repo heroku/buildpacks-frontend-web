@@ -30,7 +30,10 @@ pub(crate) fn inject_data_into_html<S: BuildHasher>(
         .read_from(&mut html.as_bytes())
         .map_err(|e| Error::ParseError(e.to_string()))?;
 
-    write_attrs_into_document(data, &dom.document)?;
+    let did_write = write_attrs_into_document(data, &dom.document)?;
+    if !did_write {
+        return Err(Error::NoBodyElementError);
+    }
 
     let document: SerializableHandle = dom.document.clone().into();
 
