@@ -78,7 +78,7 @@ fn write_attrs_into_document<S: BuildHasher>(
                 return Ok(false);
             }
 
-            inject_public_attrs::<S>(data, m)?;
+            inject_public_attrs::<S>(data, m.expect("Document Node is already known to be Some"))?;
             Ok(true)
         },
     };
@@ -88,13 +88,13 @@ fn write_attrs_into_document<S: BuildHasher>(
 
 fn inject_public_attrs<S: BuildHasher>(
     data: &HashMap<String, String, S>,
-    body_element: Option<&Rc<Node>>,
+    body_element: &Rc<Node>,
 ) -> Result<(), Error> {
     let NodeData::Element {
         name: qual_name,
         attrs: body_attrs,
         ..
-    } = &body_element.unwrap().data
+    } = &body_element.data
     else {
         return Err(Error::NoBodyElementError);
     };
@@ -113,7 +113,8 @@ fn inject_public_attrs<S: BuildHasher>(
                 ns: ns!(),
                 local: LocalName::from(format!("data-{}", k.to_lowercase())),
             },
-            value: StrTendril::from_str(data[k].as_str()).unwrap(),
+            value: StrTendril::from_str(data[k].as_str())
+                .expect("Data key is already known to exist"),
         };
         body_attrs.borrow_mut().push(new_attr);
     }
