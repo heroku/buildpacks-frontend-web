@@ -86,15 +86,15 @@ fn write_attrs_into_document<S: BuildHasher>(
 
 fn inject_public_attrs<S: BuildHasher>(
     data: &HashMap<String, String, S>,
-    body_element: &Rc<Node>,
+    element: &Rc<Node>,
 ) -> Result<(), Error> {
     let NodeData::Element {
         name: qual_name,
-        attrs: body_attrs,
+        attrs,
         ..
-    } = &body_element.data
+    } = &element.data
     else {
-        return Err(Error::NoBodyElementError);
+        return Err(Error::ElementExpected(format!("{:?}", &element.data)));
     };
 
     let mut keys: Vec<String> = data
@@ -118,7 +118,7 @@ fn inject_public_attrs<S: BuildHasher>(
             value: StrTendril::from_str(data[k].as_str())
                 .expect("Data key is already known to exist"),
         };
-        body_attrs.borrow_mut().push(new_attr);
+        attrs.borrow_mut().push(new_attr);
     }
 
     Ok(())

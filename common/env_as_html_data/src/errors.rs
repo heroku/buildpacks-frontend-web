@@ -3,6 +3,7 @@ use std::fmt::{self, Debug};
 #[derive(Debug)]
 pub(crate) enum Error {
     ConfigError(String),
+    ElementExpected(String),
     EncodeError(String),
     FileError(std::io::Error, String),
     NoBodyElementError,
@@ -15,6 +16,12 @@ impl fmt::Display for Error {
         match self {
             Error::ConfigError(error) => {
                 write!(f, "Env-as-HTML-Data configuration error, {error}")
+            }
+            Error::ElementExpected(got_name) => {
+                write!(
+                    f,
+                    "Env-as-HTML-Data expected an Element node, but got {got_name}"
+                )
             }
             Error::EncodeError(error) => {
                 write!(f, "Env-as-HTML-Data output encoding error, {error}")
