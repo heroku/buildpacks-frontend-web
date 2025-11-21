@@ -106,6 +106,10 @@ fn inject_public_attrs<S: BuildHasher>(
         .collect();
     keys.sort_unstable();
 
+    if keys.is_empty() {
+        return Ok(());
+    }
+
     for k in &keys {
         let new_attr = Attribute {
             name: QualName {
@@ -128,7 +132,7 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn inject_data_into_html_succeeds() {
+    fn inject_data_into_html_sets_public_data() {
         let mut data: HashMap<String, String> = HashMap::new();
         data.insert(
             "PUBLIC_API_URL".to_string(),
@@ -147,5 +151,21 @@ mod tests {
         let result_value = result.unwrap();
         print!("{}", &result_value);
         assert_eq!(&result_value, expected_html);
+    }
+
+    #[test]
+    fn inject_data_into_html_without_public_data_makes_no_diff() {
+        let mut data: HashMap<String, String> = HashMap::new();
+        data.insert(
+            "NOT_PUBLIC_VAR".to_string(),
+            "non-public should not be included".to_string(),
+        );
+        let html =
+            "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
+        let result = inject_data_into_html(&data, html);
+        assert!(result.is_ok());
+        let result_value = result.unwrap();
+        print!("{}", &result_value);
+        assert_eq!(&result_value, html);
     }
 }
