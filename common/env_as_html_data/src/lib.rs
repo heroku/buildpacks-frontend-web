@@ -3,13 +3,11 @@ extern crate markup5ever_rcdom as rcdom;
 
 mod errors;
 use errors::Error;
-use html5ever::serialize::SerializeOpts;
 
-use std::rc::Rc;
-use std::str::FromStr;
-use std::{collections::HashMap, hash::BuildHasher};
+use std::{collections::HashMap, hash::BuildHasher, rc::Rc, str::FromStr};
 
 use html5ever::driver::ParseOpts;
+use html5ever::serialize::SerializeOpts;
 use html5ever::tendril::{StrTendril, TendrilSink};
 use html5ever::tree_builder::TreeBuilderOpts;
 use html5ever::{ns, parse_document, serialize, Attribute, LocalName, QualName};
