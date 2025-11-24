@@ -117,20 +117,33 @@ fn inject_html_data_attrs<S: BuildHasher>(
         return Ok(false);
     }
 
+    let mut attrs_borrow = attrs.borrow_mut();
     for k in &keys {
-        let new_attr = Attribute {
-            name: QualName {
-                prefix: qual_name.prefix.clone(),
-                ns: ns!(),
-                local: LocalName::from(format!("data-{}", k.to_lowercase())),
-            },
-            value: StrTendril::from_str(data[k].as_str())
-                .expect("Data key is already known to exist"),
+        let name = format_html_data_attr_name(k);
+        let value =
+            StrTendril::from_str(data[k].as_str()).expect("Data key is already known to exist");
+
+        // Replace existing attribute value, or create a new attribute.
+        if let Some(attr) = attrs_borrow.iter_mut().find(|a| a.name.local == name) {
+            attr.value = value;
+        } else {
+            let new_attr = Attribute {
+                name: QualName {
+                    prefix: qual_name.prefix.clone(),
+                    ns: ns!(),
+                    local: LocalName::from(name),
+                },
+                value,
+            };
+            attrs_borrow.push(new_attr);
         };
-        attrs.borrow_mut().push(new_attr);
     }
 
     Ok(true)
+}
+
+fn format_html_data_attr_name(name: &String) -> String {
+    format!("data-{}", name.to_lowercase())
 }
 
 #[cfg(test)]
@@ -175,6 +188,25 @@ mod tests {
         );
         let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
+
+        match parse_html_and_inject_data(&data, html) {
+            Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
+            Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
+            Err(e) => panic!("returned error {e:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_html_and_inject_data_overwrites_existing_attrs() {
+        let mut data: HashMap<String, String> = HashMap::new();
+        data.insert(
+            "PUBLIC_API_URL".to_string(),
+            "https://api.example.com/v1".to_string(),
+        );
+        data.insert("PUBLIC_DEBUG_MODE".to_string(), "true".to_string());
+        data.insert("PUBLIC_RELEASE_VERSION".to_string(), "v101".to_string());
+        let html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="http://localhost:3001/v1" data-public_release_version="v0"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101" data-public_debug_mode="true"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
