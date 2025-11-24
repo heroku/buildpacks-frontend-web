@@ -144,13 +144,32 @@ mod tests {
             "NOT_PUBLIC_VAR".to_string(),
             "non-public should not be included".to_string(),
         );
-        let html =
+        let html_missing_body =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
+        let result = inject_data_into_html(&data, html_missing_body);
+        assert!(result.is_ok());
+        let result_value = result.unwrap();
+        assert_eq!(&result_value, expected_html);
+    }
+
+    #[test]
+    fn inject_data_into_html_corrects_invalid_doc() {
+        let mut data: HashMap<String, String> = HashMap::new();
+        data.insert(
+            "PUBLIC_API_URL".to_string(),
+            "https://api.example.com/v1".to_string(),
+        );
+        data.insert("PUBLIC_RELEASE_VERSION".to_string(), "v101".to_string());
+        data.insert(
+            "NOT_PUBLIC_VAR".to_string(),
+            "non-public should not be included".to_string(),
+        );
+        let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
         let result = inject_data_into_html(&data, html);
         assert!(result.is_ok());
         let result_value = result.unwrap();
-        print!("{}", &result_value);
         assert_eq!(&result_value, expected_html);
     }
 
@@ -166,7 +185,6 @@ mod tests {
         let result = inject_data_into_html(&data, html);
         assert!(result.is_ok());
         let result_value = result.unwrap();
-        print!("{}", &result_value);
         assert_eq!(&result_value, html);
     }
 }
