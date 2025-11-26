@@ -97,7 +97,7 @@ pub(crate) fn config_web_server(
         // Set env-to-html-data param as env variable
         let mut configuration_layer_env = configuration_layer.read_env()?;
         configuration_layer_env.insert(
-            Scope::Launch,
+            Scope::Process("web".to_string()),
             ModificationBehavior::Override,
             "ENV_AS_HTML_DATA_TARGET_FILES",
             default_doc_path,
