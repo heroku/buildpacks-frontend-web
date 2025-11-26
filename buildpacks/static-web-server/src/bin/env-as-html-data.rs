@@ -1,3 +1,4 @@
+#![allow(unused_crate_dependencies)]
 use std::{env, path::Path};
 
 use env_as_html_data::env_as_html_data;

@@ -250,7 +250,7 @@ mod tests {
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
+        match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
             Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
@@ -272,7 +272,7 @@ mod tests {
         let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
+        match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
             Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
@@ -291,7 +291,7 @@ mod tests {
         let html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="http://localhost:3001/v1" data-public_release_version="v0"><h1>Hello World</h1></body></html>"#;
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101" data-public_debug_mode="true"><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
+        match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
             Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
@@ -308,7 +308,7 @@ mod tests {
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
 
-        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
+        match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok((false, _)) => (),
             Ok((true, _)) => panic!("should have returned 'false' that inject did not happen"),
             Err(e) => panic!("returned error {e:?}"),
