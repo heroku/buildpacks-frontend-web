@@ -7,10 +7,10 @@ Deploy a static web app that requires Node.js for build.
 * At build:
   * Creates Build Plan `[requires.metadata]` for Static Web Server, setting specific values to support the detected framwork:
     * the framework's root & index document
-    * client-side routing
-    * the framework's `build` command.
+    * client-side routing.
 * At launch:
   * [static-web-server](../../buildpacks/static-web-server/README.md) runs with config generated during build.
+  * Performs [runtime app configuration](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
 
 ## Usage
 

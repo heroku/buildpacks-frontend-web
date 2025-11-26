@@ -4,10 +4,10 @@
 * At build:
   * Creates Build Plan `[requires.metadata]` for static-web-server, defining:
     * Ember's `dist` root
-    * support for client-side routing
-    * the framework's `build` command.
+    * support for client-side routing.
 * At launch:
   * [static-web-server](../../buildpacks/static-web-server/README.md) runs with config generated during build.
+  * Performs [runtime app configuration](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
 
 ## Usage
 
