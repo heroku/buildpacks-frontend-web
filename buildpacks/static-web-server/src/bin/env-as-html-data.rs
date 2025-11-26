@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, path::Path};
 
 use env_as_html_data::env_as_html_data;
 
@@ -11,7 +11,15 @@ fn main() {
     }).map(|v| v.split(',').collect()).expect("should exit failure when none");
 
     for file_path in file_paths {
-        match env_as_html_data(&command_env, &PathBuf::from(file_path.trim())) {
+        let fp = Path::new(file_path.trim());
+        if !fp.exists() {
+            eprintln!(
+                "Runtime configuration skipping file '{}' because it does not exist.",
+                fp.display()
+            );
+            continue;
+        }
+        match env_as_html_data(&command_env, &fp.to_path_buf()) {
             Err(e) => {
                 eprintln!("Runtime configuration failed: {e:?}");
                 std::process::exit(1);

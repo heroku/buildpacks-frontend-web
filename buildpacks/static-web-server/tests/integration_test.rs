@@ -249,3 +249,37 @@ fn runtime_configuration() {
         );
     });
 }
+
+#[test]
+#[ignore = "integration test"]
+fn runtime_configuration_nonexistent_doc() {
+    static_web_server_integration_test("./fixtures/nonexistent_doc_root", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            ContainerConfig::new().env(
+                "PUBLIC_INTEGRATION_TEST",
+                "runtime-config-via-container-env",
+            ),
+            |container, socket_addr| {
+                let log_output = container.logs_now();
+                assert_contains!(log_output.stderr, "Runtime configuration skipping file");
+
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/")).call()
+                });
+                match response_result {
+                    Err(ureq::Error::Status(code, _response)) => {
+                        assert_eq!(code, 404);
+                    }
+                    Ok(_) => {
+                        panic!("should respond 404 Not Found, but got 200 ok");
+                    }
+                    Err(error) => {
+                        panic!("should respond 404 Not Found, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
