@@ -2,12 +2,12 @@
 
 This buildpack implements www hosting support for a static web app.
 
-* Defines [`project.toml` configuration](#built-time-configuration), `[com.heroku.static-web-server]`
+* Defines [`project.toml` configuration](#build-time-configuration), `[com.heroku.static-web-server]`
 * At build:
   * Installs a static web server (currently [Caddy](https://caddyserver.com/)).
   * [Inherits configuration](#inherited-build-time-configuration) from the Build Plan `[requires.metadata]` of other buildpacks.
   * Transforms the configuration into native configuration for the web server.
-  * Optionally, runs a `build` command, such as `npm build` for minification & bundling of a Javascript app.
+  * Optionally, runs a [static build command](#static-build-command).
 * At launch, the default `web` process:
   * Performs [runtime app configuration](#runtime-app-configuration), `PUBLIC_*` environment variables are written into `<body data-*>` attributes of the default HTML file in the document root.
   * Starts the web server listing on the `PORT`, using the server's native config generated during build.
@@ -110,18 +110,32 @@ This is set in the app source repo [`project.toml`](https://buildpacks.io/docs/r
 
 This buildpack supports a executing a build command during CNB Build process. The output of this command is saved in the container image.
 
+For apps built with Node.js, execution of the build command is typically handled automatically by [heroku/nodejs CNB's build script hooks](https://github.com/heroku/buildpacks-nodejs/blob/main/README.md#build-script-hooks), and does not need to be configured here.
+
+If your static web app is a static site generator built in a language other than JS, then you may need to configure the static site build command here. For example, [Hugo](https://gohugo.io) written in Go:
+
 ```toml
 [com.heroku.static-web-server.build]
 command = "sh"
-args = ["-c", "npm build"]
+args = ["-c", "hugo"]
 ```
 
 This static build command does not have access to Heroku app config vars, but still can be configured using CNB Build variables in `project.toml`:
 
 ```toml
  [[io.buildpacks.build.env]]
- name = "API_URL"
- value = "https://test.example.com/api/v7"
+ name = "HUGO_ENABLE_ROBOTS_TXT"
+ value = "true"
+```
+
+When dependent on another language's compiled program like this, ensure that the app's buildpacks are ordered with `heroku/static-web-server` last, after the language buildpack.
+
+```toml
+[[io.buildpacks.group]]
+id = "heroku/go"
+
+[[io.buildpacks.group]]
+id = "heroku/static-web-server"
 ```
 
 ### Runtime Configuration Enabled
