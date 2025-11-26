@@ -50,9 +50,10 @@ impl Buildpack for WebsiteEmberBuildpack {
             };
 
         let mut static_web_server_req = Require::new("static-web-server");
+
         static_web_server_req
             .metadata(toml! {
-                root = "/workspace/static-artifacts"
+                root = "/workspace/dist"
                 index = "index.html"
 
                 [errors.404]
@@ -61,44 +62,10 @@ impl Buildpack for WebsiteEmberBuildpack {
             })
             .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
 
-        let mut release_phase_req = Require::new("release-phase");
-        let mut release_phase_metadata = toml::Table::new();
-        let mut release_build_command = toml::Table::new();
-        release_build_command.insert("command".to_string(), "bash".to_string().into());
-        let pkg_mgr_build_command = if context.app_dir.join("yarn.lock").exists() {
-            "yarn run build"
-        } else if context.app_dir.join("pnpm-lock.yaml").exists() {
-            "pnpm run build"
-        } else {
-            "npm run build"
-        };
-        release_build_command.insert(
-            "args".to_string(),
-            vec![
-                "-c",
-                format!("{pkg_mgr_build_command} && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/").as_str(),
-            ]
-            .into(),
-        );
-        release_build_command.insert("source".to_string(), BUILDPACK_NAME.to_string().into());
-        release_phase_metadata.insert("release-build".to_string(), release_build_command.into());
-        release_phase_req
-            .metadata(release_phase_metadata)
-            .map_err(WebsiteEmberBuildpackError::SettingBuildPlanMetadata)?;
-
-        let mut nodejs_require = Require::new("heroku/nodejs");
-        nodejs_require.metadata = toml! {
-            // The package.json build scripts are automatically executed by the heroku/nodejs
-            // component buildpacks responsible for installing dependencies for the detected
-            // package manager (i.e.; npm, pnpm, or Yarn). This needs to be disabled so that
-            // the build process can be deferred to the release-build phase.
-            enabled = false
-            skip_pruning = true
-        };
+        let nodejs_require = Require::new("heroku/nodejs");
 
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req)
-            .requires(release_phase_req)
             .requires(nodejs_require);
 
         if depends_on_ember_cli {
