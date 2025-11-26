@@ -9,7 +9,7 @@ This buildpack implements www hosting support for a static web app.
   * Transforms the configuration into native configuration for the web server.
   * Optionally, runs a `build` command, such as `npm build` for minification & bundling of a Javascript app.
 * At launch, the default `web` process:
-  * To support [runtime app configuration](#runtime-app-configuration), `PUBLIC_*` environment variables are injected into `<body data-*>` attributes of HTML files in the document root.
+  * Performs [runtime app configuration](#runtime-app-configuration), `PUBLIC_*` environment variables are written into `<body data-*>` attributes of the default HTML file in the document root.
   * Starts the web server listing on the `PORT`, using the server's native config generated during build.
   * Honors process signals for graceful shutdown.
 
@@ -24,15 +24,15 @@ id = "heroku/static-web-server"
 
 ## Runtime App Configuration
 
-_Dynamic config used by the static web app at runtime, to support different app instances, such as Staging vs Production app configuration._
+_Dynamic config used by the static web app at runtime, to support different app instances, such as a backend API URL that differs between Staging and Production._
 
-These are set in the container's environment variables ([Heroku Config Vars](https://devcenter.heroku.com/articles/config-vars)) and during CNB launch, written into the default HTML document. To access runtime app config, the javascript app's source code must be modified to read configuration values from the global `document.body.dataset`, [HTML data-* attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
+These are set in the container's environment variables ([Heroku Config Vars](https://devcenter.heroku.com/articles/config-vars)) and during CNB launch, written into the default HTML document. To access runtime app config, the javascript app's source code must read configuration values from the global `document.body.dataset`, [HTML data-* attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
 
 **Do not set secret values into these environment variables.** They will be injected into the website, where anyone on the internet can see the values. As a precaution, only environment variables prefixed with `PUBLIC_` prefix will be exposed.
 
 **This feature parses and rewrites the HTML document.** If the document's HTML syntax is invalid, the parser ([Servo's html5ever](https://github.com/servo/html5ever)) will correct the document using the same heuristics as web browsers.
 
-This Runtime App Configuration feature can be [disabled using Build-time Configuration](#runtime-configuration-enabled).
+This Runtime App Configuration feature can be [disabled through Build-time Configuration](#runtime-configuration-enabled).
 
 ### Runtime Config Usage
 
