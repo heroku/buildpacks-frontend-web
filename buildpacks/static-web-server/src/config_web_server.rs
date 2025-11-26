@@ -4,7 +4,7 @@ use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, BUILD_PLAN_
 use libcnb::additional_buildpack_binary_path;
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
-use libcnb::layer_env::{LayerEnv, ModificationBehavior, Scope};
+use libcnb::layer_env::{ModificationBehavior, Scope};
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use static_web_server_utils::read_project_config;
@@ -36,18 +36,24 @@ pub(crate) fn config_web_server(
     let runtime_config_enabled_opt = heroku_config.runtime_config_enabled;
 
     // Resolve web root and index doc
-    let doc_root = heroku_config
+    let doc_root_path = heroku_config
         .root
         .clone()
         .or(Some(PathBuf::from(DEFAULT_DOC_ROOT)))
         .expect("should always default to some value");
+    let doc_root = doc_root_path.to_string_lossy();
     let doc_index = heroku_config
         .index
         .clone()
         .or(Some(DEFAULT_DOC_INDEX.to_owned()))
         .expect("should always default to some value");
-    let default_doc_string = format!("{}/{}", doc_root.to_string_lossy(), doc_index);
-    let default_doc_path = Path::new(default_doc_string.as_str());
+    let default_doc_path = format!("{doc_root}/{doc_index}");
+    let default_doc_string = if doc_root.is_empty() {
+        doc_index.as_str()
+    } else {
+        default_doc_path.as_str()
+    };
+    let default_doc_path = Path::new(default_doc_string);
 
     // Transform web server config to Caddy native JSON config
     let caddy_config = CaddyConfig::try_from(heroku_config)?;
