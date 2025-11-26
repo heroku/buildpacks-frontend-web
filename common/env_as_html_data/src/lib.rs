@@ -54,7 +54,7 @@ pub fn env_as_html_data<S: BuildHasher>(
 
 pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
-    html_bytes: &Vec<u8>,
+    html_bytes: &[u8],
 ) -> Result<(bool, String), Error> {
     let opts = ParseOpts {
         tree_builder: TreeBuilderOpts {
@@ -68,7 +68,7 @@ pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
 
     if let (_, false) = match_html_body_and_inject_data(data, &dom.document)? {
         return Ok((false, html.to_owned()));
-    };
+    }
 
     let document: SerializableHandle = dom.document.clone().into();
 
@@ -171,13 +171,13 @@ fn inject_html_data_attrs<S: BuildHasher>(
                 value,
             };
             attrs_borrow.push(new_attr);
-        };
+        }
     }
 
     Ok(true)
 }
 
-fn format_html_data_attr_name(name: &String) -> String {
+fn format_html_data_attr_name(name: &str) -> String {
     format!("data-{}", name.to_lowercase())
 }
 
