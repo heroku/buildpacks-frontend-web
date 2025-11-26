@@ -1,8 +1,7 @@
 use std::fmt::{self, Debug};
 
 #[derive(Debug)]
-pub(crate) enum Error {
-    ConfigError(String),
+pub enum Error {
     ElementExpected(String),
     EncodeError(String),
     FileError(std::io::Error, String),
@@ -14,9 +13,6 @@ pub(crate) enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::ConfigError(error) => {
-                write!(f, "Env-as-HTML-Data configuration error, {error}")
-            }
             Error::ElementExpected(got_name) => {
                 write!(
                     f,

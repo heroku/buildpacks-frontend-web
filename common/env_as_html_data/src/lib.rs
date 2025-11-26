@@ -4,6 +4,9 @@ extern crate markup5ever_rcdom as rcdom;
 mod errors;
 use errors::Error;
 
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::PathBuf;
 use std::{collections::HashMap, hash::BuildHasher, rc::Rc, str::FromStr};
 
 use html5ever::driver::ParseOpts;
@@ -13,11 +16,45 @@ use html5ever::tree_builder::TreeBuilderOpts;
 use html5ever::{ns, parse_document, serialize, Attribute, LocalName, QualName};
 use rcdom::{Handle, Node, NodeData, RcDom, SerializableHandle};
 
-pub(crate) fn env_as_html_data() {}
+pub fn env_as_html_data<S: BuildHasher>(
+    data: &HashMap<String, String, S>,
+    file_path: &PathBuf,
+) -> Result<bool, Error> {
+    let mut html_file = File::options()
+        .read(true)
+        .open(file_path)
+        .map_err(|e| Error::FileError(e, format!("Tried to open {}", file_path.display())))?;
+    let mut buffer = Vec::new();
+    html_file
+        .read_to_end(&mut buffer)
+        .map_err(|e| Error::FileError(e, format!("Tried to read {}", file_path.display())))?;
+
+    match parse_html_and_inject_data(data, &buffer)? {
+        (true, html_result) => {
+            let mut rewrite_html_file = File::options()
+                .write(true)
+                .truncate(true)
+                .open(file_path)
+                .map_err(|e| {
+                    Error::FileError(
+                        e,
+                        format!("Tried to reopen for writing {}", file_path.display()),
+                    )
+                })?;
+            rewrite_html_file
+                .write_all(html_result.as_bytes())
+                .map_err(|e| {
+                    Error::FileError(e, format!("Tried to write {}", file_path.display()))
+                })?;
+            Ok(true)
+        }
+        (false, _) => Ok(false),
+    }
+}
 
 pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
-    html: &str,
+    html_bytes: &Vec<u8>,
 ) -> Result<(bool, String), Error> {
     let opts = ParseOpts {
         tree_builder: TreeBuilderOpts {
@@ -25,10 +62,9 @@ pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
         },
         ..Default::default()
     };
-    let dom = parse_document(RcDom::default(), opts)
-        .from_utf8()
-        .read_from(&mut html.as_bytes())
-        .map_err(|e| Error::ParseError(e.to_string()))?;
+    let html = std::str::from_utf8(html_bytes)
+        .map_err(|e| Error::ParseError(format!("could not decode HTML as UTF-8 {e:?}")))?;
+    let dom = parse_document(RcDom::default(), opts).one(html);
 
     if let (_, false) = match_html_body_and_inject_data(data, &dom.document)? {
         return Ok((false, html.to_owned()));
@@ -70,10 +106,9 @@ fn match_html_body_and_inject_data<S: BuildHasher>(
             if m.is_none() {
                 let mut children = n.children.borrow_mut();
                 for child in children.iter_mut() {
-                    match (recurse_to_match.f)(recurse_to_match, child) {
-                        Ok((true, did_inject)) => return Ok((true, did_inject)),
-                        _ => (),
-                    };
+                    if let Ok((true, did_inject)) = (recurse_to_match.f)(recurse_to_match, child) {
+                        return Ok((true, did_inject));
+                    }
                 }
                 return Ok((false, false));
             }
@@ -148,8 +183,56 @@ fn format_html_data_attr_name(name: &String) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::parse_html_and_inject_data;
-    use std::collections::HashMap;
+    use crate::{env_as_html_data, parse_html_and_inject_data};
+    use std::{
+        collections::HashMap,
+        fs::{self, File},
+        io::{Read, Write},
+        path::Path,
+    };
+    use uuid::Uuid;
+
+    #[test]
+    #[allow(clippy::assertions_on_constants)]
+    fn env_as_html_data_writes_into_file() {
+        let mut data: HashMap<String, String> = HashMap::new();
+        data.insert(
+            "PUBLIC_API_URL".to_string(),
+            "https://api.example.com/v1".to_string(),
+        );
+        let html =
+            "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1"><h1>Hello World</h1></body></html>"#;
+
+        let unique = Uuid::new_v4();
+        let test_dir = format!("env-as-html-data-test-{unique}");
+        let test_path = Path::new(&test_dir);
+        fs::create_dir_all(test_path).expect("test dir should be created");
+        let index_html_path = test_path.join("index.html");
+        File::create(&index_html_path)
+            .and_then(|mut file| file.write_all(html.as_bytes()))
+            .expect("HTML file shoud be written");
+
+        let mut result_html = Vec::new();
+        match env_as_html_data(&data, &index_html_path) {
+            Ok(true) => {
+                let mut result_file =
+                    File::open(index_html_path).expect("the test file should exist");
+                result_file
+                    .read_to_end(&mut result_html)
+                    .expect("test fixture file should contain bytes");
+            }
+            Ok(v) => assert!(v, "should have returned 'true' that inject was successful"),
+            Err(e) => assert!(false, "returned error {e:?}"),
+        }
+
+        fs::remove_dir_all(test_path).unwrap_or_default();
+
+        assert_eq!(
+            str::from_utf8(&result_html).expect("HTML contains valid UTF8 characters"),
+            expected_html
+        );
+    }
 
     #[test]
     fn parse_html_and_inject_data_sets_public_data() {
@@ -167,7 +250,7 @@ mod tests {
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, html) {
+        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
             Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
@@ -189,7 +272,7 @@ mod tests {
         let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, html) {
+        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
             Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
@@ -208,7 +291,7 @@ mod tests {
         let html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="http://localhost:3001/v1" data-public_release_version="v0"><h1>Hello World</h1></body></html>"#;
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101" data-public_debug_mode="true"><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, html) {
+        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
             Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
             Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
@@ -225,7 +308,7 @@ mod tests {
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
 
-        match parse_html_and_inject_data(&data, html) {
+        match parse_html_and_inject_data(&data, &html.as_bytes().to_vec()) {
             Ok((false, _)) => (),
             Ok((true, _)) => panic!("should have returned 'false' that inject did not happen"),
             Err(e) => panic!("returned error {e:?}"),
