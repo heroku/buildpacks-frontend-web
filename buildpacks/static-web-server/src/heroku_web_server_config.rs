@@ -15,7 +15,7 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) errors: Option<ErrorsConfig>,
     #[serde(default, deserialize_with = "deserialize_headers")]
     pub(crate) headers: Option<Vec<Header>>,
-    pub(crate) runtime_config_enabled: Option<bool>,
+    pub(crate) runtime_config: Option<RuntimeConfig>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -41,6 +41,11 @@ pub(crate) struct Header {
     pub(crate) path_matcher: String,
     pub(crate) key: String,
     pub(crate) value: String,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct RuntimeConfig {
+    pub(crate) enabled: Option<bool>,
 }
 
 fn deserialize_headers<'de, D>(d: D) -> Result<Option<Vec<Header>>, D::Error>
@@ -135,15 +140,16 @@ mod tests {
     }
 
     #[test]
-    fn custom_runtime_config_enabled() {
+    fn custom_runtime_config_disabled() {
         let toml_config = toml! {
-            runtime_config_enabled = false
+            [runtime_config]
+            enabled = false
         };
 
         let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
-        assert_eq!(parsed_config.runtime_config_enabled, Some(false));
+        assert_eq!(parsed_config.runtime_config.unwrap().enabled, Some(false));
         assert_eq!(parsed_config.headers, None);
         assert_eq!(parsed_config.errors, None);
     }

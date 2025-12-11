@@ -1,5 +1,7 @@
 use crate::caddy_config::CaddyConfig;
-use crate::heroku_web_server_config::{HerokuWebServerConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT};
+use crate::heroku_web_server_config::{
+    HerokuWebServerConfig, RuntimeConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
+};
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, BUILD_PLAN_ID};
 use libcnb::additional_buildpack_binary_path;
 use libcnb::data::layer_name;
@@ -33,7 +35,7 @@ pub(crate) fn config_web_server(
         generate_config_with_inheritance(project_config.as_ref(), &build_plan_config)?;
 
     let build_command_opt = heroku_config.build.clone();
-    let runtime_config_enabled_opt = heroku_config.runtime_config_enabled;
+    let runtime_config_opt = heroku_config.runtime_config.clone();
 
     // Resolve web root and index doc
     let doc_root_path = heroku_config
@@ -76,7 +78,11 @@ pub(crate) fn config_web_server(
     }
 
     // Set-up runtime configuration; defaults to enabled
-    if runtime_config_enabled_opt.unwrap_or(true) {
+    if runtime_config_opt
+        .unwrap_or(RuntimeConfig { enabled: None })
+        .enabled
+        .unwrap_or(true)
+    {
         log_info("Installing runtime configuration process…");
         let web_exec_destination = configuration_layer.path().join("exec.d/web");
         let exec_path = web_exec_destination.join("env-as-html-data");

@@ -145,8 +145,8 @@ id = "heroku/static-web-server"
 The [Runtime App Configuration](#runtime-app-configuration) feature may be disabled, such as when it is completely uneccesary or undesirable for a specific app.
 
 ```toml
-[com.heroku.static-web-server]
-runtime_config_enabled = false
+[com.heroku.static-web-server.runtime_config]
+enabled = false
 ```
 
 ### Document Root
