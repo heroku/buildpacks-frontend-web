@@ -76,9 +76,7 @@ pub(crate) fn config_web_server(
     }
 
     // Set-up runtime configuration; defaults to enabled
-    if runtime_config_enabled_opt
-        .unwrap_or(true)
-    {
+    if runtime_config_enabled_opt.unwrap_or(true) {
         log_info("Installing runtime configuration process…");
         let web_exec_destination = configuration_layer.path().join("exec.d/web");
         let exec_path = web_exec_destination.join("env-as-html-data");
