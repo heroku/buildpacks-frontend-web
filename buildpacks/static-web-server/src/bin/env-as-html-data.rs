@@ -39,10 +39,10 @@ fn main() {
                 std::process::exit(1);
             }
             Ok(HtmlRewritten::Yes) => {
-                eprintln!("Runtime configuration written into {file_path}");
+                eprintln!("Runtime configuration written into '{trimmed_file_path}'");
             }
             Ok(HtmlRewritten::No) => {
-                eprintln!("No runtime configuration is set, '{file_path}' unchanged");
+                eprintln!("No runtime configuration is set, '{trimmed_file_path}' unchanged");
             }
         }
     }

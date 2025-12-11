@@ -46,6 +46,7 @@ pub(crate) struct Header {
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
 pub(crate) struct RuntimeConfig {
     pub(crate) enabled: Option<bool>,
+    pub(crate) html_files: Option<Vec<String>>,
 }
 
 fn deserialize_headers<'de, D>(d: D) -> Result<Option<Vec<Header>>, D::Error>
@@ -150,6 +151,24 @@ mod tests {
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.runtime_config.unwrap().enabled, Some(false));
+        assert_eq!(parsed_config.headers, None);
+        assert_eq!(parsed_config.errors, None);
+    }
+
+    #[test]
+    fn custom_runtime_config_html_files() {
+        let toml_config = toml! {
+            [runtime_config]
+            html_files = ["main.html", "admin.html"]
+        };
+
+        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
+        assert_eq!(parsed_config.root, None);
+        assert_eq!(
+            parsed_config.runtime_config.unwrap().html_files,
+            Some(vec!["main.html".to_string(), "admin.html".to_string()])
+        );
         assert_eq!(parsed_config.headers, None);
         assert_eq!(parsed_config.errors, None);
     }

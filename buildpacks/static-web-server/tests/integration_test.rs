@@ -220,7 +220,67 @@ fn client_side_routing() {
 
 #[test]
 #[ignore = "integration test"]
-fn runtime_configuration() {
+fn runtime_configuration_custom() {
+    static_web_server_integration_test("./fixtures/runtime_config", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            ContainerConfig::new().env(
+                "PUBLIC_INTEGRATION_TEST",
+                "runtime-config-via-container-env",
+            ),
+            |container, socket_addr| {
+                let log_output = container.logs_now();
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/index.html'"
+                );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/subsection/index.html'"
+                );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration skipping 'public/non-existent.html'"
+                );
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(
+                            response_body,
+                            r#"data-public_integration_test="runtime-config-via-container-env""#
+                        );
+                    }
+                    Err(error) => {
+                        panic!("should respond 200 Ok, but received: {error:?}");
+                    }
+                }
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/subsection/")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(
+                            response_body,
+                            r#"data-public_integration_test="runtime-config-via-container-env""#
+                        );
+                    }
+                    Err(error) => {
+                        panic!("should respond 200 Ok, but received: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
+fn runtime_configuration_default() {
     static_web_server_integration_test("./fixtures/no_project_toml", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(
@@ -243,40 +303,6 @@ fn runtime_configuration() {
                     }
                     Err(error) => {
                         panic!("should respond 200 Ok, but received: {error:?}");
-                    }
-                }
-            },
-        );
-    });
-}
-
-#[test]
-#[ignore = "integration test"]
-fn runtime_configuration_nonexistent_doc() {
-    static_web_server_integration_test("./fixtures/nonexistent_doc_root", |ctx| {
-        assert_contains!(ctx.pack_stdout, "Static Web Server");
-        start_container(
-            &ctx,
-            ContainerConfig::new().env(
-                "PUBLIC_INTEGRATION_TEST",
-                "runtime-config-via-container-env",
-            ),
-            |container, socket_addr| {
-                let log_output = container.logs_now();
-                assert_contains!(log_output.stderr, "Runtime configuration skipping");
-
-                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
-                });
-                match response_result {
-                    Err(ureq::Error::Status(code, _response)) => {
-                        assert_eq!(code, 404);
-                    }
-                    Ok(_) => {
-                        panic!("should respond 404 Not Found, but got 200 ok");
-                    }
-                    Err(error) => {
-                        panic!("should respond 404 Not Found, but got other error: {error:?}");
                     }
                 }
             },

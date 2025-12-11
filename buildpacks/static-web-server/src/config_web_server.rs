@@ -11,7 +11,7 @@ use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use static_web_server_utils::read_project_config;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use toml::Table;
 
@@ -42,18 +42,10 @@ pub(crate) fn config_web_server(
         .root
         .clone()
         .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT));
-    let doc_root = doc_root_path.to_string_lossy();
     let doc_index = heroku_config
         .index
         .clone()
         .unwrap_or(DEFAULT_DOC_INDEX.to_string());
-    let default_doc_path = format!("{doc_root}/{doc_index}");
-    let default_doc_string = if doc_root.is_empty() {
-        doc_index.as_str()
-    } else {
-        default_doc_path.as_str()
-    };
-    let default_doc_path = Path::new(default_doc_string);
 
     // Transform web server config to Caddy native JSON config
     let caddy_config = CaddyConfig::try_from(heroku_config)?;
@@ -78,11 +70,11 @@ pub(crate) fn config_web_server(
     }
 
     // Set-up runtime configuration; defaults to enabled
-    if runtime_config_opt
-        .unwrap_or(RuntimeConfig { enabled: None })
-        .enabled
-        .unwrap_or(true)
-    {
+    let runtime_config = runtime_config_opt.unwrap_or(RuntimeConfig {
+        enabled: None,
+        html_files: None,
+    });
+    if runtime_config.enabled.unwrap_or(true) {
         log_info("Installing runtime configuration process…");
         let web_exec_destination = configuration_layer.path().join("exec.d/web");
         let exec_path = web_exec_destination.join("env-as-html-data");
@@ -101,7 +93,13 @@ pub(crate) fn config_web_server(
             Scope::Process("web".to_string()),
             ModificationBehavior::Override,
             "ENV_AS_HTML_DATA_TARGET_FILES",
-            default_doc_path,
+            runtime_config
+                .html_files
+                .unwrap_or(vec![doc_index])
+                .iter()
+                .map(|doc| format!("{}/{}", doc_root_path.to_string_lossy(), doc))
+                .collect::<Vec<_>>()
+                .join(", "),
         );
         configuration_layer.write_env(configuration_layer_env)?;
     } else {

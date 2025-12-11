@@ -149,6 +149,19 @@ The [Runtime App Configuration](#runtime-app-configuration) feature may be disab
 enabled = false
 ```
 
+### Runtime Configuration HTML Files
+
+*Default: the set [index document](#index-document), or else its default `index.html`*
+
+List of HTML files to rewrite with `data-*` attributes from [Runtime App Configuration](#runtime-app-configuration).
+
+The files must be located within the [document root](#document-root), `public/` by default.
+
+```toml
+[com.heroku.static-web-server.runtime_config]
+html_files = ["index.html", "subsection/index.html"]
+```
+
 ### Document Root
 
 *Default: `public`*
