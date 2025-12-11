@@ -27,12 +27,8 @@ pub fn env_as_html_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     file_path: &PathBuf,
 ) -> Result<HtmlRewritten, Error> {
-    let data_keys: Vec<String> = data
-        .keys()
-        .filter(|k| k.starts_with(ENV_VAR_PREFIX) || k.starts_with(&ENV_VAR_PREFIX.to_lowercase()))
-        .cloned()
-        .collect();
-    if data_keys.is_empty() {
+    let keys: Vec<String> = runtime_env_keys::<S>(data);
+    if keys.is_empty() {
         return Ok(HtmlRewritten::No);
     }
 
@@ -139,25 +135,25 @@ fn match_html_body_and_inject_data<S: BuildHasher>(
             if m.is_none() {
                 let mut children = n.children.borrow_mut();
                 for child in children.iter_mut() {
-                    if let Ok((HtmlMatched::Yes, did_inject)) =
+                    if let Ok((HtmlMatched::Yes, data_injected)) =
                         (recurse_to_match.f)(recurse_to_match, child)
                     {
-                        return Ok((HtmlMatched::Yes, did_inject));
+                        return Ok((HtmlMatched::Yes, data_injected));
                     }
                 }
                 return Ok((HtmlMatched::No, DataInjected::No));
             }
 
-            let did_inject = inject_html_data_attrs::<S>(
+            let data_injected = inject_html_data_attrs::<S>(
                 data,
                 m.expect("Document Node is already known to be Some"),
             )?;
-            Ok((HtmlMatched::Yes, did_inject))
+            Ok((HtmlMatched::Yes, data_injected))
         },
     };
 
     match (recurse_to_match.f)(&recurse_to_match, node) {
-        Ok((HtmlMatched::Yes, did_inject)) => Ok(did_inject),
+        Ok((HtmlMatched::Yes, data_injected)) => Ok(data_injected),
         Ok((HtmlMatched::No, _)) => Err(Error::NoBodyElementError),
         Err(e) => Err(e),
     }
@@ -176,13 +172,7 @@ fn inject_html_data_attrs<S: BuildHasher>(
         return Err(Error::ElementExpected(format!("{:?}", &element.data)));
     };
 
-    let mut keys: Vec<String> = data
-        .keys()
-        .filter(|k| k.starts_with(ENV_VAR_PREFIX) || k.starts_with(&ENV_VAR_PREFIX.to_lowercase()))
-        .cloned()
-        .collect();
-    keys.sort_unstable();
-
+    let keys = runtime_env_keys(data);
     if keys.is_empty() {
         return Ok(DataInjected::No);
     }
@@ -210,6 +200,16 @@ fn inject_html_data_attrs<S: BuildHasher>(
     }
 
     Ok(DataInjected::Yes)
+}
+
+fn runtime_env_keys<S: BuildHasher>(data: &HashMap<String, String, S>) -> Vec<String> {
+    let mut keys: Vec<String> = data
+        .keys()
+        .filter(|k| k.starts_with(ENV_VAR_PREFIX) || k.starts_with(&ENV_VAR_PREFIX.to_lowercase()))
+        .cloned()
+        .collect();
+    keys.sort_unstable();
+    keys
 }
 
 fn format_html_data_attr_name(name: &str) -> String {
