@@ -1,7 +1,7 @@
 #![allow(unused_crate_dependencies)]
 use std::{env, path::Path};
 
-use env_as_html_data::env_as_html_data;
+use env_as_html_data::{env_as_html_data, HtmlRewritten};
 
 fn main() {
     let command_env: std::collections::HashMap<String, String> = env::vars().collect();
@@ -25,7 +25,7 @@ fn main() {
                 eprintln!("Runtime configuration failed: {e:?}");
                 std::process::exit(1);
             }
-            Ok(true) => {
+            Ok(HtmlRewritten::Yes) => {
                 eprintln!("Runtime configuration written into {file_path}");
             }
             _ => (),

@@ -16,10 +16,15 @@ use html5ever::tree_builder::TreeBuilderOpts;
 use html5ever::{ns, parse_document, serialize, Attribute, LocalName, QualName};
 use rcdom::{Handle, Node, NodeData, RcDom, SerializableHandle};
 
+pub enum HtmlRewritten {
+    Yes,
+    No,
+}
+
 pub fn env_as_html_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     file_path: &PathBuf,
-) -> Result<bool, Error> {
+) -> Result<HtmlRewritten, Error> {
     let mut html_file = File::options()
         .read(true)
         .open(file_path)
@@ -30,7 +35,7 @@ pub fn env_as_html_data<S: BuildHasher>(
         .map_err(|e| Error::FileError(e, format!("Tried to read {}", file_path.display())))?;
 
     match parse_html_and_inject_data(data, &buffer)? {
-        (true, html_result) => {
+        HtmlChanged::Yes(html_result) => {
             let mut rewrite_html_file = File::options()
                 .write(true)
                 .truncate(true)
@@ -46,16 +51,21 @@ pub fn env_as_html_data<S: BuildHasher>(
                 .map_err(|e| {
                     Error::FileError(e, format!("Tried to write {}", file_path.display()))
                 })?;
-            Ok(true)
+            Ok(HtmlRewritten::Yes)
         }
-        (false, _) => Ok(false),
+        HtmlChanged::No => Ok(HtmlRewritten::No),
     }
+}
+
+pub(crate) enum HtmlChanged {
+    Yes(String),
+    No,
 }
 
 pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     html_bytes: &[u8],
-) -> Result<(bool, String), Error> {
+) -> Result<HtmlChanged, Error> {
     let opts = ParseOpts {
         tree_builder: TreeBuilderOpts {
             ..Default::default()
@@ -66,8 +76,8 @@ pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
         .map_err(|e| Error::ParseError(format!("could not decode HTML as UTF-8 {e:?}")))?;
     let dom = parse_document(RcDom::default(), opts).one(html);
 
-    if let (_, false) = match_html_body_and_inject_data(data, &dom.document)? {
-        return Ok((false, html.to_owned()));
+    if let DataInjected::No = match_html_body_and_inject_data(data, &dom.document)? {
+        return Ok(HtmlChanged::No);
     }
 
     let document: SerializableHandle = dom.document.clone().into();
@@ -77,20 +87,32 @@ pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
         .map_err(|e| Error::SerializeError(e.to_string()))?;
     let output =
         std::str::from_utf8(buf.as_slice()).map_err(|e| Error::EncodeError(e.to_string()))?;
-    Ok((true, output.to_string()))
+    Ok(HtmlChanged::Yes(output.to_string()))
+}
+
+pub(crate) enum HtmlMatched {
+    Yes,
+    No,
+}
+
+pub(crate) enum DataInjected {
+    Yes,
+    No,
 }
 
 #[allow(clippy::type_complexity)]
 fn match_html_body_and_inject_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     node: &Handle,
-) -> Result<(bool, bool), Error> {
+) -> Result<DataInjected, Error> {
     // Closure around the reference-counted HTML DOM document/nodes, to support recursing to find the body element
     struct RecurseToMatch<'r> {
-        f: &'r dyn Fn(&RecurseToMatch, &Rc<Node>) -> Result<(bool, bool), Error>,
+        f: &'r dyn Fn(&RecurseToMatch, &Rc<Node>) -> Result<(HtmlMatched, DataInjected), Error>,
     }
     let recurse_to_match = RecurseToMatch {
-        f: &|recurse_to_match: &RecurseToMatch, n: &Rc<Node>| -> Result<(bool, bool), Error> {
+        f: &|recurse_to_match: &RecurseToMatch,
+             n: &Rc<Node>|
+         -> Result<(HtmlMatched, DataInjected), Error> {
             let m: Option<&Rc<Node>> = match n.data {
                 NodeData::Element { ref name, .. } => {
                     if *name.local == *"body" {
@@ -106,24 +128,26 @@ fn match_html_body_and_inject_data<S: BuildHasher>(
             if m.is_none() {
                 let mut children = n.children.borrow_mut();
                 for child in children.iter_mut() {
-                    if let Ok((true, did_inject)) = (recurse_to_match.f)(recurse_to_match, child) {
-                        return Ok((true, did_inject));
+                    if let Ok((HtmlMatched::Yes, did_inject)) =
+                        (recurse_to_match.f)(recurse_to_match, child)
+                    {
+                        return Ok((HtmlMatched::Yes, did_inject));
                     }
                 }
-                return Ok((false, false));
+                return Ok((HtmlMatched::No, DataInjected::No));
             }
 
             let did_inject = inject_html_data_attrs::<S>(
                 data,
                 m.expect("Document Node is already known to be Some"),
             )?;
-            Ok((true, did_inject))
+            Ok((HtmlMatched::Yes, did_inject))
         },
     };
 
     match (recurse_to_match.f)(&recurse_to_match, node) {
-        Ok((true, did_inject)) => Ok((true, did_inject)),
-        Ok((false, _)) => Err(Error::NoBodyElementError),
+        Ok((HtmlMatched::Yes, did_inject)) => Ok(did_inject),
+        Ok((HtmlMatched::No, _)) => Err(Error::NoBodyElementError),
         Err(e) => Err(e),
     }
 }
@@ -131,7 +155,7 @@ fn match_html_body_and_inject_data<S: BuildHasher>(
 fn inject_html_data_attrs<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     element: &Rc<Node>,
-) -> Result<bool, Error> {
+) -> Result<DataInjected, Error> {
     let NodeData::Element {
         name: qual_name,
         attrs,
@@ -149,7 +173,7 @@ fn inject_html_data_attrs<S: BuildHasher>(
     keys.sort_unstable();
 
     if keys.is_empty() {
-        return Ok(false);
+        return Ok(DataInjected::No);
     }
 
     let mut attrs_borrow = attrs.borrow_mut();
@@ -174,7 +198,7 @@ fn inject_html_data_attrs<S: BuildHasher>(
         }
     }
 
-    Ok(true)
+    Ok(DataInjected::Yes)
 }
 
 fn format_html_data_attr_name(name: &str) -> String {
@@ -183,7 +207,7 @@ fn format_html_data_attr_name(name: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::{env_as_html_data, parse_html_and_inject_data};
+    use crate::{env_as_html_data, parse_html_and_inject_data, HtmlChanged, HtmlRewritten};
     use std::{
         collections::HashMap,
         fs::{self, File},
@@ -215,14 +239,14 @@ mod tests {
 
         let mut result_html = Vec::new();
         match env_as_html_data(&data, &index_html_path) {
-            Ok(true) => {
+            Ok(HtmlRewritten::Yes) => {
                 let mut result_file =
                     File::open(index_html_path).expect("the test file should exist");
                 result_file
                     .read_to_end(&mut result_html)
                     .expect("test fixture file should contain bytes");
             }
-            Ok(v) => assert!(v, "should have returned 'true' that inject was successful"),
+            Ok(HtmlRewritten::No) => assert!(false, "should have rewritten the HTML"),
             Err(e) => assert!(false, "returned error {e:?}"),
         }
 
@@ -251,8 +275,8 @@ mod tests {
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
-            Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
-            Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
+            Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
+            Ok(HtmlChanged::No) => panic!("should have changed the HTML"),
             Err(e) => panic!("returned error {e:?}"),
         }
     }
@@ -273,8 +297,8 @@ mod tests {
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
-            Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
-            Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
+            Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
+            Ok(HtmlChanged::No) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
         }
     }
@@ -292,8 +316,8 @@ mod tests {
         let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101" data-public_debug_mode="true"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
-            Ok((true, result_value)) => assert_eq!(&result_value, expected_html),
-            Ok((false, _)) => panic!("should have returned 'true' that inject was successful"),
+            Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
+            Ok(HtmlChanged::No) => panic!("should have returned 'true' that inject was successful"),
             Err(e) => panic!("returned error {e:?}"),
         }
     }
@@ -309,8 +333,10 @@ mod tests {
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
-            Ok((false, _)) => (),
-            Ok((true, _)) => panic!("should have returned 'false' that inject did not happen"),
+            Ok(HtmlChanged::No) => (),
+            Ok(HtmlChanged::Yes(_)) => {
+                panic!("should have returned 'false' that inject did not happen")
+            }
             Err(e) => panic!("returned error {e:?}"),
         }
     }
