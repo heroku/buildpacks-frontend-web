@@ -39,8 +39,7 @@ pub(crate) fn config_web_server(
     let doc_root_path = heroku_config
         .root
         .clone()
-        .or(Some(PathBuf::from(DEFAULT_DOC_ROOT)))
-        .expect("should always default to some value");
+        .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT));
     let doc_root = doc_root_path.to_string_lossy();
     let doc_index = heroku_config
         .index
