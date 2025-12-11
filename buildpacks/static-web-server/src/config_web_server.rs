@@ -44,8 +44,7 @@ pub(crate) fn config_web_server(
     let doc_index = heroku_config
         .index
         .clone()
-        .or(Some(DEFAULT_DOC_INDEX.to_owned()))
-        .expect("should always default to some value");
+        .unwrap_or(DEFAULT_DOC_INDEX.to_string());
     let default_doc_path = format!("{doc_root}/{doc_index}");
     let default_doc_string = if doc_root.is_empty() {
         doc_index.as_str()
