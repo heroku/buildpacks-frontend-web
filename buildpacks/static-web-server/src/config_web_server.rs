@@ -77,8 +77,7 @@ pub(crate) fn config_web_server(
 
     // Set-up runtime configuration; defaults to enabled
     if runtime_config_enabled_opt
-        .or(Some(true))
-        .expect("should always default to some boolean")
+        .unwrap_or(true)
     {
         log_info("Installing runtime configuration process…");
         let web_exec_destination = configuration_layer.path().join("exec.d/web");
