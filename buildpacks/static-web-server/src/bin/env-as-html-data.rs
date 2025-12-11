@@ -28,7 +28,9 @@ fn main() {
             Ok(HtmlRewritten::Yes) => {
                 eprintln!("Runtime configuration written into {file_path}");
             }
-            _ => (),
+            Ok(HtmlRewritten::No) => {
+                eprintln!("No runtime configuration is set, '{file_path}' unchanged");
+            }
         }
     }
 }

@@ -16,6 +16,8 @@ use html5ever::tree_builder::TreeBuilderOpts;
 use html5ever::{ns, parse_document, serialize, Attribute, LocalName, QualName};
 use rcdom::{Handle, Node, NodeData, RcDom, SerializableHandle};
 
+pub const ENV_VAR_PREFIX: &str = "PUBLIC_";
+
 pub enum HtmlRewritten {
     Yes,
     No,
@@ -25,6 +27,15 @@ pub fn env_as_html_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     file_path: &PathBuf,
 ) -> Result<HtmlRewritten, Error> {
+    let data_keys: Vec<String> = data
+        .keys()
+        .filter(|k| k.starts_with(ENV_VAR_PREFIX) || k.starts_with(&ENV_VAR_PREFIX.to_lowercase()))
+        .cloned()
+        .collect();
+    if data_keys.is_empty() {
+        return Ok(HtmlRewritten::No);
+    }
+
     let mut html_file = File::options()
         .read(true)
         .open(file_path)
@@ -167,7 +178,7 @@ fn inject_html_data_attrs<S: BuildHasher>(
 
     let mut keys: Vec<String> = data
         .keys()
-        .filter(|k| k.starts_with("PUBLIC_") || k.starts_with("public_"))
+        .filter(|k| k.starts_with(ENV_VAR_PREFIX) || k.starts_with(&ENV_VAR_PREFIX.to_lowercase()))
         .cloned()
         .collect();
     keys.sort_unstable();
