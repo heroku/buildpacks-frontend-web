@@ -3,6 +3,8 @@ use std::{env, path::Path};
 
 use env_as_html_data::{env_as_html_data, HtmlRewritten};
 
+pub const ALLOWED_FILESYSTEM_ROOT: &str = "/workspace";
+
 fn main() {
     let command_env: std::collections::HashMap<String, String> = env::vars().collect();
 
@@ -12,15 +14,26 @@ fn main() {
     }).map(|v| v.split(',').collect()).expect("should exit failure when none");
 
     for file_path in file_paths {
-        let fp = Path::new(file_path.trim());
-        if !fp.exists() {
+        let trimmed_file_path = file_path.trim();
+        let canonical_path = Path::new(trimmed_file_path).canonicalize();
+        let fp = match canonical_path {
+            Err(e) => {
+                eprintln!(
+                    "Runtime configuration skipping '{trimmed_file_path}' because the path is invalid: {e}"
+                );
+                continue;
+            }
+            Ok(path_buf) => path_buf.clone(),
+        };
+        if !fp.starts_with(ALLOWED_FILESYSTEM_ROOT) {
             eprintln!(
-                "Runtime configuration skipping file '{}' because it does not exist.",
-                fp.display()
+                "Runtime configuration skipping '{}' because it is not in '{}'.",
+                fp.display(),
+                ALLOWED_FILESYSTEM_ROOT
             );
             continue;
         }
-        match env_as_html_data(&command_env, &fp.to_path_buf()) {
+        match env_as_html_data(&command_env, &fp.clone()) {
             Err(e) => {
                 eprintln!("Runtime configuration failed: {e:?}");
                 std::process::exit(1);

@@ -263,7 +263,7 @@ fn runtime_configuration_nonexistent_doc() {
             ),
             |container, socket_addr| {
                 let log_output = container.logs_now();
-                assert_contains!(log_output.stderr, "Runtime configuration skipping file");
+                assert_contains!(log_output.stderr, "Runtime configuration skipping");
 
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}/")).call()
