@@ -5,7 +5,7 @@ pub enum Error {
     ElementExpected(String),
     EncodeError(String),
     FileError(std::io::Error, String),
-    NoBodyElementError,
+    NoHeadElementError,
     ParseError(String),
     SerializeError(String),
 }
@@ -25,8 +25,8 @@ impl fmt::Display for Error {
             Error::FileError(error, error_desc) => {
                 write!(f, "Env-as-HTML-Data file error, {error_desc}, {error:#?}")
             }
-            Error::NoBodyElementError => {
-                write!(f, "Env-as-HTML-Data no body element found in document")
+            Error::NoHeadElementError => {
+                write!(f, "Env-as-HTML-Data no head element found in document")
             }
             Error::ParseError(error) => {
                 write!(f, "Env-as-HTML-Data document parsing error, {error}")

@@ -83,7 +83,7 @@ pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
         .map_err(|e| Error::ParseError(format!("could not decode HTML as UTF-8 {e:?}")))?;
     let dom = parse_document(RcDom::default(), opts).one(html);
 
-    if let DataInjected::No = match_html_body_and_inject_data(data, &dom.document)? {
+    if let DataInjected::No = match_html_head_and_inject_data(data, &dom.document)? {
         return Ok(HtmlChanged::No);
     }
 
@@ -108,11 +108,11 @@ pub(crate) enum DataInjected {
 }
 
 #[allow(clippy::type_complexity)]
-fn match_html_body_and_inject_data<S: BuildHasher>(
+fn match_html_head_and_inject_data<S: BuildHasher>(
     data: &HashMap<String, String, S>,
     node: &Handle,
 ) -> Result<DataInjected, Error> {
-    // Closure around the reference-counted HTML DOM document/nodes, to support recursing to find the body element
+    // Closure around the reference-counted HTML DOM document/nodes, to support recursing to find the head element
     struct RecurseToMatch<'r> {
         f: &'r dyn Fn(&RecurseToMatch, &Rc<Node>) -> Result<(HtmlMatched, DataInjected), Error>,
     }
@@ -122,7 +122,7 @@ fn match_html_body_and_inject_data<S: BuildHasher>(
          -> Result<(HtmlMatched, DataInjected), Error> {
             let m: Option<&Rc<Node>> = match n.data {
                 NodeData::Element { ref name, .. } => {
-                    if *name.local == *"body" {
+                    if *name.local == *"head" {
                         Some(n)
                     } else {
                         None
@@ -154,7 +154,7 @@ fn match_html_body_and_inject_data<S: BuildHasher>(
 
     match (recurse_to_match.f)(&recurse_to_match, node) {
         Ok((HtmlMatched::Yes, data_injected)) => Ok(data_injected),
-        Ok((HtmlMatched::No, _)) => Err(Error::NoBodyElementError),
+        Ok((HtmlMatched::No, _)) => Err(Error::NoHeadElementError),
         Err(e) => Err(e),
     }
 }
@@ -237,7 +237,7 @@ mod tests {
         );
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
         let unique = Uuid::new_v4();
         let test_dir = format!("env-as-html-data-test-{unique}");
@@ -283,7 +283,7 @@ mod tests {
         );
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
@@ -305,7 +305,7 @@ mod tests {
             "non-public should not be included".to_string(),
         );
         let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
@@ -323,8 +323,8 @@ mod tests {
         );
         data.insert("PUBLIC_WEB_DEBUG_MODE".to_string(), "true".to_string());
         data.insert("PUBLIC_WEB_RELEASE_VERSION".to_string(), "v101".to_string());
-        let html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="http://localhost:3001/v1" data-public_web_release_version="v0"><h1>Hello World</h1></body></html>"#;
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101" data-public_web_debug_mode="true"><h1>Hello World</h1></body></html>"#;
+        let html = r#"<html><head data-public_web_api_url="http://localhost:3001/v1" data-public_web_release_version="v0"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101" data-public_web_debug_mode="true"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
