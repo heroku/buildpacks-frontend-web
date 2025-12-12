@@ -230,19 +230,6 @@ fn runtime_configuration_custom() {
                 "runtime-config-via-container-env",
             ),
             |container, socket_addr| {
-                let log_output = container.logs_wait();
-                assert_contains!(
-                    log_output.stderr,
-                    "Runtime configuration written into 'public/index.html'"
-                );
-                assert_contains!(
-                    log_output.stderr,
-                    "Runtime configuration written into 'public/subsection/index.html'"
-                );
-                assert_contains!(
-                    log_output.stderr,
-                    "Runtime configuration skipping 'public/non-existent.html'"
-                );
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}/")).call()
                 });
@@ -273,6 +260,20 @@ fn runtime_configuration_custom() {
                         panic!("should respond 200 Ok, but received: {error:?}");
                     }
                 }
+
+                let log_output = container.logs_now();
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/index.html'"
+                );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/subsection/index.html'"
+                );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration skipping 'public/non-existent.html'"
+                );
             },
         );
     });
