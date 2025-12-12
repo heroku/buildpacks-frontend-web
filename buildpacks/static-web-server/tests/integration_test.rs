@@ -230,7 +230,7 @@ fn runtime_configuration_custom() {
                 "runtime-config-via-container-env",
             ),
             |container, socket_addr| {
-                let log_output = container.logs_now();
+                let log_output = container.logs_wait();
                 assert_contains!(
                     log_output.stderr,
                     "Runtime configuration written into 'public/index.html'"
