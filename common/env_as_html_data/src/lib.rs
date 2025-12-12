@@ -309,7 +309,7 @@ mod tests {
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
-            Ok(HtmlChanged::No) => panic!("should have returned 'true' that inject was successful"),
+            Ok(HtmlChanged::No) => panic!("should have returned HtmlChanged::Yes"),
             Err(e) => panic!("returned error {e:?}"),
         }
     }
@@ -328,7 +328,7 @@ mod tests {
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
-            Ok(HtmlChanged::No) => panic!("should have returned 'true' that inject was successful"),
+            Ok(HtmlChanged::No) => panic!("should have returned HtmlChanged::Yes"),
             Err(e) => panic!("returned error {e:?}"),
         }
     }
@@ -346,7 +346,7 @@ mod tests {
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::No) => (),
             Ok(HtmlChanged::Yes(_)) => {
-                panic!("should have returned 'false' that inject did not happen")
+                panic!("should have returned HtmlChanged::No")
             }
             Err(e) => panic!("returned error {e:?}"),
         }
