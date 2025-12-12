@@ -8,10 +8,15 @@ pub const ALLOWED_FILESYSTEM_ROOT: &str = "/workspace";
 fn main() {
     let command_env: std::collections::HashMap<String, String> = env::vars().collect();
 
-    let file_paths: Vec<&str> = command_env.get("ENV_AS_HTML_DATA_TARGET_FILES").or_else(|| {
-        eprintln!("Runtime configuration failed: env-as-html-data requires comma-delimited list of target files, the paths of the HTML documents to process. Set with environment variable: ENV_AS_HTML_DATA_TARGET_FILES. (This should be automatically set during CNB build.)");
-        std::process::exit(1);
-    }).map(|v| v.split(',').collect()).expect("should exit failure when none");
+    // Expects ENV_AS_HTML_DATA_TARGET_FILES to be set internally during CNB build, in config_web_server.
+    let file_paths: Vec<&str> = command_env
+        .get("ENV_AS_HTML_DATA_TARGET_FILES")
+        .or_else(|| {
+            eprintln!("Runtime configuration skipped, because no HTML files are configured.");
+            std::process::exit(0);
+        })
+        .map(|v| v.split(',').collect())
+        .expect("should exit success when none");
 
     for file_path in file_paths {
         let trimmed_file_path = file_path.trim();
