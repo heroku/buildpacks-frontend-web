@@ -9,7 +9,7 @@ This buildpack implements www hosting support for a static web app.
   * Transforms the configuration into native configuration for the web server.
   * Optionally, runs a [static build command](#static-build-command).
 * At launch, the default `web` process:
-  * Performs [runtime app configuration](#runtime-app-configuration), `PUBLIC_*` environment variables are written into `<body data-*>` attributes of the default HTML file in the document root.
+  * Performs [runtime app configuration](#runtime-app-configuration), `PUBLIC_WEB_*` environment variables are written into `<body data-*>` attributes of the default HTML file in the document root.
   * Starts the web server listing on the `PORT`, using the server's native config generated during build.
   * Honors process signals for graceful shutdown.
 
@@ -28,7 +28,7 @@ _Dynamic config used by the static web app at runtime, to support different app 
 
 These are set in the container's environment variables ([Heroku Config Vars](https://devcenter.heroku.com/articles/config-vars)) and during CNB launch, written into the default HTML document. To access runtime app config, the javascript app's source code must read configuration values from the global `document.body.dataset`, [HTML data-* attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
 
-**Do not set secret values into these environment variables.** They will be injected into the website, where anyone on the internet can see the values. As a precaution, only environment variables prefixed with `PUBLIC_` prefix will be exposed.
+**Do not set secret values into these environment variables.** They will be injected into the website, where anyone on the internet can see the values. As a precaution, only environment variables prefixed with `PUBLIC_WEB_` prefix will be exposed.
 
 **This feature parses and rewrites the HTML document.** If the document's HTML syntax is invalid, the parser ([Servo's html5ever](https://github.com/servo/html5ever)) will correct the document using the same heuristics as web browsers.
 
@@ -41,21 +41,21 @@ This Runtime App Configuration feature can be [disabled through Build-time Confi
 For example, an app is started with the environment:
 
 ```
-PUBLIC_API_URL=https://localhost:3001
-PUBLIC_RELEASE_VERSION=v42
+PUBLIC_WEB_API_URL=https://localhost:3001
+PUBLIC_WEB_RELEASE_VERSION=v42
 PORT=3000
 HOME=/workspace
 ```
 
-When the default HTML document is fetched by a web browser, loading the app, the `PUBLIC_*` vars can be accessed from javascript using the [HTML Data Attribtes](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/Use_data_attributes) via `document.body.dataset`:
+When the default HTML document is fetched by a web browser, loading the app, the `PUBLIC_WEB_*` vars can be accessed from javascript using the [HTML Data Attribtes](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/Use_data_attributes) via `document.body.dataset`:
 
 ```javascript
-document.body.dataset.public_api_url
+document.body.dataset.public_web_api_url
 // → "https://api-staging.example.com"
-document.body.dataset.public_release_version
+document.body.dataset.public_web_release_version
 // → "v42"
 
-// Not exposed because not prefixed with PUBLIC_
+// Not exposed because not prefixed with PUBLIC_WEB_
 document.body.dataset.port
 // → null
 document.body.dataset.home
@@ -64,11 +64,11 @@ document.body.dataset.home
 
 **The variable names are case-insensitive, accessed as lowercase.** Although enviroment variables are colloquially uppercased, the resulting HTML Data Attributes are set & accessed lowercased, because [they are case-insensitive XML names](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
 
-For example, the `public_api_url` might be used for a `fetch()` call:
+For example, the `public_web_api_url` might be used for a `fetch()` call:
 
 ```javascript
-// If the PUBLIC_API_URL variable is not set, default to the production API host.
-const apiUrl = document.body.dataset.public_api_url || 'https://api.example.com';
+// If the PUBLIC_WEB_API_URL variable is not set, default to the production API host.
+const apiUrl = document.body.dataset.public_web_api_url || 'https://api.example.com';
 const response = await fetch(apiUrl, {
   method: "POST",
   // …
@@ -82,8 +82,8 @@ Alternatively, default values can be preset in the HTML document's body element:
 <head>
   <title>Example</title>
 </head>
-<!-- If the PUBLIC_API_URL variable is set, this value in the document will be overwritten -->
-<body data-public_api_url="https://api.example.com">
+<!-- If the PUBLIC_WEB_API_URL variable is set, this value in the document will be overwritten -->
+<body data-public_web_api_url="https://api.example.com">
   <h1>Example</h1>
 </body>
 </html>  
@@ -92,7 +92,7 @@ Alternatively, default values can be preset in the HTML document's body element:
 Then, the javascript does not need a default value specified.
 
 ```javascript
-const response = await fetch(document.body.dataset.public_api_url, {
+const response = await fetch(document.body.dataset.public_web_api_url, {
   method: "POST",
   // …
 });

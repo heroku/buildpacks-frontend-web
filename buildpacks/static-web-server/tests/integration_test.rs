@@ -226,7 +226,7 @@ fn runtime_configuration_custom() {
         start_container(
             &ctx,
             ContainerConfig::new().env(
-                "PUBLIC_INTEGRATION_TEST",
+                "PUBLIC_WEB_INTEGRATION_TEST",
                 "runtime-config-via-container-env",
             ),
             |container, socket_addr| {
@@ -251,7 +251,7 @@ fn runtime_configuration_custom() {
                         let response_body = response.into_string().unwrap();
                         assert_contains!(
                             response_body,
-                            r#"data-public_integration_test="runtime-config-via-container-env""#
+                            r#"data-public_web_integration_test="runtime-config-via-container-env""#
                         );
                     }
                     Err(error) => {
@@ -266,7 +266,7 @@ fn runtime_configuration_custom() {
                         let response_body = response.into_string().unwrap();
                         assert_contains!(
                             response_body,
-                            r#"data-public_integration_test="runtime-config-via-container-env""#
+                            r#"data-public_web_integration_test="runtime-config-via-container-env""#
                         );
                     }
                     Err(error) => {
@@ -286,7 +286,7 @@ fn runtime_configuration_default() {
         start_container(
             &ctx,
             ContainerConfig::new().env(
-                "PUBLIC_INTEGRATION_TEST",
+                "PUBLIC_WEB_INTEGRATION_TEST",
                 "runtime-config-via-container-env",
             ),
             |_container, socket_addr| {
@@ -298,7 +298,7 @@ fn runtime_configuration_default() {
                         let response_body = response.into_string().unwrap();
                         assert_contains!(
                             response_body,
-                            r#"data-public_integration_test="runtime-config-via-container-env""#
+                            r#"data-public_web_integration_test="runtime-config-via-container-env""#
                         );
                     }
                     Err(error) => {

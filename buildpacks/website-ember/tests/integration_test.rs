@@ -15,7 +15,7 @@ fn ember_cli_app() {
         start_container(
             &ctx,
             ContainerConfig::new().env(
-                "PUBLIC_INTEGRATION_TEST",
+                "PUBLIC_WEB_INTEGRATION_TEST",
                 "runtime-config-via-container-env",
             ),
             |_container, socket_addr| {
@@ -29,7 +29,7 @@ fn ember_cli_app() {
                 assert_contains!(response_body, "cnb-ember-web-app/config/environment");
                 assert_contains!(
                     response_body,
-                    r#"data-public_integration_test="runtime-config-via-container-env""#
+                    r#"data-public_web_integration_test="runtime-config-via-container-env""#
                 );
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
@@ -42,7 +42,7 @@ fn ember_cli_app() {
                 assert_contains!(response_body, "cnb-ember-web-app/config/environment");
                 assert_contains!(
                     response_body,
-                    r#"data-public_integration_test="runtime-config-via-container-env""#
+                    r#"data-public_web_integration_test="runtime-config-via-container-env""#
                 );
             },
         );

@@ -16,7 +16,7 @@ use html5ever::tree_builder::TreeBuilderOpts;
 use html5ever::{ns, parse_document, serialize, Attribute, LocalName, QualName};
 use rcdom::{Handle, Node, NodeData, RcDom, SerializableHandle};
 
-pub const ENV_VAR_PREFIX: &str = "PUBLIC_";
+pub const ENV_VAR_PREFIX: &str = "PUBLIC_WEB_";
 
 pub enum HtmlRewritten {
     Yes,
@@ -232,12 +232,12 @@ mod tests {
     fn env_as_html_data_writes_into_file() {
         let mut data: HashMap<String, String> = HashMap::new();
         data.insert(
-            "PUBLIC_API_URL".to_string(),
+            "PUBLIC_WEB_API_URL".to_string(),
             "https://api.example.com/v1".to_string(),
         );
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1"><h1>Hello World</h1></body></html>"#;
 
         let unique = Uuid::new_v4();
         let test_dir = format!("env-as-html-data-test-{unique}");
@@ -270,20 +270,20 @@ mod tests {
     }
 
     #[test]
-    fn parse_html_and_inject_data_sets_public_data() {
+    fn parse_html_and_inject_data_sets_public_web_data() {
         let mut data: HashMap<String, String> = HashMap::new();
         data.insert(
-            "PUBLIC_API_URL".to_string(),
+            "PUBLIC_WEB_API_URL".to_string(),
             "https://api.example.com/v1".to_string(),
         );
-        data.insert("PUBLIC_RELEASE_VERSION".to_string(), "v101".to_string());
+        data.insert("PUBLIC_WEB_RELEASE_VERSION".to_string(), "v101".to_string());
         data.insert(
-            "NOT_PUBLIC_VAR".to_string(),
+            "NOT_PUBLIC_WEB_VAR".to_string(),
             "non-public should not be included".to_string(),
         );
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
@@ -296,16 +296,16 @@ mod tests {
     fn parse_html_and_inject_data_corrects_invalid_doc() {
         let mut data: HashMap<String, String> = HashMap::new();
         data.insert(
-            "PUBLIC_API_URL".to_string(),
+            "PUBLIC_WEB_API_URL".to_string(),
             "https://api.example.com/v1".to_string(),
         );
-        data.insert("PUBLIC_RELEASE_VERSION".to_string(), "v101".to_string());
+        data.insert("PUBLIC_WEB_RELEASE_VERSION".to_string(), "v101".to_string());
         data.insert(
-            "NOT_PUBLIC_VAR".to_string(),
+            "NOT_PUBLIC_WEB_VAR".to_string(),
             "non-public should not be included".to_string(),
         );
         let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
@@ -318,13 +318,13 @@ mod tests {
     fn parse_html_and_inject_data_overwrites_existing_attrs() {
         let mut data: HashMap<String, String> = HashMap::new();
         data.insert(
-            "PUBLIC_API_URL".to_string(),
+            "PUBLIC_WEB_API_URL".to_string(),
             "https://api.example.com/v1".to_string(),
         );
-        data.insert("PUBLIC_DEBUG_MODE".to_string(), "true".to_string());
-        data.insert("PUBLIC_RELEASE_VERSION".to_string(), "v101".to_string());
-        let html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="http://localhost:3001/v1" data-public_release_version="v0"><h1>Hello World</h1></body></html>"#;
-        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_api_url="https://api.example.com/v1" data-public_release_version="v101" data-public_debug_mode="true"><h1>Hello World</h1></body></html>"#;
+        data.insert("PUBLIC_WEB_DEBUG_MODE".to_string(), "true".to_string());
+        data.insert("PUBLIC_WEB_RELEASE_VERSION".to_string(), "v101".to_string());
+        let html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="http://localhost:3001/v1" data-public_web_release_version="v0"><h1>Hello World</h1></body></html>"#;
+        let expected_html = r#"<html><head><title>Hello World</title></head><body data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101" data-public_web_debug_mode="true"><h1>Hello World</h1></body></html>"#;
 
         match parse_html_and_inject_data(&data, html.as_bytes()) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
@@ -334,10 +334,10 @@ mod tests {
     }
 
     #[test]
-    fn parse_html_and_inject_data_without_public_data_makes_no_diff() {
+    fn parse_html_and_inject_data_without_public_web_data_makes_no_diff() {
         let mut data: HashMap<String, String> = HashMap::new();
         data.insert(
-            "NOT_PUBLIC_VAR".to_string(),
+            "NOT_PUBLIC_WEB_VAR".to_string(),
             "non-public should not be included".to_string(),
         );
         let html =
