@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-ember"
-version = "1.0.8"
+version = "2.0.0"
 name = "Heroku Website (Ember.js)"
 description = "A component of the 'heroku/website-nodejs' buildpack."
 
