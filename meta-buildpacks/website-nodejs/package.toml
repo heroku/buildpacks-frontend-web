@@ -9,6 +9,3 @@ uri = "docker://heroku/buildpack-nodejs:5.0.0"
 
 [[dependencies]]
 uri = "libcnb:heroku/static-web-server"
-
-[[dependencies]]
-uri = "docker://heroku/buildpack-release-phase:1.0.4"

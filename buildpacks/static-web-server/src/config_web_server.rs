@@ -1,12 +1,17 @@
 use crate::caddy_config::CaddyConfig;
-use crate::heroku_web_server_config::HerokuWebServerConfig;
+use crate::heroku_web_server_config::{
+    HerokuWebServerConfig, RuntimeConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
+};
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, BUILD_PLAN_ID};
+use libcnb::additional_buildpack_binary_path;
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
+use libcnb::layer_env::{ModificationBehavior, Scope};
 use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use static_web_server_utils::read_project_config;
 use std::fs;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use toml::Table;
 
@@ -30,6 +35,17 @@ pub(crate) fn config_web_server(
         generate_config_with_inheritance(project_config.as_ref(), &build_plan_config)?;
 
     let build_command_opt = heroku_config.build.clone();
+    let runtime_config_opt = heroku_config.runtime_config.clone();
+
+    // Resolve web root and index doc
+    let doc_root_path = heroku_config
+        .root
+        .clone()
+        .unwrap_or(PathBuf::from(DEFAULT_DOC_ROOT));
+    let doc_index = heroku_config
+        .index
+        .clone()
+        .unwrap_or(DEFAULT_DOC_INDEX.to_string());
 
     // Transform web server config to Caddy native JSON config
     let caddy_config = CaddyConfig::try_from(heroku_config)?;
@@ -53,6 +69,43 @@ pub(crate) fn config_web_server(
             .map_err(StaticWebServerBuildpackError::BuildCommandFailed)?;
     }
 
+    // Set-up runtime configuration; defaults to enabled
+    let runtime_config = runtime_config_opt.unwrap_or(RuntimeConfig {
+        enabled: None,
+        html_files: None,
+    });
+    if runtime_config.enabled.unwrap_or(true) {
+        log_info("Installing runtime configuration process…");
+        let web_exec_destination = configuration_layer.path().join("exec.d/web");
+        let exec_path = web_exec_destination.join("env-as-html-data");
+        log_info(format!("  {}", exec_path.display()));
+        fs::create_dir_all(&web_exec_destination)
+            .map_err(StaticWebServerBuildpackError::CannotCreatWebExecD)?;
+        fs::copy(
+            additional_buildpack_binary_path!("env-as-html-data"),
+            exec_path,
+        )
+        .map_err(StaticWebServerBuildpackError::CannotInstallEnvAsHtmlData)?;
+
+        // Set env-to-html-data param as env variable
+        let mut configuration_layer_env = configuration_layer.read_env()?;
+        configuration_layer_env.insert(
+            Scope::Process("web".to_string()),
+            ModificationBehavior::Override,
+            "ENV_AS_HTML_DATA_TARGET_FILES",
+            runtime_config
+                .html_files
+                .unwrap_or(vec![doc_index])
+                .iter()
+                .map(|doc| format!("{}/{}", doc_root_path.to_string_lossy(), doc))
+                .collect::<Vec<_>>()
+                .join(", "),
+        );
+        configuration_layer.write_env(configuration_layer_env)?;
+    } else {
+        log_info("Runtime configuration is not enabled.");
+    }
+
     Ok(configuration_layer)
 }
 
@@ -73,7 +126,7 @@ fn generate_build_plan_config(
                     {
                         let mut all_values = existing_values.clone();
                         new_values.into_iter().for_each(|(nk, nv)| {
-                            all_values.insert(nk.to_string(), nv.clone());
+                            all_values.insert(nk.clone(), nv.clone());
                         });
                         build_plan_config.insert(k.to_owned(), all_values.into());
                     } else {

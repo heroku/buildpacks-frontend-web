@@ -16,6 +16,8 @@ use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack, Error};
 use libherokubuildpack::log::log_header;
 
+use env_as_html_data as _;
+
 // Silence unused dependency warning for
 // dependencies only used in tests
 #[cfg(test)]

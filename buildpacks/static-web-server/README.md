@@ -2,15 +2,14 @@
 
 This buildpack implements www hosting support for a static web app.
 
-* Defines [`project.toml` configuration](#configuration), `[com.heroku.static-web-server]`
+* Defines [`project.toml` configuration](#build-time-configuration), `[com.heroku.static-web-server]`
 * At build:
   * Installs a static web server (currently [Caddy](https://caddyserver.com/)).
-  * Includes [heroku/release-phase buildpack](https://github.com/heroku/buildpacks-release-phase) to enable Release Phase Build & Static Artifacts.
-  * [Inherits configuration](#inherited-configuration) from the Build Plan `[requires.metadata]` of other buildpacks.
+  * [Inherits configuration](#inherited-build-time-configuration) from the Build Plan `[requires.metadata]` of other buildpacks.
   * Transforms the configuration into native configuration for the web server.
-  * Optionally, runs a `build` command, such as `npm build` for minification & bundling of a Javascript app.
+  * Optionally, runs a [static build command](#static-build-command).
 * At launch, the default `web` process:
-  * Loads static artifacts for the release using [heroku/release-phase buildpack](https://github.com/heroku/buildpacks-release-phase)
+  * Performs [runtime app configuration](#runtime-app-configuration), `PUBLIC_WEB_*` environment variables are written into `<head data-*>` attributes of the default HTML file in the document root.
   * Starts the web server listing on the `PORT`, using the server's native config generated during build.
   * Honors process signals for graceful shutdown.
 
@@ -23,52 +22,144 @@ In the app source repo, add the buildpack to [`project.toml`](https://buildpacks
 id = "heroku/static-web-server"
 ```
 
-## Configuration
+## Runtime App Configuration
 
-In the app source repo, set custom configuration in [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/).
+_Dynamic config used by the static web app at runtime, to support different app instances, such as a backend API URL that differs between Staging and Production._
 
-### Release Build Command
+These are set in the container's environment variables ([Heroku Config Vars](https://devcenter.heroku.com/articles/config-vars)) and during CNB launch, written into the default HTML document. To access runtime app config, the javascript app's source code must read configuration values from the global `document.head.dataset`, [HTML data-* attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
 
-*Default: (none)*
+**Do not set secret values into these environment variables.** They will be injected into the website, where anyone on the internet can see the values. As a precaution, only environment variables prefixed with `PUBLIC_WEB_` prefix will be exposed.
 
-The command to generate static artifacts for a website, such as a JavaScript compiler/bundler. It is automatically executed during [Heroku Release Phase](https://devcenter.heroku.com/articles/release-phase), for changes to config vars, pipeline promotions, and rollbacks.
+**This feature parses and rewrites the HTML document.** If the document's HTML syntax is invalid, the parser ([Servo's html5ever](https://github.com/servo/html5ever)) will correct the document using the same heuristics as web browsers.
 
-This command must write its output to the `static-artifacts/` directory (`/workspace/static-artifacts/` in the container). The generated `static-artifacts/` from each release are saved in an object store (AWS S3), separate from the container image itself, and loaded into `web` containers as they start-up.
+This Runtime App Configuration feature can be [disabled through Build-time Configuration](#runtime-configuration-enabled).
 
-Any dependencies to run this build command should be installed by an earlier buildpack, such as Node & npm engines for JavaScript.
+### Runtime Config Usage
 
-```toml
-[com.heroku.phase.release-build]
-command = "sh"
-args = ["-c", "npm build"]
+*Default: runtime config is written into `public/index.html`, unless [document root](#document-root) or [index document](#index-document) are custom configured.*
+
+For example, an app is started with the environment:
+
+```
+PUBLIC_WEB_API_URL=https://localhost:3001
+PUBLIC_WEB_RELEASE_VERSION=v42
+PORT=3000
+HOME=/workspace
 ```
 
-If the output is sent to a different directory, for example `dist/`, it should be copied to the expected location:
+When the default HTML document is fetched by a web browser, loading the app, the `PUBLIC_WEB_*` vars can be accessed from javascript using the [HTML Data Attribtes](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/Use_data_attributes) via `document.head.dataset`:
 
-```toml
-[com.heroku.phase.release-build]
-command = "sh"
-args = ["-c", "npm run build && mkdir -p static-artifacts && cp -rL dist/* static-artifacts/"]
+```javascript
+document.head.dataset.public_web_api_url
+// → "https://api-staging.example.com"
+document.head.dataset.public_web_release_version
+// → "v42"
+
+// Not exposed because not prefixed with PUBLIC_WEB_
+document.head.dataset.port
+// → null
+document.head.dataset.home
+// → null
 ```
+
+**The variable names are case-insensitive, accessed as lowercase.** Although enviroment variables are colloquially uppercased, the resulting HTML Data Attributes are set & accessed lowercased, because [they are case-insensitive XML names](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
+
+For example, the `public_web_api_url` might be used for a `fetch()` call:
+
+```javascript
+// If the PUBLIC_WEB_API_URL variable is not set, default to the production API host.
+const apiUrl = document.head.dataset.public_web_api_url || 'https://api.example.com';
+const response = await fetch(apiUrl, {
+  method: "POST",
+  // …
+});
+```
+
+Alternatively, default values can be preset in the HTML document's head element:
+
+```html
+<html>
+<!-- If the PUBLIC_WEB_API_URL variable is set, this value in the document will be overwritten -->
+<head data-public_web_api_url="https://api.example.com">
+  <title>Example</title>
+</head>
+<body>
+  <h1>Example</h1>
+</body>
+</html>  
+```
+
+Then, the javascript does not need a default value specified.
+
+```javascript
+const response = await fetch(document.head.dataset.public_web_api_url, {
+  method: "POST",
+  // …
+});
+```
+
+## Build-time Configuration
+
+_Static config that controls how the app is built, and how the web server delivers it._
+
+This is set in the app source repo [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) file and processed during CNB build. Rebuild is necessary to apply any changes.
 
 ### Static Build Command
 
 *Default: (none)*
 
-This buildpack also supports a executing a build command during CNB Build process. The output of this command is saved in the container image, and will not be re-built during release, versus the [Release Build Command](#release-build-command)).
+This buildpack supports a executing a build command during CNB Build process. The output of this command is saved in the container image.
+
+For apps built with Node.js, execution of the build command is typically handled automatically by [heroku/nodejs CNB's build script hooks](https://github.com/heroku/buildpacks-nodejs/blob/main/README.md#build-script-hooks), and does not need to be configured here.
+
+If your static web app is a static site generator built in a language other than JS, then you may need to configure the static site build command here. For example, [Hugo](https://gohugo.io) written in Go:
 
 ```toml
 [com.heroku.static-web-server.build]
 command = "sh"
-args = ["-c", "npm build"]
+args = ["-c", "hugo"]
 ```
 
 This static build command does not have access to Heroku app config vars, but still can be configured using CNB Build variables in `project.toml`:
 
 ```toml
  [[io.buildpacks.build.env]]
- name = "API_URL"
- value = "https://test.example.com/api/v7"
+ name = "HUGO_ENABLE_ROBOTS_TXT"
+ value = "true"
+```
+
+When dependent on another language's compiled program like this, ensure that the app's buildpacks are ordered with `heroku/static-web-server` last, after the language buildpack.
+
+```toml
+[[io.buildpacks.group]]
+id = "heroku/go"
+
+[[io.buildpacks.group]]
+id = "heroku/static-web-server"
+```
+
+### Runtime Configuration Enabled
+
+*Default: true*
+
+The [Runtime App Configuration](#runtime-app-configuration) feature may be disabled, such as when it is completely uneccesary or undesirable for a specific app.
+
+```toml
+[com.heroku.static-web-server.runtime_config]
+enabled = false
+```
+
+### Runtime Configuration HTML Files
+
+*Default: the set [index document](#index-document), or else its default `index.html`*
+
+List of HTML files to rewrite with `data-*` attributes from [Runtime App Configuration](#runtime-app-configuration).
+
+The files must be located within the [document root](#document-root), `public/` by default.
+
+```toml
+[com.heroku.static-web-server.runtime_config]
+html_files = ["index.html", "subsection/index.html"]
 ```
 
 ### Document Root
@@ -156,7 +247,7 @@ file_path = "index.html"
 status = 200
 ```
 
-## Inherited Configuration
+## Inherited Build-time Configuration
 
 Other buildpacks can return a [Build Plan](https://github.com/buildpacks/spec/blob/main/buildpack.md#build-plan-toml) from `detect` for Static Web Server configuration.
 

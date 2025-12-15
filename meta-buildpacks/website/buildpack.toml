@@ -13,10 +13,6 @@ type = "MIT"
 [[order]]
 
 [[order.group]]
-id = "heroku/release-phase"
-version = "1.0.4"
-
-[[order.group]]
 id = "heroku/static-web-server"
 version = "1.0.8"
 

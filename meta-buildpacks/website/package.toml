@@ -6,6 +6,3 @@ uri = "libcnb:heroku/website-public-html"
 
 [[dependencies]]
 uri = "libcnb:heroku/static-web-server"
-
-[[dependencies]]
-uri = "docker://heroku/buildpack-release-phase:1.0.4"

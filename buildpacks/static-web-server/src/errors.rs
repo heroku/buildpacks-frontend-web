@@ -22,6 +22,8 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotCreateCaddyInstallationDir(std::io::Error),
     CannotCreateCaddyTarballFile(std::io::Error),
     BuildCommandFailed(std::io::Error),
+    CannotCreatWebExecD(std::io::Error),
+    CannotInstallEnvAsHtmlData(std::io::Error),
 }
 
 pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
@@ -71,6 +73,20 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError, logger: Box<dyn Star
             ", buildpack_name = fmt::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::BuildCommandFailed(e) => on_build_command_error(&e, logger),
+        StaticWebServerBuildpackError::CannotCreatWebExecD(error) => {
+            print_error_details(logger, &error)
+                .announce()
+                .error(&formatdoc! {"
+                Cannot create exec.d/web for {buildpack_name}
+            ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+        }
+        StaticWebServerBuildpackError::CannotInstallEnvAsHtmlData(error) => {
+            print_error_details(logger, &error)
+                .announce()
+                .error(&formatdoc! {"
+                Cannot install env-as-html-data (runtime configuration program) for {buildpack_name}
+            ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+        }
     }
 }
 
