@@ -4,6 +4,7 @@ use crate::heroku_web_server_config::{
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -55,9 +56,18 @@ pub(crate) struct MatchPath {
 #[serde(untagged)]
 pub(crate) enum CaddyHTTPServerRouteHandler {
     FileServer(FileServer),
+    Encode(Encode),
     Headers(Headers),
     Rewrite(Rewrite),
     StaticResponse(StaticResponse),
+}
+
+// https://caddyserver.com/docs/json/apps/http/servers/routes/handle/encode/
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct Encode {
+    pub(crate) handler: String,
+    pub(crate) encodings: Box<RawValue>,
+    pub(crate) prefer: Box<RawValue>,
 }
 
 // https://caddyserver.com/docs/json/apps/http/servers/routes/handle/file_server/
@@ -126,13 +136,25 @@ impl TryFrom<HerokuWebServerConfig> for CaddyConfig {
         // while response processing is reverse direction.
         routes.push(CaddyHTTPServerRoute {
             r#match: None,
-            handle: vec![CaddyHTTPServerRouteHandler::FileServer(FileServer {
-                handler: "file_server".to_owned(),
-                root: doc_root.to_string_lossy().to_string(),
-                index_names: vec![doc_index.clone()],
-                pass_thru: true,
-                status_code: None,
-            })],
+            handle: vec![
+                CaddyHTTPServerRouteHandler::Encode(Encode {
+                    handler: "encode".to_owned(),
+                    // Raw JSON, because this data schema varies across member values.
+                    encodings: RawValue::from_string(
+                        r#"{"zstd":{"level":"default"},"gzip":{"level":6}}"#.to_string(),
+                    )
+                    .expect("hardcoded data is JSON"),
+                    prefer: RawValue::from_string(r#"["zstd","gzip"]"#.to_string())
+                        .expect("hardcoded data is JSON"),
+                }),
+                CaddyHTTPServerRouteHandler::FileServer(FileServer {
+                    handler: "file_server".to_owned(),
+                    root: doc_root.to_string_lossy().to_string(),
+                    index_names: vec![doc_index.clone()],
+                    pass_thru: true,
+                    status_code: None,
+                }),
+            ],
         });
 
         routes.push(generate_error_404_route(
