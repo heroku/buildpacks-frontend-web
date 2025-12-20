@@ -4,4 +4,4 @@
 
 Create a repo containing a `public/index.html` file.
 
-Then, use with [heroku/website](../../meta-buildpacks/website/) meta-buildpack.
+Then, use with [heroku/website](../../meta-buildpacks/website/README.md) meta-buildpack.

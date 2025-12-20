@@ -10,6 +10,36 @@ use test_support::{
 
 #[test]
 #[ignore = "integration test"]
+fn default_behavior() {
+    static_web_server_integration_test("./fixtures/no_project_toml", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            &mut ContainerConfig::new(),
+            |_container, socket_addr| {
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        eprint!("response.headers_names() {:?}", response.headers_names());
+                        let h = response.header("Content-Type").unwrap_or_default();
+                        assert_contains!(h, "text/html");
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(response_body, "Welcome to CNB Static Web Server Test!");
+                    }
+                    Err(error) => {
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
 fn build_command() {
     static_web_server_integration_test("./fixtures/build_command", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
