@@ -12,20 +12,30 @@ This repository contains multiple buildpacks:
 
 High-level buildpacks for zero-configuration deployment of specific static site technologies.
 
-| ID                           | Name                                                          |
-|------------------------------|---------------------------------------------------------------|
-| `heroku/website`             | [Website](meta-buildpacks/website/README.md)                  |
-| `heroku/website-nodejs`      | [Website/Node.js](meta-buildpacks/website-nodejs/README.md)   |
+| ID                           | Name                                                          | Detects                |
+|------------------------------|---------------------------------------------------------------|------------------------|
+| `heroku/website`             | [Website](meta-buildpacks/website/README.md)                  | Public HTML            |
+| `heroku/website-nodejs`      | [Website/Node.js](meta-buildpacks/website-nodejs/README.md)   | Ember.js, more to come |
 
-### Buildpacks
+### Component Buildpacks
 
-Lower-level buildpacks that provide specific capabilities. Typically require manual configuration.
+Buildpacks that provide a specific server-side component.
 
-| ID                           | Name                                                              |
-|------------------------------|-------------------------------------------------------------------|
-| `heroku/static-web-server`   | [Static Web Server](buildpacks/static-web-server/README.md)       |
-| `heroku/website-ember`       | [Website (Ember.js)](buildpacks/website-ember/README.md)          |
-| `heroku/website-public-html` | [Website (Public HTML)](buildpacks/website-public-html/README.md) |
+| ID                           | Name                                                              | Provides |
+|------------------------------|-------------------------------------------------------------------|----------|
+| `heroku/static-web-server`   | [Static Web Server](buildpacks/static-web-server/README.md)       | Web Server supporting build and runtime configuration, as well as configuration inheritance from other buildpacks |
+
+### Framework Buildpacks
+
+Lower-level buildpacks that detect specific source layouts, frameworks, or tools, to automate configuration of build process and heroku/static-web-server.
+
+| ID                           | Name                                                              | Provides                            |
+|------------------------------|-------------------------------------------------------------------|-------------------------------------|
+| `heroku/website-ember`       | [Website (Ember.js)](buildpacks/website-ember/README.md)          | auto-detect for ember-cli           |
+| `heroku/website-public-html` | [Website (Public HTML)](buildpacks/website-public-html/README.md) | auto-detect for `public/index.html` |
+| More frameworks to come…     |                                                                   |                                     |
+
+To implement support for additional frameworks, start from one these framework buildpacks as a template, and then combine it with other buildpacks such as heroku/nodejs and heroku/static-web-server in a [meta-buildpack](meta-buildpacks/).
 
 ## Usage
 
