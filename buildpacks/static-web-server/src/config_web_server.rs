@@ -1,4 +1,4 @@
-use crate::caddy_config::CaddyConfig;
+use crate::caddy_config::caddy_json_config;
 use crate::heroku_web_server_config::{
     HerokuWebServerConfig, RuntimeConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
 };
@@ -48,9 +48,9 @@ pub(crate) fn config_web_server(
         .unwrap_or(DEFAULT_DOC_INDEX.to_string());
 
     // Transform web server config to Caddy native JSON config
-    let caddy_config = CaddyConfig::try_from(heroku_config)?;
-    let caddy_config_json =
-        serde_json::to_string(&caddy_config).map_err(StaticWebServerBuildpackError::Json)?;
+    let caddy_config_json = serde_json::to_string(&caddy_json_config(heroku_config))
+        .map_err(StaticWebServerBuildpackError::Json)?;
+
     let config_path = configuration_layer.path().join("caddy.json");
     fs::write(config_path, caddy_config_json)
         .map_err(StaticWebServerBuildpackError::CannotWriteCaddyConfiguration)?;
