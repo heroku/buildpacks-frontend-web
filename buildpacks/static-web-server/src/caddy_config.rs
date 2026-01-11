@@ -36,6 +36,9 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
                 "prefer": ["zstd", "gzip"]
             },
             {
+                "handler": "templates",
+            },
+            {
                 "handler": "file_server",
                 "root": doc_root,
                 "index_names": vec![&doc_index],

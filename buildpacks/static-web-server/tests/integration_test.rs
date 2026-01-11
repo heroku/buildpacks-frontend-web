@@ -2,7 +2,7 @@
 #![allow(unused_crate_dependencies)]
 #![allow(clippy::unwrap_used)]
 
-use libcnb_test::{assert_contains, ContainerConfig};
+use libcnb_test::{assert_contains, assert_contains_match, ContainerConfig};
 use test_support::{
     assert_web_response, retry, start_container, static_web_server_integration_test,
     DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
@@ -334,6 +334,39 @@ fn runtime_configuration_default() {
                     }
                     Err(error) => {
                         panic!("should respond 200 Ok, but received: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
+
+#[test]
+fn csp_nonce() {
+    static_web_server_integration_test("./fixtures/csp_nonce", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            &mut ContainerConfig::new(),
+            |container, socket_addr| {
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        eprint!("response.headers_names() {:?}", response.headers_names());
+                        let h = response
+                            .header("Content-Security-Policy")
+                            .unwrap_or_default();
+                        assert_contains_match!(h, "nonce-[0-9a-f-]+");
+                        let response_body = response.into_string().unwrap();
+                        assert_contains_match!(response_body, r#"nonce="[0-9a-f-]+""#);
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
                     }
                 }
             },
