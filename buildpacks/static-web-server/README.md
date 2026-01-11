@@ -251,7 +251,7 @@ status = 200
 
 *While this static web server is designed to be future-proof with configuration that is not specific to any server/host technology, some use-cases require capabilities that are implemented using server-specific configuration.*
 
-#### Templates
+#### Caddy: Templates
 
 *Default: false*
 
