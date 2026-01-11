@@ -247,6 +247,36 @@ file_path = "index.html"
 status = 200
 ```
 
+### Server-specific config: Caddy
+
+*While this static web server is designed to be future-proof with configuration that is not specific to any server/host technology, some use-cases require capabilities that are implemented using server-specific configuration.*
+
+#### Templates
+
+*Default: false*
+
+Enables [Caddy's server-side template rendering](https://caddyserver.com/docs/json/apps/http/servers/routes/handle/templates/), to support per-request dynamic values.
+
+```toml
+[com.heroku.static-web-server.caddy_server_opts]
+templates = true
+```
+
+This supports [Content-Security-Policy nonces](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy#nonce-nonce_value), by using the following template tags in HTML files:
+```html
+{{ $nonce := uuidv4 }}
+{{ .RespHeader.Add "Content-Security-Policy" (print "nonce-" $nonce) }}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script nonce="{{ $nonce }}">alert('Load me with a strict CSP')</script>
+</head>
+
+</html>
+```
+
 ## Inherited Build-time Configuration
 
 Other buildpacks can return a [Build Plan](https://github.com/buildpacks/spec/blob/main/buildpack.md#build-plan-toml) from `detect` for Static Web Server configuration.

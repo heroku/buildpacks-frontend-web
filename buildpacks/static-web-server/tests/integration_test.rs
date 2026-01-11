@@ -23,7 +23,6 @@ fn default_behavior() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        eprint!("response.headers_names() {:?}", response.headers_names());
                         let h = response.header("Content-Type").unwrap_or_default();
                         assert_contains!(h, "text/html");
                         let response_body = response.into_string().unwrap();
@@ -342,8 +341,9 @@ fn runtime_configuration_default() {
 }
 
 #[test]
-fn csp_nonce() {
-    static_web_server_integration_test("./fixtures/csp_nonce", |ctx| {
+#[ignore = "integration test"]
+fn caddy_csp_nonce() {
+    static_web_server_integration_test("./fixtures/caddy_csp_nonce", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(
             &ctx,
@@ -355,7 +355,6 @@ fn csp_nonce() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        eprint!("response.headers_names() {:?}", response.headers_names());
                         let h = response
                             .header("Content-Security-Policy")
                             .unwrap_or_default();
