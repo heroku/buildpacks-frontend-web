@@ -25,23 +25,38 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
         .clone()
         .unwrap_or(String::from(DEFAULT_DOC_INDEX));
 
+    let mut static_file_handlers = vec![];
+
+    static_file_handlers.push(json!(
+    {
+        "handler": "encode",
+        "encodings": {
+            "zstd": { "level": "default" },
+            "gzip": { "level": 6 }
+        },
+        "prefer": ["zstd", "gzip"]
+    }));
+
+    if config
+        .caddy_server_opts
+        .is_some_and(|v| v.templates.is_some_and(|vv| vv))
+    {
+        static_file_handlers.push(json!(
+        {
+            "handler": "templates",
+        }));
+    }
+
+    static_file_handlers.push(json!(
+    {
+        "handler": "file_server",
+        "root": doc_root,
+        "index_names": vec![&doc_index],
+        "pass_thru": true,
+    }));
+
     routes.push(json!({
-        "handle": [
-            {
-                "handler": "encode",
-                "encodings": {
-                    "zstd": { "level": "default" },
-                    "gzip": { "level": 6 }
-                },
-                "prefer": ["zstd", "gzip"]
-            },
-            {
-                "handler": "file_server",
-                "root": doc_root,
-                "index_names": vec![&doc_index],
-                "pass_thru": true,
-            }
-        ]
+        "handle": static_file_handlers
     }));
 
     routes.push(generate_error_404_route(
