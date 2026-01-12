@@ -247,9 +247,11 @@ file_path = "index.html"
 status = 200
 ```
 
-### Server-specific config: Caddy
+## Server-specific Configuration
 
-*While this static web server is designed to be future-proof with configuration that is not specific to any server/host technology, some use-cases require capabilities that are implemented using server-specific configuration.*
+Beyond pure static website delivery, some use-cases require dynamic server-side capabilities. This buildpack offers some server-specific configuration options, which tie the app to the specific static server. Currently, one server is implemented: [Caddy](https://caddyserver.com).
+
+### Server-specific config: Caddy
 
 #### Caddy: Templates
 
@@ -257,12 +259,25 @@ status = 200
 
 Enables [Caddy's server-side template rendering](https://caddyserver.com/docs/json/apps/http/servers/routes/handle/templates/), to support per-request dynamic values.
 
+To avoid stale content being displayed in browsers and served through CDNs, dynamic content may require different cache control headers than static files.
+
 ```toml
 [com.heroku.static-web-server.caddy_server_opts]
 templates = true
 ```
 
-This supports [Content-Security-Policy nonces](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy#nonce-nonce_value), by using the following template tags in HTML files:
+#### Caddy: Nonces for Content-Security-Policy
+
+*Requires: [Templates](#caddy-templates) enabled*
+
+Use [CSP nonces](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy#nonce-nonce_value) by way of [template tags](https://caddyserver.com/docs/json/apps/http/servers/routes/handle/templates/) in HTML files. In an HTML file where inline scripts should be allowed:
+
+1. Generate a nonce with [`uuidv4`](https://masterminds.github.io/sprig/uuid.html)
+2. Declare the nonce in a CSP header
+3. Set the nonce on script element `nonce` attributes.
+
+For example:
+
 ```html
 {{ $nonce := uuidv4 }}
 {{ .RespHeader.Add "Content-Security-Policy" (print "nonce-" $nonce) }}
