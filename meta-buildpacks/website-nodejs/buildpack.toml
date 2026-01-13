@@ -24,6 +24,10 @@ version = "2.1.0"
 id = "heroku/website-ember"
 version = "2.1.0"
 
+[[order.group]]
+id = "heroku/website-vite"
+version = "1.0.0"
+
 [[metadata.targets]]
 os = "linux"
 arch = "amd64"
