@@ -1945,6 +1945,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "website-vite"
+version = "0.0.0"
+dependencies = [
+ "commons",
+ "heroku-nodejs-utils",
+ "indoc",
+ "libcnb 0.25.0",
+ "libcnb-test",
+ "libherokubuildpack 0.22.0",
+ "tempfile",
+ "test_support",
+ "toml",
+ "ureq",
+ "uuid",
+]
+
+[[package]]
 name = "which"
 version = "6.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

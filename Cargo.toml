@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "buildpacks/website-ember",
     "buildpacks/website-public-html",
+    "buildpacks/website-vite",
     "buildpacks/static-web-server",
     "common/env_as_html_data",
     "common/static_web_server_utils"
