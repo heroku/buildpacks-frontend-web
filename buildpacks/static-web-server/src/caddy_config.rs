@@ -71,7 +71,25 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
                 "servers": {
                     "public": {
                         "listen": [":{env.PORT}"],
+                        "logs": {},
                         "routes": routes
+                    }
+                }
+            }
+        },
+        "logging": {
+            "sink": {
+                "writer": {
+                    "output": "stderr"
+                }
+            },
+            "logs": {
+                "default": {
+                    "writer": {
+                        "output": "stdout"
+                    },
+                    "encoder": {
+                        "format": "json"
                     }
                 }
             }
