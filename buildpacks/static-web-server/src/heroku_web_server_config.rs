@@ -16,6 +16,7 @@ pub(crate) struct HerokuWebServerConfig {
     #[serde(default, deserialize_with = "deserialize_headers")]
     pub(crate) headers: Option<Vec<Header>>,
     pub(crate) runtime_config: Option<RuntimeConfig>,
+    pub(crate) caddy_server_opts: Option<CaddyServerOpts>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -47,6 +48,11 @@ pub(crate) struct Header {
 pub(crate) struct RuntimeConfig {
     pub(crate) enabled: Option<bool>,
     pub(crate) html_files: Option<Vec<String>>,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct CaddyServerOpts {
+    pub(crate) templates: Option<bool>,
 }
 
 fn deserialize_headers<'de, D>(d: D) -> Result<Option<Vec<Header>>, D::Error>
@@ -168,6 +174,25 @@ mod tests {
         assert_eq!(
             parsed_config.runtime_config.unwrap().html_files,
             Some(vec!["main.html".to_string(), "admin.html".to_string()])
+        );
+        assert_eq!(parsed_config.headers, None);
+        assert_eq!(parsed_config.errors, None);
+    }
+
+    #[test]
+    fn custom_caddy_server_opts() {
+        let toml_config = toml! {
+            [caddy_server_opts]
+            templates = true
+        };
+
+        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.build, None);
+        assert_eq!(parsed_config.root, None);
+        assert_eq!(parsed_config.runtime_config, None);
+        assert_eq!(
+            parsed_config.caddy_server_opts.unwrap().templates,
+            Some(true)
         );
         assert_eq!(parsed_config.headers, None);
         assert_eq!(parsed_config.errors, None);
