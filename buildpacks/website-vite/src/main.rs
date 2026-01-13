@@ -33,8 +33,6 @@ impl Buildpack for WebsiteViteBuildpack {
     type Error = WebsiteViteBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let vite_config_exists = context.app_dir.join("vite.config.ts").is_file()
-            || context.app_dir.join("vite.config.js").is_file();
         let depends_on_vite =
             if let Ok(package_json) = PackageJson::read(context.app_dir.join("package.json")) {
                 if package_json.has_dependencies() {
@@ -70,7 +68,7 @@ impl Buildpack for WebsiteViteBuildpack {
             .requires(static_web_server_req)
             .requires(nodejs_require);
 
-        if depends_on_vite && vite_config_exists {
+        if depends_on_vite {
             DetectResultBuilder::pass()
                 .build_plan(plan_builder.build())
                 .build()
