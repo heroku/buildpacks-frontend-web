@@ -36,7 +36,7 @@ version = "2.1.0"
 
 [[order.group]]
 id = "heroku/website-vite"
-version = "1.0.0"
+version = "2.1.0"
 
 [[metadata.targets]]
 os = "linux"
