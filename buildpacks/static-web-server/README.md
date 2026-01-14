@@ -249,7 +249,7 @@ status = 200
 
 ## Server-specific Configuration
 
-Beyond pure static website delivery, some use-cases require dynamic server-side capabilities. This buildpack offers some server-specific configuration options, which tie the app to the specific static server. Currently, one server is implemented: [Caddy](https://caddyserver.com).
+Beyond pure static website delivery, some use-cases require dynamic server-side capabilities. This buildpack offers some server-specific configuration options, which tie the app to the specific server. Currently, only one web server is implemented: [Caddy](https://caddyserver.com).
 
 ### Server-specific config: Caddy
 

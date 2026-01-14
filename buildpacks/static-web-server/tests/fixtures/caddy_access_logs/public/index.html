@@ -1,17 +1,14 @@
-{{ $nonce := uuidv4 }}
-{{ .RespHeader.Add "Content-Security-Policy" (print "nonce-" $nonce) }}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CNB Static Web Server CSP Nonce Test</title>
-  <script nonce="{{ $nonce }}">alert('Load me with a strict CSP')</script>
+  <title>CNB Static Web Server Access Logs Test</title>
 </head>
 
 <body>
-  <h1>Welcome to CNB Static Web Server CSP Nonce Test!</h1>
+  <h1>Welcome to CNB Static Web Server Access Logs Test!</h1>
 </body>
 
 </html>
