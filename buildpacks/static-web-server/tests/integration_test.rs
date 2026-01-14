@@ -372,3 +372,31 @@ fn caddy_csp_nonce() {
         );
     });
 }
+
+#[test]
+fn caddy_access_logs() {
+    static_web_server_integration_test("./fixtures/caddy_access_logs", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            &mut ContainerConfig::new(),
+            |container, socket_addr| {
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let logs = container.logs_now().to_string();
+                        assert_contains!(logs, "\"logger\":\"http.log.access.public\"");
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}

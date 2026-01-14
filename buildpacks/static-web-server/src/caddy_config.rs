@@ -39,6 +39,7 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
 
     if config
         .caddy_server_opts
+        .as_ref()
         .is_some_and(|v| v.templates.is_some_and(|vv| vv))
     {
         static_file_handlers.push(json!(
@@ -65,13 +66,24 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
         config.errors.as_ref(),
     ));
 
+    let mut server_logs_config = json!(null);
+    let caddy_access_logs_config = config
+        .caddy_server_opts
+        .as_ref()
+        .and_then(|v| v.access_logs.as_ref());
+    if caddy_access_logs_config.is_some_and(|vv| vv.enabled.is_some_and(|vvv| vvv)) {
+        server_logs_config = json!({
+            "default_logger_name": "public"
+        });
+    }
+
     json!({
         "apps": {
             "http": {
                 "servers": {
                     "public": {
                         "listen": [":{env.PORT}"],
-                        "logs": {},
+                        "logs": server_logs_config,
                         "routes": routes
                     }
                 }
@@ -90,6 +102,22 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
                     },
                     "encoder": {
                         "format": "json"
+                    },
+                    "exclude": [
+                        "http.log.access.public"
+                    ]
+                },
+                "public": {
+                    "writer": {
+                        "output": "stdout"
+                    },
+                    "encoder": {
+                        "format": "json"
+                    },
+                    "sampling": {
+                        "interval": caddy_access_logs_config.map_or(0, |v| v.sampling_interval.unwrap_or(0)),
+                        "first": caddy_access_logs_config.map_or(0, |v| v.sampling_first.unwrap_or(0)),
+                        "thereafter": caddy_access_logs_config.map_or(0, |v| v.sampling_thereafter.unwrap_or(0))
                     }
                 }
             }

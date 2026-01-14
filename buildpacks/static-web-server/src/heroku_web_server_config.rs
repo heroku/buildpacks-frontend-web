@@ -53,6 +53,15 @@ pub(crate) struct RuntimeConfig {
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
 pub(crate) struct CaddyServerOpts {
     pub(crate) templates: Option<bool>,
+    pub(crate) access_logs: Option<CaddyAccessLogsConfig>,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct CaddyAccessLogsConfig {
+    pub(crate) enabled: Option<bool>,
+    pub(crate) sampling_interval: Option<i64>,
+    pub(crate) sampling_first: Option<i64>,
+    pub(crate) sampling_thereafter: Option<i64>,
 }
 
 fn deserialize_headers<'de, D>(d: D) -> Result<Option<Vec<Header>>, D::Error>
@@ -181,18 +190,70 @@ mod tests {
 
     #[test]
     fn custom_caddy_server_opts() {
-        let toml_config = toml! {
+        // Use a TOML string here, because the toml! macro forces integers to fit i32
+        // instead of deserializing directly into the access_log's numeric type i64.
+        let toml_str = r"
             [caddy_server_opts]
             templates = true
-        };
 
-        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+            [caddy_server_opts.access_logs]
+            enabled = true
+            sampling_interval = 60_000_000_000
+            sampling_first = 1000
+            sampling_thereafter = 1000
+        ";
+
+        let parsed_config: HerokuWebServerConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(parsed_config.build, None);
         assert_eq!(parsed_config.root, None);
         assert_eq!(parsed_config.runtime_config, None);
         assert_eq!(
-            parsed_config.caddy_server_opts.unwrap().templates,
+            parsed_config.caddy_server_opts.as_ref().unwrap().templates,
             Some(true)
+        );
+        assert_eq!(
+            parsed_config
+                .caddy_server_opts
+                .as_ref()
+                .unwrap()
+                .access_logs
+                .as_ref()
+                .unwrap()
+                .enabled,
+            Some(true)
+        );
+        assert_eq!(
+            parsed_config
+                .caddy_server_opts
+                .as_ref()
+                .unwrap()
+                .access_logs
+                .as_ref()
+                .unwrap()
+                .sampling_interval,
+            Some(60_000_000_000)
+        );
+        assert_eq!(
+            parsed_config
+                .caddy_server_opts
+                .as_ref()
+                .unwrap()
+                .access_logs
+                .as_ref()
+                .unwrap()
+                .sampling_first,
+            Some(1000)
+        );
+        assert_eq!(
+            parsed_config
+                .caddy_server_opts
+                .as_ref()
+                .unwrap()
+                .access_logs
+                .as_ref()
+                .unwrap()
+                .sampling_thereafter,
+            Some(1000)
         );
         assert_eq!(parsed_config.headers, None);
         assert_eq!(parsed_config.errors, None);

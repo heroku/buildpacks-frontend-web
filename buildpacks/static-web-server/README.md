@@ -253,6 +253,27 @@ Beyond pure static website delivery, some use-cases require dynamic server-side 
 
 ### Server-specific config: Caddy
 
+#### Caddy: Access Logs
+
+*Default: not enabled*
+
+Per-request access logs may be enabled, sending them to stdout. These are normally disabled, because the Heroku router already emits request events to the app log. These access logs may be beneficial for other use-cases, running locally or on other hosts.
+
+```toml
+[com.heroku.static-web-server.caddy_server_opts.access_logs]
+enabled = true
+```
+
+[Caddy's log sampling](https://caddyserver.com/docs/json/logging/logs/sampling/) may be configured as well, to reduce logging load on a high traffic server.
+
+```toml
+[com.heroku.static-web-server.caddy_server_opts.access_logs]
+enabled = true
+sampling_interval = 60_000_000_000 # sixty-seconds
+sampling_first = 1000
+sampling_thereafter = 1000
+```
+
 #### Caddy: Templates
 
 *Default: false*
