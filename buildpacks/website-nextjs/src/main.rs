@@ -58,7 +58,7 @@ impl Buildpack for WebsiteNextjsBuildpack {
 
                 [errors.404]
                 file_path = "_not-found.html"
-                status = 200
+                status = 404
             })
             .map_err(WebsiteNextjsBuildpackError::SettingBuildPlanMetadata)?;
 
