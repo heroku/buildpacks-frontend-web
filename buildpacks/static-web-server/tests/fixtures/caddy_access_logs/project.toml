@@ -1,0 +1,5 @@
+[com.heroku.static-web-server.caddy_server_opts.access_logs]
+enabled = true
+sampling_interval = 60_000_000_000
+sampling_first = 1000
+sampling_thereafter = 1000
