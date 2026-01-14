@@ -374,6 +374,7 @@ fn caddy_csp_nonce() {
 }
 
 #[test]
+#[ignore = "integration test"]
 fn caddy_access_logs() {
     static_web_server_integration_test("./fixtures/caddy_access_logs", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
