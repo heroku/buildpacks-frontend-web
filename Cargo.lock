@@ -1932,6 +1932,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "website-nextjs"
+version = "0.0.0"
+dependencies = [
+ "commons",
+ "heroku-nodejs-utils",
+ "indoc",
+ "libcnb 0.25.0",
+ "libcnb-test",
+ "libherokubuildpack 0.22.0",
+ "tempfile",
+ "test_support",
+ "toml",
+ "ureq",
+ "uuid",
+]
+
+[[package]]
 name = "website-public-html"
 version = "0.0.0"
 dependencies = [

@@ -8,6 +8,9 @@ uri = "libcnb:heroku/website-ember"
 uri = "libcnb:heroku/website-vite"
 
 [[dependencies]]
+uri = "libcnb:heroku/website-nextjs"
+
+[[dependencies]]
 uri = "docker://heroku/buildpack-nodejs:5.0.0"
 
 [[dependencies]]

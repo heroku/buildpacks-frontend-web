@@ -38,6 +38,20 @@ version = "2.1.0"
 id = "heroku/website-ember"
 version = "2.1.0"
 
+[[order]]
+
+[[order.group]]
+id = "heroku/nodejs"
+version = "5.0.0"
+
+[[order.group]]
+id = "heroku/static-web-server"
+version = "2.1.0"
+
+[[order.group]]
+id = "heroku/website-nextjs"
+version = "2.1.0"
+
 [[metadata.targets]]
 os = "linux"
 arch = "amd64"

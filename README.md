@@ -32,6 +32,7 @@ Lower-level buildpacks that detect specific source layouts, frameworks, or tools
 | ID                           | Name                                                              | Provides                            |
 |------------------------------|-------------------------------------------------------------------|-------------------------------------|
 | `heroku/website-ember`       | [Website (Ember.js)](buildpacks/website-ember/README.md)          | auto-detect for ember-cli           |
+| `heroku/website-nextjs`      | [Website (Next.js)](buildpacks/website-nextjs/README.md)          | auto-detect for Next.js             |
 | `heroku/website-public-html` | [Website (Public HTML)](buildpacks/website-public-html/README.md) | auto-detect for `public/index.html` |
 | `heroku/website-vite`        | [Website (Vite)](buildpacks/website-vite/README.md)               | auto-detect for vite                |
 | More frameworks to come…     |                                                                   |                                     |
