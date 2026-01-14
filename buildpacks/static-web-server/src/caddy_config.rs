@@ -6,6 +6,8 @@ use serde_json::json;
 use std::collections::HashMap;
 
 /// Transforms the given [`HerokuWebServerConfig`] into an equivalent Caddy JSON configuration.
+/// Keeping this as a single function, because many lines are just the JSON itself being assembled.
+#[allow(clippy::too_many_lines)]
 pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Value {
     let mut routes = vec![];
 
