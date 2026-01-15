@@ -25,10 +25,7 @@ fn vite_app() {
                 .unwrap();
                 let response_body = response.into_string().unwrap();
 
-                assert_contains!(
-                    response_body,
-                    "vite_app"
-                );
+                assert_contains!(response_body, "vite_app");
             },
         );
     });
@@ -53,10 +50,7 @@ fn vite_react_app() {
                 .unwrap();
                 let response_body = response.into_string().unwrap();
 
-                assert_contains!(
-                    response_body,
-                    "vite_react_app"
-                );
+                assert_contains!(response_body, "vite_react_app");
             },
         );
     });
@@ -81,10 +75,7 @@ fn vite_svelte_app() {
                 .unwrap();
                 let response_body = response.into_string().unwrap();
 
-                assert_contains!(
-                    response_body,
-                    "vite_svelte_app"
-                );
+                assert_contains!(response_body, "vite_svelte_app");
             },
         );
     });
