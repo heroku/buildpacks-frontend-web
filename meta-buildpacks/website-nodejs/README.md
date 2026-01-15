@@ -6,6 +6,7 @@ Deploy a static web app that requires Node.js for build.
   * Detects specific frameworks in the app's `package.json` dependencies:
     * [Ember.js](../../buildpacks/website-ember/README.md)
     * [Vite](../../buildpacks/website-vite/README.md)
+    * [Next.js](../../buildpacks/website-nextjs/README.md)
     * *More frameworks are planned, still to come.*
   * Performs heroku/nodejs install and runs build script.
   * Configures heroku/static-web-server for the detected framwork.
