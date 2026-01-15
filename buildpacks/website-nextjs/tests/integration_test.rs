@@ -25,10 +25,7 @@ fn nextjs_app() {
                 .unwrap();
                 let response_body = response.into_string().unwrap();
 
-                assert_contains!(
-                    response_body,
-                    "Create Next App"
-                );
+                assert_contains!(response_body, "Create Next App");
             },
         );
     });
