@@ -1,0 +1,21 @@
+api = "0.10"
+
+[buildpack]
+id = "heroku/website-vite"
+version = "2.1.0"
+name = "Heroku Website (Vite)"
+description = "A component of the 'heroku/website-nodejs' buildpack."
+
+[[buildpack.licenses]]
+type = "MIT"
+
+[[targets]]
+os = "linux"
+arch = "amd64"
+
+[[targets]]
+os = "linux"
+arch = "arm64"
+
+[metadata.release]
+image = { repository = "docker.io/heroku/buildpack-website-vite" }
