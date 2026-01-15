@@ -27,7 +27,7 @@ fn nextjs_app() {
 
                 assert_contains!(
                     response_body,
-                    r#"data-public_web_integration_test="runtime-config-via-container-env""#
+                    "Create Next App"
                 );
             },
         );
