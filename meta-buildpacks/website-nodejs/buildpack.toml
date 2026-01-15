@@ -21,7 +21,7 @@ id = "heroku/static-web-server"
 version = "2.1.0"
 
 [[order.group]]
-id = "heroku/website-ember"
+id = "heroku/website-vite"
 version = "2.1.0"
 
 [[order]]
@@ -35,7 +35,7 @@ id = "heroku/static-web-server"
 version = "2.1.0"
 
 [[order.group]]
-id = "heroku/website-vite"
+id = "heroku/website-ember"
 version = "2.1.0"
 
 [[metadata.targets]]
