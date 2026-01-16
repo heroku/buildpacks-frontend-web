@@ -38,7 +38,9 @@ impl Buildpack for WebsiteViteBuildpack {
                 return DetectResultBuilder::fail().build()
             }
             Err(e) => {
-                return Err(libcnb::Error::BuildpackError(WebsiteViteBuildpackError::ReadPackageJson(e)))
+                return Err(libcnb::Error::BuildpackError(
+                    WebsiteViteBuildpackError::ReadPackageJson(e),
+                ))
             }
         };
         let json = serde_json::from_str::<serde_json::Value>(&contents)
