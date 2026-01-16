@@ -32,8 +32,15 @@ impl Buildpack for WebsiteViteBuildpack {
     type Error = WebsiteViteBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let contents = std::fs::read_to_string(context.app_dir.join("package.json"))
-            .map_err(WebsiteViteBuildpackError::ReadPackageJson)?;
+        let contents = match std::fs::read_to_string(context.app_dir.join("package.json")) {
+            Ok(contents) => contents,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return DetectResultBuilder::fail().build()
+            }
+            Err(e) => {
+                return Err(libcnb::Error::BuildpackError(WebsiteViteBuildpackError::ReadPackageJson(e)))
+            }
+        };
         let json = serde_json::from_str::<serde_json::Value>(&contents)
             .map_err(WebsiteViteBuildpackError::ParsePackageJson)?;
         let depends_on_vite = json["dependencies"]

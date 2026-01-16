@@ -32,8 +32,17 @@ impl Buildpack for WebsiteNextjsBuildpack {
     type Error = WebsiteNextjsBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let contents = std::fs::read_to_string(context.app_dir.join("package.json"))
-            .map_err(WebsiteNextjsBuildpackError::ReadPackageJson)?;
+        let contents = match std::fs::read_to_string(context.app_dir.join("package.json")) {
+            Ok(contents) => contents,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return DetectResultBuilder::fail().build()
+            }
+            Err(e) => {
+                return Err(libcnb::Error::BuildpackError(
+                    WebsiteNextjsBuildpackError::ReadPackageJson(e),
+                ))
+            }
+        };
         let json = serde_json::from_str::<serde_json::Value>(&contents)
             .map_err(WebsiteNextjsBuildpackError::ParsePackageJson)?;
         let depends_on_nextjs = json["dependencies"]
