@@ -36,14 +36,12 @@ impl Buildpack for WebsiteNextjsBuildpack {
             .map_err(WebsiteNextjsBuildpackError::ReadPackageJson)?;
         let json = serde_json::from_str::<serde_json::Value>(&contents)
             .map_err(WebsiteNextjsBuildpackError::ParsePackageJson)?;
-        let depends_on_nextjs = json
-            .get("dependencies")
-            .and_then(|deps| deps.get("next"))
-            .is_some()
-            || json
-                .get("devDependencies")
-                .and_then(|deps| deps.get("next"))
-                .is_some();
+        let depends_on_nextjs = json["dependencies"]
+            .as_object()
+            .is_some_and(|deps| deps.contains_key("next"))
+            || json["devDependencies"]
+                .as_object()
+                .is_some_and(|deps| deps.contains_key("next"));
 
         let mut static_web_server_req = Require::new("static-web-server");
 

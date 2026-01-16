@@ -36,14 +36,12 @@ impl Buildpack for WebsiteViteBuildpack {
             .map_err(WebsiteViteBuildpackError::ReadPackageJson)?;
         let json = serde_json::from_str::<serde_json::Value>(&contents)
             .map_err(WebsiteViteBuildpackError::ParsePackageJson)?;
-        let depends_on_vite = json
-            .get("dependencies")
-            .and_then(|deps| deps.get("vite"))
-            .is_some()
-            || json
-                .get("devDependencies")
-                .and_then(|deps| deps.get("vite"))
-                .is_some();
+        let depends_on_vite = json["dependencies"]
+            .as_object()
+            .is_some_and(|deps| deps.contains_key("vite"))
+            || json["devDependencies"]
+                .as_object()
+                .is_some_and(|deps| deps.contains_key("vite"));
 
         let mut static_web_server_req = Require::new("static-web-server");
 

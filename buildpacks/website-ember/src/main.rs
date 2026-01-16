@@ -36,14 +36,12 @@ impl Buildpack for WebsiteEmberBuildpack {
             .map_err(WebsiteEmberBuildpackError::ReadPackageJson)?;
         let json = serde_json::from_str::<serde_json::Value>(&contents)
             .map_err(WebsiteEmberBuildpackError::ParsePackageJson)?;
-        let depends_on_ember_cli = json
-            .get("dependencies")
-            .and_then(|deps| deps.get("ember-cli"))
-            .is_some()
-            || json
-                .get("devDependencies")
-                .and_then(|deps| deps.get("ember-cli"))
-                .is_some();
+        let depends_on_ember_cli = json["dependencies"]
+            .as_object()
+            .is_some_and(|deps| deps.contains_key("ember-cli"))
+            || json["devDependencies"]
+                .as_object()
+                .is_some_and(|deps| deps.contains_key("ember-cli"));
 
         let mut static_web_server_req = Require::new("static-web-server");
 
