@@ -1,7 +1,6 @@
 mod errors;
 
 use crate::errors::{on_error, WebsiteViteBuildpackError};
-use heroku_nodejs_utils::package_json::PackageJson;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
@@ -33,21 +32,25 @@ impl Buildpack for WebsiteViteBuildpack {
     type Error = WebsiteViteBuildpackError;
 
     fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, Self::Error> {
-        let depends_on_vite =
-            if let Ok(package_json) = PackageJson::read(context.app_dir.join("package.json")) {
-                if package_json.has_dependencies() {
-                    [
-                        package_json.dependencies.as_ref(),
-                        package_json.dev_dependencies.as_ref(),
-                    ]
-                    .iter()
-                    .any(|dep_group| dep_group.is_some_and(|deps| deps.contains_key("vite")))
-                } else {
-                    false
-                }
-            } else {
-                false
-            };
+        let contents = match std::fs::read_to_string(context.app_dir.join("package.json")) {
+            Ok(contents) => contents,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return DetectResultBuilder::fail().build()
+            }
+            Err(e) => {
+                return Err(libcnb::Error::BuildpackError(
+                    WebsiteViteBuildpackError::ReadPackageJson(e),
+                ))
+            }
+        };
+        let json = serde_json::from_str::<serde_json::Value>(&contents)
+            .map_err(WebsiteViteBuildpackError::ParsePackageJson)?;
+        let depends_on_vite = json["dependencies"]
+            .as_object()
+            .is_some_and(|deps| deps.contains_key("vite"))
+            || json["devDependencies"]
+                .as_object()
+                .is_some_and(|deps| deps.contains_key("vite"));
 
         let mut static_web_server_req = Require::new("static-web-server");
 

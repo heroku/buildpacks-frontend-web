@@ -15,6 +15,8 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum WebsiteNextjsBuildpackError {
     Detect(io::Error),
+    ReadPackageJson(io::Error),
+    ParsePackageJson(serde_json::Error),
     SettingBuildPlanMetadata(toml::ser::Error),
 }
 
@@ -31,6 +33,8 @@ pub(crate) fn on_error(error: libcnb::Error<WebsiteNextjsBuildpackError>) {
 fn on_buildpack_error(error: WebsiteNextjsBuildpackError, logger: Box<dyn StartedLogger>) {
     match error {
         WebsiteNextjsBuildpackError::Detect(e) => on_detect_error(&e, logger),
+        WebsiteNextjsBuildpackError::ReadPackageJson(e) => on_read_package_json_error(&e, logger),
+        WebsiteNextjsBuildpackError::ParsePackageJson(e) => on_parse_package_json_error(&e, logger),
         WebsiteNextjsBuildpackError::SettingBuildPlanMetadata(e) => {
             on_toml_serialization_error(&e, logger);
         }
@@ -45,6 +49,22 @@ fn on_detect_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
 
             An unexpected error occurred while determining if the {buildpack_name} should be \
             run for this application. See the log output above for more information. 
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_read_package_json_error(error: &io::Error, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            Error reading package.json from {buildpack_name}.
+        ", buildpack_name = fmt::value(BUILDPACK_NAME) });
+}
+
+fn on_parse_package_json_error(error: &serde_json::Error, logger: Box<dyn StartedLogger>) {
+    print_error_details(logger, &error)
+        .announce()
+        .error(&formatdoc! {"
+            Error parsing package.json from {buildpack_name}.
         ", buildpack_name = fmt::value(BUILDPACK_NAME) });
 }
 
