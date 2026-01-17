@@ -401,3 +401,101 @@ fn caddy_access_logs() {
         );
     });
 }
+
+#[test]
+#[ignore = "integration test"]
+fn caddy_basic_auth() {
+    static_web_server_integration_test("./fixtures/caddy_basic_auth", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            ContainerConfig::new()
+                .env("WEB_BASIC_AUTH_USERNAME", "visitor")
+                .env(
+                    "WEB_BASIC_AUTH_PASSWORD_BCRYPT",
+                    // bcrypt password hash generated with
+                    //   htpasswd -bnBC 10 "" openseasame | tr -d ':\n'
+                    "$2y$10$Uc4licEvYDo2DqtNnTkfV.o0Bvr4Sqw0Vpdh7UMrmkqwTZ92EMkZ6",
+                ),
+            |container, socket_addr| {
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}")).call()
+                });
+                match response_result {
+                    Err(ureq::Error::Status(code, _response)) => {
+                        assert_eq!(code, 401);
+                    }
+                    Ok(_) => {
+                        panic!("should respond 401 Unauthorized, but got 200 ok");
+                    }
+                    Err(error) => {
+                        panic!("should respond 401 Unauthorized, but got other error: {error:?}");
+                    }
+                }
+
+                let auth_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .set(
+                            "Authorization",
+                            // encoded basic auth data generated with that password:
+                            //   echo -n 'visitor:openseasame' | base64
+                            "Basic dmlzaXRvcjpvcGVuc2Vhc2FtZQ==",
+                        )
+                        .call()
+                });
+                match auth_response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let h = response.header("Content-Type").unwrap_or_default();
+                        assert_contains!(h, "text/html");
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(
+                            response_body,
+                            "Welcome to CNB Static Web Server Basic Auth Test!"
+                        );
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+        // Check with runtime var disabling auth.
+        start_container(
+            &ctx,
+            ContainerConfig::new()
+                .env("WEB_BASIC_AUTH_DISABLED", "true")
+                .env("WEB_BASIC_AUTH_USERNAME", "visitor")
+                .env(
+                    "WEB_BASIC_AUTH_PASSWORD_BCRYPT",
+                    // bcrypt password hash generated with
+                    //   htpasswd -bnBC 10 "" openseasame | tr -d ':\n'
+                    "$2y$10$Uc4licEvYDo2DqtNnTkfV.o0Bvr4Sqw0Vpdh7UMrmkqwTZ92EMkZ6",
+                ),
+            |container, socket_addr| {
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}")).call()
+                });
+                match response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let h = response.header("Content-Type").unwrap_or_default();
+                        assert_contains!(h, "text/html");
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(
+                            response_body,
+                            "Welcome to CNB Static Web Server Basic Auth Test!"
+                        );
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
