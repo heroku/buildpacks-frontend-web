@@ -31,6 +31,31 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
 
     static_file_handlers.push(json!(
     {
+        "handler": "subroute",
+        "routes": [{
+            "match": [{
+                "expression": {
+                    "expr": "{env.WEB_BASIC_AUTH_PASSWORD_BCRYPT} != \"\"",
+                    "name": "basic_auth_is_set"
+                }
+            }],
+            "handle": [{
+                "handler": "authentication",
+                "providers": {
+                    "http_basic": {
+                        "accounts": [{
+                            "username": "visitor",
+                            "password": "{env.WEB_BASIC_AUTH_PASSWORD_BCRYPT}"
+                        }],
+                        "realm": "Restricted"
+                    }
+                }
+            }]
+        }],
+    }));
+
+    static_file_handlers.push(json!(
+    {
         "handler": "encode",
         "encodings": {
             "zstd": { "level": "default" },

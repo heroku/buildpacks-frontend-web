@@ -274,6 +274,37 @@ sampling_first = 1000
 sampling_thereafter = 1000
 ```
 
+#### Caddy: Basic Authorization
+
+*Default: not enabled*
+
+Password protect all requests to the web server using HTTP Basic Authorization.
+
+
+
+##### Caddy: Generating hashed passwords
+
+Install `htpasswd`:
+```
+apt-get install apache2-utils     # Debian/Ubuntu
+yum install httpd-tools           # RHEL/CentOS
+brew install httpd                # macOS
+```
+
+Use `htpassword`:
+```
+htpasswd -bnBC 10 "" password | tr -d ':\n'
+
+# Explanation:
+# -b: batch mode (password on command line)
+# -n: display on stdout instead of updating file
+# -B: use bcrypt
+# -C 10: cost factor of 10
+# "": empty username (we just want the hash)
+# tr -d ':\n': removes the colon and newline
+```
+
+
 #### Caddy: Templates
 
 *Default: false*
