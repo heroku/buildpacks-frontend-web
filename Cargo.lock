@@ -18,22 +18,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ascii_table"
-version = "4.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed8a80a95ab122e7cc43bfde1d51949c89ff67e0c76eb795dc045003418473e2"
-dependencies = [
- "lazy_static",
- "regex",
-]
-
-[[package]]
-name = "autocfg"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c4b4d0bd25bd0b74681c0ad21497610ce1b7c91b1022cd21c80c6fbdd9476b0"
-
-[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -61,15 +45,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
-name = "block-buffer"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
-dependencies = [
- "generic-array",
-]
-
-[[package]]
 name = "bstr"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -80,13 +55,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "byte-unit"
-version = "4.0.19"
+name = "bullet_stream"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da78b32057b8fdfc352504708feeba7216dcd65a2c9ab02978cbd288d1279b6c"
+checksum = "848ad8d26dc3efb24babe9a899046c1c69a1134642ff74a00538b941cb79773e"
 dependencies = [
- "serde",
- "utf8-width",
+ "fun_run",
 ]
 
 [[package]]
@@ -137,60 +111,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "commons"
-version = "0.0.0"
-source = "git+https://github.com/heroku/buildpacks-ruby?branch=main#83d9da9de8db20c04a685726b89d71284a292dd6"
-dependencies = [
- "ascii_table",
- "byte-unit",
- "const_format",
- "fancy-regex",
- "fs-err",
- "fs_extra",
- "fun_run",
- "glob",
- "indoc",
- "lazy_static",
- "libcnb 0.21.0",
- "libherokubuildpack 0.21.0",
- "regex",
- "serde",
- "sha2",
- "tempfile",
- "thiserror",
- "walkdir",
-]
-
-[[package]]
-name = "const_format"
-version = "0.2.32"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3a214c7af3d04997541b18d432afaff4c455e79e2029079647e72fc2bd27673"
-dependencies = [
- "const_format_proc_macros",
-]
-
-[[package]]
-name = "const_format_proc_macros"
-version = "0.2.32"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7f6ff08fd20f4f299298a28e2dfa8a8ba1036e6cd2460ac1de7b425d76f2500"
-dependencies = [
- "proc-macro2",
- "quote",
- "unicode-xid",
-]
-
-[[package]]
-name = "cpufeatures"
-version = "0.2.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51e852e6dc9a5bed1fae92dd2375037bf2b768725bf3be87811edee3249d09ad"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "crc32fast"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -223,26 +143,6 @@ name = "crossbeam-utils"
 version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
-
-[[package]]
-name = "crypto-common"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
-dependencies = [
- "generic-array",
- "typenum",
-]
-
-[[package]]
-name = "digest"
-version = "0.10.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
-dependencies = [
- "block-buffer",
- "crypto-common",
-]
 
 [[package]]
 name = "either"
@@ -337,15 +237,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fs-err"
-version = "2.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88a41f105fe1d5b6b34b2055e3dc59bb79b46b48b2040b9e6c7b4b5de097aa41"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
 name = "fs_extra"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -353,11 +244,10 @@ checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
 
 [[package]]
 name = "fun_run"
-version = "0.2.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac1060b826a0883f31399a72e983a55ad0b38830429a5d1dff3719aac9782415"
+checksum = "8edaa9292e7fb8dbab9a2a2b77e73ddb8b0d2504f74708ef0d265e0e9bf32b9b"
 dependencies = [
- "lazy_static",
  "regex",
 ]
 
@@ -372,16 +262,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "generic-array"
-version = "0.14.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
-dependencies = [
- "typenum",
- "version_check",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -391,12 +271,6 @@ dependencies = [
  "libc",
  "wasi",
 ]
-
-[[package]]
-name = "glob"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "globset"
@@ -498,38 +372,13 @@ checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
 
 [[package]]
 name = "libcnb"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aacc89bfeaef5f43cdee664798e3c0aa36e052a412ab1391f0750aee4df1f407"
-dependencies = [
- "libcnb-common 0.21.0",
- "libcnb-data 0.21.0",
- "libcnb-proc-macros 0.21.0",
- "serde",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "libcnb"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "545de2d94471f534c49a2e8c7baaf1e0a3a2ba3e61632e7e367a1b6b37453df6"
 dependencies = [
- "libcnb-common 0.25.0",
- "libcnb-data 0.25.0",
- "libcnb-proc-macros 0.25.0",
- "serde",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "libcnb-common"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a356bd77381b51f1ca42450694f4c7d1c7533a57c5f6a49553a96af96963b6e3"
-dependencies = [
+ "libcnb-common",
+ "libcnb-data",
+ "libcnb-proc-macros",
  "serde",
  "thiserror",
  "toml",
@@ -548,26 +397,12 @@ dependencies = [
 
 [[package]]
 name = "libcnb-data"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfcd102bfb1bf98ee4c18da0b29be6f23a19681937924bf758e9ea8499668b18"
-dependencies = [
- "fancy-regex",
- "libcnb-proc-macros 0.21.0",
- "serde",
- "thiserror",
- "toml",
- "uriparse",
-]
-
-[[package]]
-name = "libcnb-data"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a31f4a9a5369004c1bc2ab3bc00ccc8379bb4ad7afdc052e215fb608ba101583"
 dependencies = [
  "fancy-regex",
- "libcnb-proc-macros 0.25.0",
+ "libcnb-proc-macros",
  "serde",
  "thiserror",
  "toml",
@@ -583,24 +418,12 @@ dependencies = [
  "cargo_metadata",
  "ignore",
  "indoc",
- "libcnb-common 0.25.0",
- "libcnb-data 0.25.0",
+ "libcnb-common",
+ "libcnb-data",
  "petgraph",
  "thiserror",
  "uriparse",
  "which",
-]
-
-[[package]]
-name = "libcnb-proc-macros"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f83bba477c3a6cd69b29f77a6591411bac15ab7b341ad3d3cd38943bfbbd412f"
-dependencies = [
- "cargo_metadata",
- "fancy-regex",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -623,21 +446,12 @@ checksum = "5a874169e98674d20662ca09c7c3520c9cdee99f8c4e3c3e31d1e5e3c075321b"
 dependencies = [
  "fastrand",
  "fs_extra",
- "libcnb-common 0.25.0",
- "libcnb-data 0.25.0",
+ "libcnb-common",
+ "libcnb-data",
  "libcnb-package",
  "regex",
  "tempfile",
  "thiserror",
-]
-
-[[package]]
-name = "libherokubuildpack"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "146f61983fd384cb5ab5373acdd8f53fcb4b27ecb200435a6bfb6a70b421bc9d"
-dependencies = [
- "crossbeam-utils",
 ]
 
 [[package]]
@@ -1041,17 +855,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha2"
-version = "0.10.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "793db75ad2bcafc3ffa7c68b215fee268f537982cd901d132f89c6343f3a3dc8"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "digest",
-]
-
-[[package]]
 name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1079,13 +882,13 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 name = "static-web-server"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "env_as_html_data",
  "indexmap",
  "indoc",
- "libcnb 0.25.0",
+ "libcnb",
  "libcnb-test",
- "libherokubuildpack 0.22.0",
+ "libherokubuildpack",
  "regex",
  "serde",
  "serde_json",
@@ -1100,8 +903,8 @@ dependencies = [
 name = "static_web_server_utils"
 version = "0.0.0"
 dependencies = [
- "libcnb 0.25.0",
- "libherokubuildpack 0.22.0",
+ "libcnb",
+ "libherokubuildpack",
  "toml",
 ]
 
@@ -1194,7 +997,7 @@ dependencies = [
 name = "test_support"
 version = "0.0.0"
 dependencies = [
- "libcnb 0.25.0",
+ "libcnb",
  "libcnb-test",
  "ureq",
 ]
@@ -1270,12 +1073,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "typenum"
-version = "1.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
-
-[[package]]
 name = "unicode-bidi"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1295,12 +1092,6 @@ checksum = "a56d1686db2308d901306f92a263857ef59ea39678a5458e7cb17f01415101f5"
 dependencies = [
  "tinyvec",
 ]
-
-[[package]]
-name = "unicode-xid"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "229730647fbc343e3a80e463c1db7f78f3855d3f3739bee0dda773c9a037c90a"
 
 [[package]]
 name = "untrusted"
@@ -1352,12 +1143,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 
 [[package]]
-name = "utf8-width"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86bd8d4e895da8537e5315b8254664e6b769c4ff3db18321b297a1e7004392e3"
-
-[[package]]
 name = "uuid"
 version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1372,12 +1157,6 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
-
-[[package]]
-name = "version_check"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "walkdir"
@@ -1420,11 +1199,11 @@ dependencies = [
 name = "website-ember"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
- "libcnb 0.25.0",
+ "libcnb",
  "libcnb-test",
- "libherokubuildpack 0.22.0",
+ "libherokubuildpack",
  "serde_json",
  "tempfile",
  "test_support",
@@ -1437,11 +1216,11 @@ dependencies = [
 name = "website-nextjs"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
- "libcnb 0.25.0",
+ "libcnb",
  "libcnb-test",
- "libherokubuildpack 0.22.0",
+ "libherokubuildpack",
  "serde_json",
  "tempfile",
  "test_support",
@@ -1454,11 +1233,11 @@ dependencies = [
 name = "website-public-html"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
- "libcnb 0.25.0",
+ "libcnb",
  "libcnb-test",
- "libherokubuildpack 0.22.0",
+ "libherokubuildpack",
  "static_web_server_utils",
  "test_support",
  "toml",
@@ -1468,11 +1247,11 @@ dependencies = [
 name = "website-vite"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
- "libcnb 0.25.0",
+ "libcnb",
  "libcnb-test",
- "libherokubuildpack 0.22.0",
+ "libherokubuildpack",
  "serde_json",
  "tempfile",
  "test_support",
