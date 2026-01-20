@@ -1,5 +1,5 @@
-use bullet_stream::{global::print, style};
 use crate::BUILDPACK_NAME;
+use bullet_stream::{global::print, style};
 use indoc::formatdoc;
 use std::fmt::Display;
 use std::io;

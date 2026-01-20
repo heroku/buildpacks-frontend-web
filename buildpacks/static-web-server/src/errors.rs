@@ -82,8 +82,7 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError) {
     }
 }
 
-fn on_download_error(
-    error: &libherokubuildpack::download::DownloadError) {
+fn on_download_error(error: &libherokubuildpack::download::DownloadError) {
     print_error_details(&error);
     print::error(formatdoc! {"
         Unable to download the static web server for {buildpack_name}. 
@@ -132,9 +131,7 @@ fn on_framework_error(error: &libcnb::Error<StaticWebServerBuildpackError>) {
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
-fn print_error_details(
-    error: &impl Display,
-) {
+fn print_error_details(error: &impl Display) {
     print::bullet(style::important(DEBUG_INFO));
     print::bullet(error.to_string());
 }

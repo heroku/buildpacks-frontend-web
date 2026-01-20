@@ -1,5 +1,5 @@
-use bullet_stream::{global::print, style};
 use crate::BUILDPACK_NAME;
+use bullet_stream::{global::print, style};
 use indoc::formatdoc;
 use libcnb::TomlFileError;
 use std::fmt::Display;
@@ -75,8 +75,7 @@ fn on_framework_error(error: &libcnb::Error<WebsitePublicHTMLBuildpackError>) {
         ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
-fn print_error_details(
-    error: &impl Display) {
+fn print_error_details(error: &impl Display) {
     print::bullet(style::important(DEBUG_INFO));
     print::bullet(error.to_string());
 }
