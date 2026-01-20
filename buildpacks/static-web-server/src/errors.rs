@@ -44,38 +44,38 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError) {
         }
         StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error) => {
             print_error_details(&error);
-            print::error(&formatdoc! {"
+            print::error(formatdoc! {"
                 Cannot write Caddy configuration for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error) => {
             print_error_details(&error);
-            print::error(&formatdoc! {"
+            print::error(formatdoc! {"
                 Cannot unpack Caddy tarball for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error) => {
             print_error_details(&error);
-            print::error(&formatdoc! {"
+            print::error(formatdoc! {"
                 Cannot create Caddy installation directory for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
             print_error_details(&error);
-            print::error(&formatdoc! {"
+            print::error(formatdoc! {"
                 Cannot create Caddy tarball file for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::BuildCommandFailed(e) => on_build_command_error(&e),
         StaticWebServerBuildpackError::CannotCreatWebExecD(error) => {
             print_error_details(&error);
-            print::error(&formatdoc! {"
+            print::error(formatdoc! {"
                 Cannot create exec.d/web for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) });
         }
         StaticWebServerBuildpackError::CannotInstallEnvAsHtmlData(error) => {
             print_error_details(&error);
-            print::error(&formatdoc! {"
+            print::error(formatdoc! {"
                 Cannot install env-as-html-data (runtime configuration program) for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) });
         }
@@ -85,42 +85,42 @@ fn on_buildpack_error(error: StaticWebServerBuildpackError) {
 fn on_download_error(
     error: &libherokubuildpack::download::DownloadError) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         Unable to download the static web server for {buildpack_name}. 
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
 fn on_json_error(error: &serde_json::Error) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         JSON error from {buildpack_name}. 
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
 fn on_toml_error(error: &TomlFileError) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         TOML error from {buildpack_name}. 
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
 fn on_config_error(error: &toml::de::Error) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         Configuration error from {buildpack_name}. 
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
 fn on_build_command_error(error: &std::io::Error) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         The custom build command [com.heroku.static-web-server.build] exited with failure. 
     "});
 }
 
 fn on_framework_error(error: &libcnb::Error<StaticWebServerBuildpackError>) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         {buildpack_name} internal error.
 
         The framework used by this buildpack encountered an unexpected error.
@@ -136,5 +136,5 @@ fn print_error_details(
     error: &impl Display,
 ) {
     print::bullet(style::important(DEBUG_INFO));
-    print::bullet(&error.to_string());
+    print::bullet(error.to_string());
 }

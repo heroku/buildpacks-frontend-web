@@ -39,7 +39,7 @@ fn on_buildpack_error(error: WebsitePublicHTMLBuildpackError) {
 
 fn on_detect_error(error: &io::Error) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         Unable to complete buildpack detection.
 
         An unexpected error occurred while determining if the {buildpack_name} should be \
@@ -49,21 +49,21 @@ fn on_detect_error(error: &io::Error) {
 
 fn on_toml_error(error: &TomlFileError) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         TOML error from {buildpack_name}. 
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
 fn on_toml_serialization_error(error: &toml::ser::Error) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
         TOML serialization error from {buildpack_name}. 
     ", buildpack_name = style::value(BUILDPACK_NAME) });
 }
 
 fn on_framework_error(error: &libcnb::Error<WebsitePublicHTMLBuildpackError>) {
     print_error_details(&error);
-    print::error(&formatdoc! {"
+    print::error(formatdoc! {"
             {buildpack_name} internal error.
 
             The framework used by this buildpack encountered an unexpected error.
@@ -76,7 +76,7 @@ fn on_framework_error(error: &libcnb::Error<WebsitePublicHTMLBuildpackError>) {
 }
 
 fn print_error_details(
-    error: &impl Display) -> () {
+    error: &impl Display) {
     print::bullet(style::important(DEBUG_INFO));
-    print::bullet(&error.to_string());
+    print::bullet(error.to_string());
 }
