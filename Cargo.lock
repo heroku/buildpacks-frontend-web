@@ -80,6 +80,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bullet_stream"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "848ad8d26dc3efb24babe9a899046c1c69a1134642ff74a00538b941cb79773e"
+dependencies = [
+ "fun_run 0.6.0",
+]
+
+[[package]]
 name = "byte-unit"
 version = "4.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -147,7 +156,7 @@ dependencies = [
  "fancy-regex",
  "fs-err",
  "fs_extra",
- "fun_run",
+ "fun_run 0.2.0",
  "glob",
  "indoc",
  "lazy_static",
@@ -358,6 +367,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac1060b826a0883f31399a72e983a55ad0b38830429a5d1dff3719aac9782415"
 dependencies = [
  "lazy_static",
+ "regex",
+]
+
+[[package]]
+name = "fun_run"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8edaa9292e7fb8dbab9a2a2b77e73ddb8b0d2504f74708ef0d265e0e9bf32b9b"
+dependencies = [
  "regex",
 ]
 
@@ -1420,7 +1438,7 @@ dependencies = [
 name = "website-ember"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
  "libcnb 0.25.0",
  "libcnb-test",
@@ -1437,7 +1455,7 @@ dependencies = [
 name = "website-nextjs"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
  "libcnb 0.25.0",
  "libcnb-test",
@@ -1468,7 +1486,7 @@ dependencies = [
 name = "website-vite"
 version = "0.0.0"
 dependencies = [
- "commons",
+ "bullet_stream",
  "indoc",
  "libcnb 0.25.0",
  "libcnb-test",
