@@ -133,5 +133,5 @@ fn on_framework_error(error: &libcnb::Error<StaticWebServerBuildpackError>) {
 
 fn print_error_details(error: &impl Display) {
     print::bullet(style::important(DEBUG_INFO));
-    print::bullet(error.to_string());
+    print::sub_bullet(error.to_string());
 }
