@@ -4,7 +4,6 @@ use indoc::formatdoc;
 use libcnb::TomlFileError;
 use std::fmt::Display;
 use std::io;
-use std::io::stdout;
 
 const DEBUG_INFO: &str = "Debug info";
 
