@@ -54,6 +54,7 @@ pub(crate) struct RuntimeConfig {
 pub(crate) struct CaddyServerOpts {
     pub(crate) templates: Option<bool>,
     pub(crate) access_logs: Option<CaddyAccessLogsConfig>,
+    pub(crate) basic_auth: Option<bool>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -195,6 +196,7 @@ mod tests {
         let toml_str = r"
             [caddy_server_opts]
             templates = true
+            basic_auth = true
 
             [caddy_server_opts.access_logs]
             enabled = true
@@ -209,6 +211,10 @@ mod tests {
         assert_eq!(parsed_config.runtime_config, None);
         assert_eq!(
             parsed_config.caddy_server_opts.as_ref().unwrap().templates,
+            Some(true)
+        );
+        assert_eq!(
+            parsed_config.caddy_server_opts.as_ref().unwrap().basic_auth,
             Some(true)
         );
         assert_eq!(

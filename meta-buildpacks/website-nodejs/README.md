@@ -25,6 +25,8 @@ id = "heroku/website-nodejs"
 
 ### Local
 
+Requires [pack](https://buildpacks.io/docs/for-platform-operators/how-to/integrate-ci/pack/) and [docker](https://docs.docker.com/engine/install/).
+
 Build & run it locally:
 
 ```bash

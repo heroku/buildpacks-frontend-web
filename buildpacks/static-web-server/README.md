@@ -274,6 +274,76 @@ sampling_first = 1000
 sampling_thereafter = 1000
 ```
 
+#### Caddy: Basic Authorization
+
+*Default: not enabled*
+
+Password protect all requests to the web server using [HTTP Basic Authorization](https://caddyserver.com/docs/modules/http.authentication.providers.http_basic).
+
+```toml
+[com.heroku.static-web-server.caddy_server_opts]
+basic_auth = true
+```
+
+##### Caddy: Basic Auth: Required Env Vars
+
++ `WEB_BASIC_AUTH_USERNAME` any name you wish, for example `visitor`
++ `WEB_BASIC_AUTH_PASSWORD_BCRYPT` see [Generating hashed password](#caddy-generating-hashed-passwords)
+
+For example, to set username `visitor` and password `geniuspass`:
+
+```bash
+# As a local shell configuration
+export WEB_BASIC_AUTH_USERNAME=visitor
+export WEB_BASIC_AUTH_PASSWORD_BCRYPT="$(htpasswd -bnBC 10 "" geniuspass | tr -d ':\n')"
+
+# As a Heroku App config
+heroku config:set \
+  WEB_BASIC_AUTH_USERNAME=visitor \
+  WEB_BASIC_AUTH_PASSWORD_BCRYPT="$(htpasswd -bnBC 10 "" geniuspass | tr -d ':\n')"
+```
+
+Without these env vars, the server will crash with an error:
+
+> provision http.authentication.providers.http_basic: account 0: username and password are required
+
+##### Caddy: Basic Auth: Disable at Runtime
+
+`WEB_BASIC_AUTH_DISABLED=true`: after Basic Auth has been enabled at build-time using `basic_auth = true`, you may need to disable it later, at runtime, such as when a password-protected staging site is promoted to production.
+
+```bash
+# As a local shell configuration
+export WEB_BASIC_AUTH_DISABLED=true
+
+# As a Heroku App config
+heroku config:set WEB_BASIC_AUTH_DISABLED=true
+```
+
+As long as `basic_auth = true`, the required env vars `WEB_BASIC_AUTH_USERNAME` and `WEB_BASIC_AUTH_PASSWORD_BCRYPT` are still required to run the server.
+
+##### Caddy: Generating hashed passwords
+
+Install `htpasswd`:
+```
+apt-get install apache2-utils     # Debian/Ubuntu
+yum install httpd-tools           # RHEL/CentOS
+brew install httpd                # macOS
+```
+
+Use `htpassword`, for example:
+
+```bash
+htpasswd -bnBC 10 "" password | tr -d ':\n'
+
+# Explanation:
+# -b: batch mode (password on command line)
+# -n: display on stdout instead of updating file
+# -B: use bcrypt
+# -C 10: cost factor of 10
+# "": empty username (we just want the hash)
+# tr -d ':\n': removes the colon and newline
+```
+
 #### Caddy: Templates
 
 *Default: false*
@@ -346,4 +416,27 @@ fn detect(&self, context: DetectContext<Self>) -> libcnb::Result<DetectResult, S
         .build_plan(plan_builder.build())
         .build()
 }
+```
+
+## Launching the Server
+
+*Requires [pack](https://buildpacks.io/docs/for-platform-operators/how-to/integrate-ci/pack/) and [docker](https://docs.docker.com/engine/install/).*
+
+Build and run the server container image locally, or on any OCI-compatible host.
+
+```bash
+# Build the container image
+pack build <APP_NAME> \
+  --builder heroku/builder:24 \
+  --path <SOURCE_DIR>
+
+# Launch Web Server
+docker run \
+  --env PORT=8888 -p 8888:8888 \
+  <APP_NAME>
+
+# Interactively explore the container from a shell
+docker run \
+  -it --entrypoint bash \
+  <APP_NAME>
 ```
