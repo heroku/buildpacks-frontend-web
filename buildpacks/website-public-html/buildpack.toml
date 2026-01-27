@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-public-html"
-version = "2.1.0"
+version = "2.2.0"
 name = "Heroku Website (Public HTML)"
 description = "A component of the 'heroku/website' buildpack."
 
