@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-nodejs"
-version = "2.1.0"
+version = "2.2.0"
 name = "Heroku Website/Node.js"
 description = "Heroku's buildpack for static web apps that require Node.js for build."
 keywords = ["ember", "emberjs", "heroku"]
@@ -18,11 +18,11 @@ version = "5.0.0"
 
 [[order.group]]
 id = "heroku/static-web-server"
-version = "2.1.0"
+version = "2.2.0"
 
 [[order.group]]
 id = "heroku/website-vite"
-version = "2.1.0"
+version = "2.2.0"
 
 [[order]]
 
@@ -32,11 +32,11 @@ version = "5.0.0"
 
 [[order.group]]
 id = "heroku/static-web-server"
-version = "2.1.0"
+version = "2.2.0"
 
 [[order.group]]
 id = "heroku/website-ember"
-version = "2.1.0"
+version = "2.2.0"
 
 [[order]]
 
@@ -46,11 +46,11 @@ version = "5.0.0"
 
 [[order.group]]
 id = "heroku/static-web-server"
-version = "2.1.0"
+version = "2.2.0"
 
 [[order.group]]
 id = "heroku/website-nextjs"
-version = "2.1.0"
+version = "2.2.0"
 
 [[metadata.targets]]
 os = "linux"
