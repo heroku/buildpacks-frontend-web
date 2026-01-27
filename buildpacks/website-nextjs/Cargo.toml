@@ -13,6 +13,7 @@ indoc = "2"
 toml = { version = "0.8", features = ["preserve_order"] }
 serde_json = "1"
 bullet_stream = "0.10.0"
+tracing = "0.1.44"
 
 [dev-dependencies]
 libcnb-test = "=0.25.0"

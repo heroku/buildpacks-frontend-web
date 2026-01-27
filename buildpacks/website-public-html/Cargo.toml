@@ -13,6 +13,7 @@ indoc = "2"
 static_web_server_utils = { path = "../../common/static_web_server_utils" }
 toml = { version = "0.8", features = ["preserve_order"] }
 bullet_stream = "0.10.0"
+tracing = "0.1.44"
 
 [dev-dependencies]
 libcnb-test = "=0.25.0"
