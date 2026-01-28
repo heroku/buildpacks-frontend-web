@@ -21,6 +21,7 @@ indexmap = "2"
 regex = "1.12.2"
 bullet_stream = "0.10.0"
 tracing = "0.1.44"
+const_format = "0.2.35"
 
 [dev-dependencies]
 libcnb-test = "=0.25.0"

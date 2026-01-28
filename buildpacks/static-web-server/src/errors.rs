@@ -1,8 +1,8 @@
 use crate::BUILDPACK_NAME;
-use bullet_stream::{global::print, style};
+use crate::o11y::*;
+use bullet_stream::{global::print, Print, style};
 use indoc::formatdoc;
 use libcnb::TomlFileError;
-use std::fmt::Display;
 
 const DEBUG_INFO: &str = "Debug info";
 
@@ -25,101 +25,119 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotInstallEnvAsHtmlData(std::io::Error),
 }
 
+pub(crate) struct ErrorMessage {
+    message: String,
+    error_string: String,
+    error_id: String,
+}
+
 pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
-    match error {
-        libcnb::Error::BuildpackError(buildpack_error) => {
-            on_buildpack_error(buildpack_error);
-        }
-        framework_error => on_framework_error(&framework_error),
-    }
+    let error_message = match error {
+        libcnb::Error::BuildpackError(buildpack_error) => buildpack_error_message(buildpack_error),
+        framework_error => framework_error_message(&framework_error),
+    };
+
+    let output = Print::new(vec![]).without_header()
+        .bullet(style::important(DEBUG_INFO))
+        .sub_bullet(error_message.error_string)
+        .done()
+        .error(error_message.message);
+
+    let output_string = String::from_utf8_lossy(&output).to_string();
+
+    tracing::error!(
+        { ERROR_ID } = error_message.error_id,
+        { ERROR_MESSAGE } = output_string,
+        "error"
+    );
+    print::plain(output_string);
+    eprintln!();
 }
 
-fn on_buildpack_error(error: StaticWebServerBuildpackError) {
+fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage {
     match error {
-        StaticWebServerBuildpackError::Download(e) => on_download_error(&e),
-        StaticWebServerBuildpackError::Json(e) => on_json_error(&e),
-        StaticWebServerBuildpackError::CannotReadProjectToml(e) => on_toml_error(&e),
-        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => {
-            on_config_error(&e);
-        }
-        StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(error) => {
-            print_error_details(&error);
-            print::error(formatdoc! {"
-                Cannot write Caddy configuration for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) });
-        }
-        StaticWebServerBuildpackError::CannotUnpackCaddyTarball(error) => {
-            print_error_details(&error);
-            print::error(formatdoc! {"
+        StaticWebServerBuildpackError::Download(e) => ErrorMessage {
+            message: formatdoc! {"
+                Unable to download the static web server for {buildpack_name}. 
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "download_error".to_string(),
+        },
+        StaticWebServerBuildpackError::Json(e) => ErrorMessage {
+            message: formatdoc! {"
+                JSON error from {buildpack_name}. 
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "json_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotUnpackCaddyTarball(e) => ErrorMessage {
+            message: formatdoc! {"
                 Cannot unpack Caddy tarball for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) });
-        }
-        StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(error) => {
-            print_error_details(&error);
-            print::error(formatdoc! {"
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_unpack_caddy_tarball_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(e) =>  ErrorMessage {
+            message: formatdoc! {"
                 Cannot create Caddy installation directory for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) });
-        }
-        StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(error) => {
-            print_error_details(&error);
-            print::error(formatdoc! {"
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_create_caddy_installation_dir_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(e) => ErrorMessage {
+            message: formatdoc! {"
                 Cannot create Caddy tarball file for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) });
-        }
-        StaticWebServerBuildpackError::BuildCommandFailed(e) => on_build_command_error(&e),
-        StaticWebServerBuildpackError::CannotCreatWebExecD(error) => {
-            print_error_details(&error);
-            print::error(formatdoc! {"
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_create_caddy_tarball_file_error".to_string(),
+        },
+        StaticWebServerBuildpackError::BuildCommandFailed(e) => ErrorMessage {
+            message: formatdoc! {"
+                The custom build command [com.heroku.static-web-server.build] exited with failure. 
+            "}, 
+            error_string: e.to_string(),
+            error_id: "build_command_failed_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotCreatWebExecD(e) => ErrorMessage {
+            message: formatdoc! {"
                 Cannot create exec.d/web for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) });
-        }
-        StaticWebServerBuildpackError::CannotInstallEnvAsHtmlData(error) => {
-            print_error_details(&error);
-            print::error(formatdoc! {"
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_create_exec_d_web_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotInstallEnvAsHtmlData(e) => ErrorMessage {
+            message: formatdoc! {"
                 Cannot install env-as-html-data (runtime configuration program) for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) });
-        }
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_install_env_as_html_data_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => ErrorMessage {
+            message: formatdoc! {"
+                Cannot parse Heroku web server configuration for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_parse_heroku_web_server_configuration_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotReadProjectToml(e) => ErrorMessage {
+            message: formatdoc! {"
+                Cannot read project.toml for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_read_project_toml_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(e) => ErrorMessage {
+            message: formatdoc! {"
+                Cannot write Caddy configuration for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_write_caddy_configuration_error".to_string(),
+        },
     }
 }
 
-fn on_download_error(error: &libherokubuildpack::download::DownloadError) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        Unable to download the static web server for {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_json_error(error: &serde_json::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        JSON error from {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_toml_error(error: &TomlFileError) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        TOML error from {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_config_error(error: &toml::de::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        Configuration error from {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_build_command_error(error: &std::io::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        The custom build command [com.heroku.static-web-server.build] exited with failure. 
-    "});
-}
-
-fn on_framework_error(error: &libcnb::Error<StaticWebServerBuildpackError>) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
+fn framework_error_message(error: &libcnb::Error<StaticWebServerBuildpackError>) -> ErrorMessage {
+    let message = formatdoc! {"
         {buildpack_name} internal error.
 
         The framework used by this buildpack encountered an unexpected error.
@@ -128,10 +146,11 @@ fn on_framework_error(error: &libcnb::Error<StaticWebServerBuildpackError>) {
         status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
 
         {SUBMIT_AN_ISSUE}
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
+    ", buildpack_name = style::value(BUILDPACK_NAME) };
 
-fn print_error_details(error: &impl Display) {
-    print::bullet(style::important(DEBUG_INFO));
-    print::sub_bullet(error.to_string());
+    ErrorMessage {
+        message,
+        error_string: error.to_string(),
+        error_id: "framework_error".to_string(),
+    }
 }

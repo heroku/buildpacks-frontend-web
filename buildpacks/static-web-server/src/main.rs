@@ -3,8 +3,10 @@ mod config_web_server;
 mod errors;
 mod heroku_web_server_config;
 mod install_web_server;
+mod o11y;
 
 use crate::errors::{on_error, StaticWebServerBuildpackError};
+use crate::o11y::*;
 use config_web_server::config_web_server;
 use install_web_server::install_web_server;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
@@ -43,6 +45,9 @@ impl Buildpack for StaticWebServerBuildpack {
         let plan_builder = BuildPlanBuilder::new()
             .provides(BUILD_PLAN_ID)
             .requires(Require::new(BUILD_PLAN_ID));
+
+        tracing::info!({ DETECT_PROVIDES_STATIC_WEB_SERVER } = true, "buildplan");
+        tracing::info!({ DETECT_REQUIRES_STATIC_WEB_SERVER } = true, "buildplan");
 
         DetectResultBuilder::pass()
             .build_plan(plan_builder.build())
