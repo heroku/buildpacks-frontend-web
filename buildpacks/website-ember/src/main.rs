@@ -1,6 +1,8 @@
 mod errors;
+mod o11y;
 
 use crate::errors::{on_error, WebsiteEmberBuildpackError};
+use crate::o11y::*;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
