@@ -1,7 +1,7 @@
 use crate::BUILDPACK_NAME;
-use bullet_stream::{global::print, style};
+use crate::o11y::*;
+use bullet_stream::{global::print, Print, style};
 use indoc::formatdoc;
-use std::fmt::Display;
 use std::io;
 
 const DEBUG_INFO: &str = "Debug info";
@@ -19,72 +19,81 @@ pub(crate) enum WebsiteNextjsBuildpackError {
     SettingBuildPlanMetadata(toml::ser::Error),
 }
 
+pub(crate) struct ErrorMessage {
+    message: String,
+    error_string: String,
+    error_id: String,
+}
+
 pub(crate) fn on_error(error: libcnb::Error<WebsiteNextjsBuildpackError>) {
+    let error_message = match error {
+        libcnb::Error::BuildpackError(buildpack_error) => buildpack_error_message(buildpack_error),
+        framework_error => framework_error_message(&framework_error),
+    };
+
+    let output = Print::new(vec![]).without_header()
+        .bullet(style::important(DEBUG_INFO))
+        .sub_bullet(error_message.error_string)
+        .done()
+        .error(error_message.message);
+
+    let output_string = String::from_utf8_lossy(&output).to_string();
+
+    tracing::error!(
+        { ERROR_ID } = error_message.error_id,
+        { ERROR_MESSAGE } = output_string,
+        "error"
+    );
+    print::plain(output_string);
+    eprintln!();
+}
+
+fn buildpack_error_message(error: WebsiteNextjsBuildpackError) -> ErrorMessage {
     match error {
-        libcnb::Error::BuildpackError(buildpack_error) => {
-            on_buildpack_error(buildpack_error);
-        }
-        framework_error => on_framework_error(&framework_error),
+        WebsiteNextjsBuildpackError::Detect(e) => ErrorMessage {
+            message: formatdoc! {"
+                Unable to complete buildpack detection.
+            "}, 
+            error_string: e.to_string(),
+            error_id: "detect_error".to_string(),
+        },
+        WebsiteNextjsBuildpackError::ReadPackageJson(e) => ErrorMessage {
+            message: formatdoc! {"
+                Error reading package.json from {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "read_package_json_error".to_string(),
+        },
+        WebsiteNextjsBuildpackError::ParsePackageJson(e) => ErrorMessage {
+            message: formatdoc! {"
+                Error parsing package.json from {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "parse_package_json_error".to_string(),
+        },
+        WebsiteNextjsBuildpackError::SettingBuildPlanMetadata(e) => ErrorMessage {
+            message: formatdoc! {"
+                Error setting build plan metadata from {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "setting_build_plan_metadata_error".to_string(),
+        },
     }
 }
 
-fn on_buildpack_error(error: WebsiteNextjsBuildpackError) {
-    match error {
-        WebsiteNextjsBuildpackError::Detect(e) => on_detect_error(&e),
-        WebsiteNextjsBuildpackError::ReadPackageJson(e) => on_read_package_json_error(&e),
-        WebsiteNextjsBuildpackError::ParsePackageJson(e) => on_parse_package_json_error(&e),
-        WebsiteNextjsBuildpackError::SettingBuildPlanMetadata(e) => {
-            on_toml_serialization_error(&e);
-        }
+fn framework_error_message(error: &libcnb::Error<WebsiteNextjsBuildpackError>) -> ErrorMessage {
+    ErrorMessage {
+        message: formatdoc! {"
+            {buildpack_name} internal error.
+
+            The framework used by this buildpack encountered an unexpected error.
+            
+            If you can't deploy to Heroku due to this issue, check the official Heroku Status page at \
+            status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
+
+            {SUBMIT_AN_ISSUE}
+        ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+        error_string: error.to_string(),
+        error_id: "website_nextjs_buildpack_error".to_string(),
     }
-}
-
-fn on_detect_error(error: &io::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        Unable to complete buildpack detection.
-
-        An unexpected error occurred while determining if the {buildpack_name} should be \
-        run for this application. See the log output above for more information. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_read_package_json_error(error: &io::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        Error reading package.json from {buildpack_name}.
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_parse_package_json_error(error: &serde_json::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        Error parsing package.json from {buildpack_name}.
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_toml_serialization_error(error: &toml::ser::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        TOML serialization error from {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_framework_error(error: &libcnb::Error<WebsiteNextjsBuildpackError>) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        {buildpack_name} internal error.
-
-        The framework used by this buildpack encountered an unexpected error.
-        
-        If you can't deploy to Heroku due to this issue, check the official Heroku Status page at \
-        status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
-
-        {SUBMIT_AN_ISSUE}
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn print_error_details(error: &impl Display) {
-    print::bullet(style::important(DEBUG_INFO));
-    print::sub_bullet(error.to_string());
 }

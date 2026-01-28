@@ -85,6 +85,13 @@ fn framework_error_message(error: &libcnb::Error<WebsiteEmberBuildpackError>) ->
     ErrorMessage {
         message: formatdoc! {"
             {buildpack_name} internal error.
+
+            The framework used by this buildpack encountered an unexpected error.
+            
+            If you can't deploy to Heroku due to this issue, check the official Heroku Status page at \
+            status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
+
+            {SUBMIT_AN_ISSUE}
         ", buildpack_name = style::value(BUILDPACK_NAME) }, 
         error_string: error.to_string(),
         error_id: "website_ember_buildpack_error".to_string(),

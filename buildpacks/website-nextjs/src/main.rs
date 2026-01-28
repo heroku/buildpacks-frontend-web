@@ -1,4 +1,5 @@
 mod errors;
+mod o11y;
 
 use crate::errors::{on_error, WebsiteNextjsBuildpackError};
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};

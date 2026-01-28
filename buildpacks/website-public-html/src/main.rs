@@ -1,4 +1,5 @@
 mod errors;
+mod o11y;
 
 use crate::errors::{on_error, WebsitePublicHTMLBuildpackError};
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};

@@ -1,8 +1,8 @@
 use crate::BUILDPACK_NAME;
-use bullet_stream::{global::print, style};
+use crate::o11y::*;
+use bullet_stream::{global::print, Print, style};
 use indoc::formatdoc;
 use libcnb::TomlFileError;
-use std::fmt::Display;
 use std::io;
 
 const DEBUG_INFO: &str = "Debug info";
@@ -18,52 +18,64 @@ pub(crate) enum WebsitePublicHTMLBuildpackError {
     SettingBuildPlanMetadata(toml::ser::Error),
 }
 
+pub(crate) struct ErrorMessage {
+    message: String,
+    error_string: String,
+    error_id: String,
+}
+
 pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
+    let error_message = match error {
+        libcnb::Error::BuildpackError(buildpack_error) => buildpack_error_message(buildpack_error),
+        framework_error => framework_error_message(&framework_error),
+    };
+
+    let output = Print::new(vec![]).without_header()
+        .bullet(style::important(DEBUG_INFO))
+        .sub_bullet(error_message.error_string)
+        .done()
+        .error(error_message.message);
+
+    let output_string = String::from_utf8_lossy(&output).to_string();
+
+    tracing::error!(
+        { ERROR_ID } = error_message.error_id,
+        { ERROR_MESSAGE } = output_string,
+        "error"
+    );
+    print::plain(output_string);
+    eprintln!();
+}
+
+fn buildpack_error_message(error: WebsitePublicHTMLBuildpackError) -> ErrorMessage {
     match error {
-        libcnb::Error::BuildpackError(buildpack_error) => {
-            on_buildpack_error(buildpack_error);
-        }
-        framework_error => on_framework_error(&framework_error),
+        WebsitePublicHTMLBuildpackError::Detect(e) => ErrorMessage {
+            message: formatdoc! {"
+                Unable to complete buildpack detection.
+            "}, 
+            error_string: e.to_string(),
+            error_id: "detect_error".to_string(),
+        },
+        WebsitePublicHTMLBuildpackError::CannotReadProjectToml(e) => ErrorMessage {
+            message: formatdoc! {"
+                TOML error from {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "cannot_read_project_toml_error".to_string(),
+        },
+        WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata(e) => ErrorMessage {
+            message: formatdoc! {"
+                Error setting build plan metadata from {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            error_string: e.to_string(),
+            error_id: "setting_build_plan_metadata_error".to_string(),
+        },
     }
 }
 
-fn on_buildpack_error(error: WebsitePublicHTMLBuildpackError) {
-    match error {
-        WebsitePublicHTMLBuildpackError::Detect(e) => on_detect_error(&e),
-        WebsitePublicHTMLBuildpackError::CannotReadProjectToml(e) => on_toml_error(&e),
-        WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata(e) => {
-            on_toml_serialization_error(&e);
-        }
-    }
-}
-
-fn on_detect_error(error: &io::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        Unable to complete buildpack detection.
-
-        An unexpected error occurred while determining if the {buildpack_name} should be \
-        run for this application. See the log output above for more information. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_toml_error(error: &TomlFileError) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        TOML error from {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_toml_serialization_error(error: &toml::ser::Error) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
-        TOML serialization error from {buildpack_name}. 
-    ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn on_framework_error(error: &libcnb::Error<WebsitePublicHTMLBuildpackError>) {
-    print_error_details(&error);
-    print::error(formatdoc! {"
+fn framework_error_message(error: &libcnb::Error<WebsitePublicHTMLBuildpackError>) -> ErrorMessage {
+    ErrorMessage {
+        message: formatdoc! {"
             {buildpack_name} internal error.
 
             The framework used by this buildpack encountered an unexpected error.
@@ -72,10 +84,8 @@ fn on_framework_error(error: &libcnb::Error<WebsitePublicHTMLBuildpackError>) {
             status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
 
             {SUBMIT_AN_ISSUE}
-        ", buildpack_name = style::value(BUILDPACK_NAME) });
-}
-
-fn print_error_details(error: &impl Display) {
-    print::bullet(style::important(DEBUG_INFO));
-    print::sub_bullet(error.to_string());
+        ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+        error_string: error.to_string(),
+        error_id: "website_public_html_buildpack_error".to_string(),
+    }
 }
