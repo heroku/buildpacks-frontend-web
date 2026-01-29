@@ -94,6 +94,6 @@ fn framework_error_message(error: &libcnb::Error<WebsiteEmberBuildpackError>) ->
             {SUBMIT_AN_ISSUE}
         ", buildpack_name = style::value(BUILDPACK_NAME) }, 
         error_string: error.to_string(),
-        error_id: "website_ember_buildpack_error".to_string(),
+        error_id: "framework_error".to_string(),
     }
 }

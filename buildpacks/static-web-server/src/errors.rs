@@ -21,7 +21,7 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotCreateCaddyInstallationDir(std::io::Error),
     CannotCreateCaddyTarballFile(std::io::Error),
     BuildCommandFailed(std::io::Error),
-    CannotCreatWebExecD(std::io::Error),
+    CannotCreateWebExecD(std::io::Error),
     CannotInstallEnvAsHtmlData(std::io::Error),
 }
 
@@ -100,7 +100,7 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
             error_string: e.to_string(),
             error_id: "build_command_failed_error".to_string(),
         },
-        StaticWebServerBuildpackError::CannotCreatWebExecD(e) => ErrorMessage {
+        StaticWebServerBuildpackError::CannotCreateWebExecD(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot create exec.d/web for {buildpack_name}
             ", buildpack_name = style::value(BUILDPACK_NAME) }, 

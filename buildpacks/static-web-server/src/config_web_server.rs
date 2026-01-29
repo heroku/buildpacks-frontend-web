@@ -89,7 +89,7 @@ pub(crate) fn config_web_server(
         let exec_path = web_exec_destination.join("env-as-html-data");
         log_info(format!("  {}", exec_path.display()));
         fs::create_dir_all(&web_exec_destination)
-            .map_err(StaticWebServerBuildpackError::CannotCreatWebExecD)?;
+            .map_err(StaticWebServerBuildpackError::CannotCreateWebExecD)?;
         fs::copy(
             additional_buildpack_binary_path!("env-as-html-data"),
             exec_path,
