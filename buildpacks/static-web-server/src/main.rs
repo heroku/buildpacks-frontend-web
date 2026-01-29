@@ -62,6 +62,12 @@ impl Buildpack for StaticWebServerBuildpack {
 
         let configuration_layer = config_web_server(&context)?;
 
+        tracing::info!(
+            { INSTALLATION_WEB_SERVER_NAME } = WEB_SERVER_NAME,
+            { INSTALLATION_WEB_SERVER_VERSION } = WEB_SERVER_VERSION,
+            "build success"
+        );
+
         BuildResultBuilder::new()
             .launch(
                 LaunchBuilder::new()
