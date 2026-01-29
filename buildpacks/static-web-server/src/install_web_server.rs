@@ -12,8 +12,8 @@ use libherokubuildpack::tar::decompress_tarball;
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 
-use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError};
 use crate::o11y::*;
+use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError};
 
 pub(crate) fn install_web_server(
     context: &BuildContext<StaticWebServerBuildpack>,
@@ -74,7 +74,12 @@ pub(crate) fn install_web_server(
                 .map_err(StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir)?;
 
             log_info(format!("Downloading web server from {artifact_url}"));
-            tracing::info!({ INSTALLATION_DOWNLOAD_URL } = artifact_url, { INSTALLATION_WEB_SERVER_NAME } = web_server_name, { INSTALLATION_WEB_SERVER_VERSION } = web_server_version, "downloading web server");
+            tracing::info!(
+                { INSTALLATION_DOWNLOAD_URL } = artifact_url,
+                { INSTALLATION_WEB_SERVER_NAME } = web_server_name,
+                { INSTALLATION_WEB_SERVER_VERSION } = web_server_version,
+                "downloading web server"
+            );
             download_file(artifact_url, web_server_tgz.path())
                 .map_err(StaticWebServerBuildpackError::Download)?;
             decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
