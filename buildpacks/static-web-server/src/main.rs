@@ -31,8 +31,8 @@ use ureq as _;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
 const BUILD_PLAN_ID: &str = "static-web-server";
-const WEB_SERVER_NAME: &str = "caddy";
-const WEB_SERVER_VERSION: &str = "2.10.2";
+pub(crate) const WEB_SERVER_NAME: &str = "caddy";
+pub(crate) const WEB_SERVER_VERSION: &str = "2.10.2";
 
 pub(crate) struct StaticWebServerBuildpack;
 

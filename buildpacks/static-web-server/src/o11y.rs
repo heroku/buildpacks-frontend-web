@@ -25,3 +25,5 @@ pub(crate) const CONFIG_RESPONSE_HEADERS_ENABLED: &str = formatcp!("{CONFIG}.res
 const ERROR: &str = formatcp!("{NAMESPACE}.error");
 pub(crate) const ERROR_ID: &str = formatcp!("{ERROR}.id");
 pub(crate) const ERROR_MESSAGE: &str = formatcp!("{ERROR}.message");
+pub(crate) const ERROR_WEB_SERVER_NAME: &str = formatcp!("{ERROR}.web_server_name");
+pub(crate) const ERROR_WEB_SERVER_VERSION: &str = formatcp!("{ERROR}.web_server_version");

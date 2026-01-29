@@ -1,4 +1,4 @@
-use crate::BUILDPACK_NAME;
+use crate::{BUILDPACK_NAME, WEB_SERVER_NAME, WEB_SERVER_VERSION};
 use crate::o11y::*;
 use bullet_stream::{global::print, Print, style};
 use indoc::formatdoc;
@@ -48,6 +48,8 @@ pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
     tracing::error!(
         { ERROR_ID } = error_message.error_id,
         { ERROR_MESSAGE } = output_string,
+        { ERROR_WEB_SERVER_NAME } = WEB_SERVER_NAME,
+        { ERROR_WEB_SERVER_VERSION } = WEB_SERVER_VERSION,
         "error"
     );
     print::plain(output_string);
