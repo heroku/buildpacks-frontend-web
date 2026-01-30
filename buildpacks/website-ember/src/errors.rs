@@ -1,6 +1,6 @@
-use crate::BUILDPACK_NAME;
 use crate::o11y::*;
-use bullet_stream::{global::print, Print, style};
+use crate::BUILDPACK_NAME;
+use bullet_stream::{global::print, style, Print};
 use indoc::formatdoc;
 use std::io;
 
@@ -31,7 +31,8 @@ pub(crate) fn on_error(error: libcnb::Error<WebsiteEmberBuildpackError>) {
         framework_error => framework_error_message(&framework_error),
     };
 
-    let output = Print::new(vec![]).without_header()
+    let output = Print::new(vec![])
+        .without_header()
         .bullet(style::important(DEBUG_INFO))
         .sub_bullet(error_message.error_string)
         .done()
@@ -53,28 +54,28 @@ fn buildpack_error_message(error: WebsiteEmberBuildpackError) -> ErrorMessage {
         WebsiteEmberBuildpackError::Detect(e) => ErrorMessage {
             message: formatdoc! {"
                 Unable to complete buildpack detection.
-            "}, 
+            "},
             error_string: e.to_string(),
             error_id: "detect_error".to_string(),
         },
         WebsiteEmberBuildpackError::ReadPackageJson(e) => ErrorMessage {
             message: formatdoc! {"
                 Error reading package.json from {buildpack_name}.
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "read_package_json_error".to_string(),
         },
         WebsiteEmberBuildpackError::ParsePackageJson(e) => ErrorMessage {
             message: formatdoc! {"
                 Error parsing package.json from {buildpack_name}.
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "parse_package_json_error".to_string(),
         },
         WebsiteEmberBuildpackError::SettingBuildPlanMetadata(e) => ErrorMessage {
             message: formatdoc! {"
                 Error setting build plan metadata from {buildpack_name}.
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "setting_build_plan_metadata_error".to_string(),
         },
@@ -92,7 +93,7 @@ fn framework_error_message(error: &libcnb::Error<WebsiteEmberBuildpackError>) ->
             status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
 
             {SUBMIT_AN_ISSUE}
-        ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+        ", buildpack_name = style::value(BUILDPACK_NAME) },
         error_string: error.to_string(),
         error_id: "framework_error".to_string(),
     }

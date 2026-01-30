@@ -74,7 +74,10 @@ impl Buildpack for WebsiteViteBuildpack {
             .requires(nodejs_require);
 
         tracing::info!({ DETECT_PROVIDES_WEBSITE_VITE } = true, "buildplan");
-        tracing::info!({ DETECT_REQUIRES_WEBSITE_VITE } = depends_on_vite, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_VITE } = depends_on_vite,
+            "buildplan"
+        );
 
         if depends_on_vite {
             DetectResultBuilder::pass()

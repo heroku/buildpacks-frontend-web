@@ -1,6 +1,6 @@
-use crate::BUILDPACK_NAME;
 use crate::o11y::*;
-use bullet_stream::{global::print, Print, style};
+use crate::BUILDPACK_NAME;
+use bullet_stream::{global::print, style, Print};
 use indoc::formatdoc;
 use libcnb::TomlFileError;
 use std::io;
@@ -30,7 +30,8 @@ pub(crate) fn on_error(error: libcnb::Error<WebsitePublicHTMLBuildpackError>) {
         framework_error => framework_error_message(&framework_error),
     };
 
-    let output = Print::new(vec![]).without_header()
+    let output = Print::new(vec![])
+        .without_header()
         .bullet(style::important(DEBUG_INFO))
         .sub_bullet(error_message.error_string)
         .done()
@@ -52,21 +53,21 @@ fn buildpack_error_message(error: WebsitePublicHTMLBuildpackError) -> ErrorMessa
         WebsitePublicHTMLBuildpackError::Detect(e) => ErrorMessage {
             message: formatdoc! {"
                 Unable to complete buildpack detection.
-            "}, 
+            "},
             error_string: e.to_string(),
             error_id: "detect_error".to_string(),
         },
         WebsitePublicHTMLBuildpackError::CannotReadProjectToml(e) => ErrorMessage {
             message: formatdoc! {"
                 TOML error from {buildpack_name}.
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_read_project_toml_error".to_string(),
         },
         WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata(e) => ErrorMessage {
             message: formatdoc! {"
                 Error setting build plan metadata from {buildpack_name}.
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "setting_build_plan_metadata_error".to_string(),
         },
@@ -84,7 +85,7 @@ fn framework_error_message(error: &libcnb::Error<WebsitePublicHTMLBuildpackError
             status.heroku.com for any ongoing incidents. After all incidents resolve, retry your build.
 
             {SUBMIT_AN_ISSUE}
-        ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+        ", buildpack_name = style::value(BUILDPACK_NAME) },
         error_string: error.to_string(),
         error_id: "website_public_html_buildpack_error".to_string(),
     }

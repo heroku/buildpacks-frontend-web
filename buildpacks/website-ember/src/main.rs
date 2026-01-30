@@ -74,7 +74,10 @@ impl Buildpack for WebsiteEmberBuildpack {
             .requires(nodejs_require);
 
         tracing::info!({ DETECT_PROVIDES_WEBSITE_EMBER } = true, "buildplan");
-        tracing::info!({ DETECT_REQUIRES_WEBSITE_EMBER } = depends_on_ember_cli, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_EMBER } = depends_on_ember_cli,
+            "buildplan"
+        );
 
         if depends_on_ember_cli {
             DetectResultBuilder::pass()

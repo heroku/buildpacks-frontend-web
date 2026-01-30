@@ -1,6 +1,6 @@
-use crate::{BUILDPACK_NAME, WEB_SERVER_NAME, WEB_SERVER_VERSION};
 use crate::o11y::*;
-use bullet_stream::{global::print, Print, style};
+use crate::{BUILDPACK_NAME, WEB_SERVER_NAME, WEB_SERVER_VERSION};
+use bullet_stream::{global::print, style, Print};
 use indoc::formatdoc;
 use libcnb::TomlFileError;
 
@@ -37,7 +37,8 @@ pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
         framework_error => framework_error_message(&framework_error),
     };
 
-    let output = Print::new(vec![]).without_header()
+    let output = Print::new(vec![])
+        .without_header()
         .bullet(style::important(DEBUG_INFO))
         .sub_bullet(error_message.error_string)
         .done()
@@ -61,77 +62,77 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
         StaticWebServerBuildpackError::Download(e) => ErrorMessage {
             message: formatdoc! {"
                 Unable to download the static web server for {buildpack_name}. 
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "download_error".to_string(),
         },
         StaticWebServerBuildpackError::Json(e) => ErrorMessage {
             message: formatdoc! {"
                 JSON error from {buildpack_name}. 
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "json_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotUnpackCaddyTarball(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot unpack Caddy tarball for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_unpack_caddy_tarball_error".to_string(),
         },
-        StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(e) =>  ErrorMessage {
+        StaticWebServerBuildpackError::CannotCreateCaddyInstallationDir(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot create Caddy installation directory for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_create_caddy_installation_dir_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotCreateCaddyTarballFile(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot create Caddy tarball file for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_create_caddy_tarball_file_error".to_string(),
         },
         StaticWebServerBuildpackError::BuildCommandFailed(e) => ErrorMessage {
             message: formatdoc! {"
                 The custom build command [com.heroku.static-web-server.build] exited with failure. 
-            "}, 
+            "},
             error_string: e.to_string(),
             error_id: "build_command_failed_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotCreateWebExecD(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot create exec.d/web for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_create_exec_d_web_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotInstallEnvAsHtmlData(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot install env-as-html-data (runtime configuration program) for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_install_env_as_html_data_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotParseHerokuWebServerConfiguration(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot parse Heroku web server configuration for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_parse_heroku_web_server_configuration_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotReadProjectToml(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot read project.toml for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_read_project_toml_error".to_string(),
         },
         StaticWebServerBuildpackError::CannotWriteCaddyConfiguration(e) => ErrorMessage {
             message: formatdoc! {"
                 Cannot write Caddy configuration for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) }, 
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_write_caddy_configuration_error".to_string(),
         },

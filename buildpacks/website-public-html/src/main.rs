@@ -71,7 +71,10 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
         let plan_builder = BuildPlanBuilder::new().requires(static_web_server_req);
 
         tracing::info!({ DETECT_PROVIDES_WEBSITE_PUBLIC_HTML } = true, "buildplan");
-        tracing::info!({ DETECT_REQUIRES_WEBSITE_PUBLIC_HTML } = index_page_exists, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_PUBLIC_HTML } = index_page_exists,
+            "buildplan"
+        );
 
         if index_page_exists {
             DetectResultBuilder::pass()

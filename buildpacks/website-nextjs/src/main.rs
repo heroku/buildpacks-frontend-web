@@ -74,7 +74,10 @@ impl Buildpack for WebsiteNextjsBuildpack {
             .requires(nodejs_require);
 
         tracing::info!({ DETECT_PROVIDES_WEBSITE_NEXTJS } = true, "buildplan");
-        tracing::info!({ DETECT_REQUIRES_WEBSITE_NEXTJS } = depends_on_nextjs, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_NEXTJS } = depends_on_nextjs,
+            "buildplan"
+        );
 
         if depends_on_nextjs {
             DetectResultBuilder::pass()
