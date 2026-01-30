@@ -3,8 +3,10 @@ mod config_web_server;
 mod errors;
 mod heroku_web_server_config;
 mod install_web_server;
+mod o11y;
 
 use crate::errors::{on_error, StaticWebServerBuildpackError};
+use crate::o11y::*;
 use config_web_server::config_web_server;
 use install_web_server::install_web_server;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
@@ -29,8 +31,8 @@ use ureq as _;
 
 const BUILDPACK_NAME: &str = "Heroku Static Web Server Buildpack";
 const BUILD_PLAN_ID: &str = "static-web-server";
-const WEB_SERVER_NAME: &str = "caddy";
-const WEB_SERVER_VERSION: &str = "2.10.2";
+pub(crate) const WEB_SERVER_NAME: &str = "caddy";
+pub(crate) const WEB_SERVER_VERSION: &str = "2.10.2";
 
 pub(crate) struct StaticWebServerBuildpack;
 
@@ -44,6 +46,9 @@ impl Buildpack for StaticWebServerBuildpack {
             .provides(BUILD_PLAN_ID)
             .requires(Require::new(BUILD_PLAN_ID));
 
+        tracing::info!({ DETECT_PROVIDES_STATIC_WEB_SERVER } = true, "buildplan");
+        tracing::info!({ DETECT_REQUIRES_STATIC_WEB_SERVER } = true, "buildplan");
+
         DetectResultBuilder::pass()
             .build_plan(plan_builder.build())
             .build()
@@ -56,6 +61,12 @@ impl Buildpack for StaticWebServerBuildpack {
             install_web_server(&context, WEB_SERVER_NAME, WEB_SERVER_VERSION)?;
 
         let configuration_layer = config_web_server(&context)?;
+
+        tracing::info!(
+            { INSTALLATION_WEB_SERVER_NAME } = WEB_SERVER_NAME,
+            { INSTALLATION_WEB_SERVER_VERSION } = WEB_SERVER_VERSION,
+            "build success"
+        );
 
         BuildResultBuilder::new()
             .launch(

@@ -111,6 +111,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "const_format"
+version = "0.2.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7faa7469a93a566e9ccc1c73fe783b4a65c274c5ace346038dca9c39fe0030ad"
+dependencies = [
+ "const_format_proc_macros",
+]
+
+[[package]]
+name = "const_format_proc_macros"
+version = "0.2.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d57c2eccfb16dbac1f4e61e206105db5820c9d26c3c472bc17c774259ef7744"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-xid",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -653,6 +673,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pin-project-lite"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
+
+[[package]]
 name = "pkg-config"
 version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -876,6 +902,7 @@ name = "static-web-server"
 version = "0.0.0"
 dependencies = [
  "bullet_stream",
+ "const_format",
  "env_as_html_data",
  "indexmap",
  "indoc",
@@ -889,6 +916,7 @@ dependencies = [
  "tempfile",
  "test_support",
  "toml",
+ "tracing",
  "ureq",
 ]
 
@@ -1066,6 +1094,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100"
+dependencies = [
+ "pin-project-lite",
+ "tracing-attributes",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-attributes"
+version = "0.1.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "tracing-core"
+version = "0.1.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1085,6 +1144,12 @@ checksum = "a56d1686db2308d901306f92a263857ef59ea39678a5458e7cb17f01415101f5"
 dependencies = [
  "tinyvec",
 ]
+
+[[package]]
+name = "unicode-xid"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
 name = "untrusted"
@@ -1193,6 +1258,7 @@ name = "website-ember"
 version = "0.0.0"
 dependencies = [
  "bullet_stream",
+ "const_format",
  "indoc",
  "libcnb",
  "libcnb-test",
@@ -1201,6 +1267,7 @@ dependencies = [
  "tempfile",
  "test_support",
  "toml",
+ "tracing",
  "ureq",
  "uuid",
 ]
@@ -1210,6 +1277,7 @@ name = "website-nextjs"
 version = "0.0.0"
 dependencies = [
  "bullet_stream",
+ "const_format",
  "indoc",
  "libcnb",
  "libcnb-test",
@@ -1218,6 +1286,7 @@ dependencies = [
  "tempfile",
  "test_support",
  "toml",
+ "tracing",
  "ureq",
  "uuid",
 ]
@@ -1227,6 +1296,7 @@ name = "website-public-html"
 version = "0.0.0"
 dependencies = [
  "bullet_stream",
+ "const_format",
  "indoc",
  "libcnb",
  "libcnb-test",
@@ -1234,6 +1304,7 @@ dependencies = [
  "static_web_server_utils",
  "test_support",
  "toml",
+ "tracing",
 ]
 
 [[package]]
@@ -1241,6 +1312,7 @@ name = "website-vite"
 version = "0.0.0"
 dependencies = [
  "bullet_stream",
+ "const_format",
  "indoc",
  "libcnb",
  "libcnb-test",
@@ -1249,6 +1321,7 @@ dependencies = [
  "tempfile",
  "test_support",
  "toml",
+ "tracing",
  "ureq",
  "uuid",
 ]

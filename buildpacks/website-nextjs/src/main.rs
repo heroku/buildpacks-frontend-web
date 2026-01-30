@@ -1,6 +1,8 @@
 mod errors;
+mod o11y;
 
 use crate::errors::{on_error, WebsiteNextjsBuildpackError};
+use crate::o11y::*;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
@@ -70,6 +72,12 @@ impl Buildpack for WebsiteNextjsBuildpack {
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req)
             .requires(nodejs_require);
+
+        tracing::info!({ DETECT_PROVIDES_WEBSITE_NEXTJS } = true, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_NEXTJS } = depends_on_nextjs,
+            "buildplan"
+        );
 
         if depends_on_nextjs {
             DetectResultBuilder::pass()
