@@ -75,7 +75,6 @@ pub(crate) fn install_web_server(
 
             log_info(format!("Downloading web server from {artifact_url}"));
             tracing::info!(
-                { INSTALLATION_DOWNLOAD_URL } = artifact_url,
                 { INSTALLATION_WEB_SERVER_NAME } = web_server_name,
                 { INSTALLATION_WEB_SERVER_VERSION } = web_server_version,
                 "downloading web server"
