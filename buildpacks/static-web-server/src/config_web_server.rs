@@ -2,6 +2,7 @@ use crate::caddy_config::caddy_json_config;
 use crate::heroku_web_server_config::{
     HerokuWebServerConfig, RuntimeConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
 };
+use crate::o11y::*;
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, BUILD_PLAN_ID};
 use libcnb::additional_buildpack_binary_path;
 use libcnb::data::layer_name;
@@ -47,6 +48,12 @@ pub(crate) fn config_web_server(
         .clone()
         .unwrap_or(DEFAULT_DOC_INDEX.to_string());
 
+    tracing::info!(
+        { CONFIG_DOC_ROOT_PATH } = doc_root_path.to_string_lossy().to_string(),
+        { CONFIG_DOC_INDEX } = doc_index,
+        "config web server"
+    );
+
     // Transform web server config to Caddy native JSON config
     let caddy_config_json = serde_json::to_string(&caddy_json_config(heroku_config))
         .map_err(StaticWebServerBuildpackError::Json)?;
@@ -58,6 +65,10 @@ pub(crate) fn config_web_server(
     // Execute the optional build command
     if let Some(build_command) = build_command_opt {
         log_info(format!("Executing build command: {build_command:#?}"));
+        tracing::info!(
+            { CONFIG_BUILD_COMMAND } = build_command.command,
+            "build command"
+        );
         let mut cmd = Command::new(build_command.command);
         if let Some(args) = build_command.args {
             cmd.args(args);
@@ -76,11 +87,15 @@ pub(crate) fn config_web_server(
     });
     if runtime_config.enabled.unwrap_or(true) {
         log_info("Installing runtime configuration process…");
+        tracing::info!(
+            { CONFIG_RUNTIME_CONFIG_ENABLED } = true,
+            "runtime configuration"
+        );
         let web_exec_destination = configuration_layer.path().join("exec.d/web");
         let exec_path = web_exec_destination.join("env-as-html-data");
         log_info(format!("  {}", exec_path.display()));
         fs::create_dir_all(&web_exec_destination)
-            .map_err(StaticWebServerBuildpackError::CannotCreatWebExecD)?;
+            .map_err(StaticWebServerBuildpackError::CannotCreateWebExecD)?;
         fs::copy(
             additional_buildpack_binary_path!("env-as-html-data"),
             exec_path,

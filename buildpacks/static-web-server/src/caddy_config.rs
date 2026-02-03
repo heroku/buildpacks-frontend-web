@@ -1,6 +1,7 @@
 use crate::heroku_web_server_config::{
     ErrorsConfig, Header, HerokuWebServerConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
 };
+use crate::o11y::*;
 use indexmap::IndexMap;
 use serde_json::json;
 use std::collections::HashMap;
@@ -13,6 +14,7 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
 
     // Header routes come first so headers will be added to any response down the chain.
     if let Some(headers) = config.headers {
+        tracing::info!({ CONFIG_RESPONSE_HEADERS_ENABLED } = true, "config");
         routes.extend(generate_response_headers_routes(&headers));
     }
 
@@ -34,6 +36,7 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
         .as_ref()
         .is_some_and(|v| v.basic_auth.is_some_and(|vv| vv))
     {
+        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_BASIC_AUTH } = true, "config");
         static_file_handlers.push(json!(
         {
             "handler": "subroute",
@@ -75,6 +78,7 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
         .as_ref()
         .is_some_and(|v| v.templates.is_some_and(|vv| vv))
     {
+        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_TEMPLATES } = true, "config");
         static_file_handlers.push(json!(
         {
             "handler": "templates",
@@ -105,6 +109,7 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
         .as_ref()
         .and_then(|v| v.access_logs.as_ref());
     if caddy_access_logs_config.is_some_and(|vv| vv.enabled.is_some_and(|vvv| vvv)) {
+        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS } = true, "config");
         server_logs_config = json!({
             "default_logger_name": "public"
         });
@@ -203,6 +208,12 @@ fn generate_error_404_route(
     let not_found_response_handlers = error_config
         .map(|error_config| {
             let status_code = error_config.status.unwrap_or(404).to_string();
+            tracing::info!(
+                { CONFIG_ERROR_404_FILE_PATH } =
+                    error_config.file_path.to_string_lossy().to_string(),
+                "config"
+            );
+            tracing::info!({ CONFIG_ERROR_404_STATUS_CODE } = status_code, "config");
 
             json!([
                 {

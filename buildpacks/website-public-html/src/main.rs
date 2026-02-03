@@ -1,6 +1,8 @@
 mod errors;
+mod o11y;
 
 use crate::errors::{on_error, WebsitePublicHTMLBuildpackError};
+use crate::o11y::*;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
@@ -67,6 +69,12 @@ impl Buildpack for WebsitePublicHTMLBuildpack {
             .metadata(metadata_table)
             .map_err(WebsitePublicHTMLBuildpackError::SettingBuildPlanMetadata)?;
         let plan_builder = BuildPlanBuilder::new().requires(static_web_server_req);
+
+        tracing::info!({ DETECT_PROVIDES_WEBSITE_PUBLIC_HTML } = true, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_PUBLIC_HTML } = index_page_exists,
+            "buildplan"
+        );
 
         if index_page_exists {
             DetectResultBuilder::pass()

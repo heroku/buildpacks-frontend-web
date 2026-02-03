@@ -1,6 +1,8 @@
 mod errors;
+mod o11y;
 
 use crate::errors::{on_error, WebsiteViteBuildpackError};
+use crate::o11y::*;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
@@ -70,6 +72,12 @@ impl Buildpack for WebsiteViteBuildpack {
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req)
             .requires(nodejs_require);
+
+        tracing::info!({ DETECT_PROVIDES_WEBSITE_VITE } = true, "buildplan");
+        tracing::info!(
+            { DETECT_REQUIRES_WEBSITE_VITE } = depends_on_vite,
+            "buildplan"
+        );
 
         if depends_on_vite {
             DetectResultBuilder::pass()
