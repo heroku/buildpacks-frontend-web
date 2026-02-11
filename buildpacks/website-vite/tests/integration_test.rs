@@ -3,13 +3,13 @@
 
 use libcnb_test::{assert_contains, ContainerConfig};
 use test_support::{
-    retry, start_container, website_nodejs_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
+    retry, start_container, website_vite_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
 };
 
 #[test]
 #[ignore = "integration test"]
 fn vite_app() {
-    website_nodejs_integration_test("./fixtures/vite_app", |ctx| {
+    website_vite_integration_test("./fixtures/vite_app", |ctx| {
         assert_contains!(ctx.pack_stdout, "Website (Vite)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(
@@ -34,7 +34,7 @@ fn vite_app() {
 #[test]
 #[ignore = "integration test"]
 fn vite_react_app() {
-    website_nodejs_integration_test("./fixtures/vite_react_app", |ctx| {
+    website_vite_integration_test("./fixtures/vite_react_app", |ctx| {
         assert_contains!(ctx.pack_stdout, "Website (Vite)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(
@@ -59,7 +59,7 @@ fn vite_react_app() {
 #[test]
 #[ignore = "integration test"]
 fn vite_svelte_app() {
-    website_nodejs_integration_test("./fixtures/vite_svelte_app", |ctx| {
+    website_vite_integration_test("./fixtures/vite_svelte_app", |ctx| {
         assert_contains!(ctx.pack_stdout, "Website (Vite)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(

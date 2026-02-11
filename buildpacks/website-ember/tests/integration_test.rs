@@ -3,13 +3,13 @@
 
 use libcnb_test::{assert_contains, ContainerConfig};
 use test_support::{
-    retry, start_container, website_nodejs_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
+    retry, start_container, website_ember_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
 };
 
 #[test]
 #[ignore = "integration test"]
 fn ember_cli_app() {
-    website_nodejs_integration_test("./fixtures/ember_cli_app", |ctx| {
+    website_ember_integration_test("./fixtures/ember_cli_app", |ctx| {
         assert_contains!(ctx.pack_stdout, "Website (Ember.js)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(

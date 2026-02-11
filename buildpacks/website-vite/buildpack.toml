@@ -4,7 +4,7 @@ api = "0.10"
 id = "heroku/website-vite"
 version = "2.2.0"
 name = "Heroku Website (Vite)"
-description = "A component of the 'heroku/website-nodejs' buildpack."
+description = "Vite framework support for heroku/buildpacks-frontend-web."
 
 [[buildpack.licenses]]
 type = "MIT"
