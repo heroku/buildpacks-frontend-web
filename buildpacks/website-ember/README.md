@@ -2,18 +2,37 @@
 
 * At build:
   * Detects `ember-cli` in the app's `package.json` dependencies.
-  * Performs heroku/nodejs install and runs build script.
-  * Configures heroku/static-web-server for the detected framework.
-* At launch:
-  * Performs [runtime app configuration](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
-  * [static-web-server](../../buildpacks/static-web-server/README.md) runs with config generated during build.
+  * Requires `heroku/nodejs` installation and build.
+  * Configures `heroku/static-web-server` for `ember-cli`'s output.
 
 ## Usage
 
-Create an app with [ember-cli](https://cli.emberjs.com/release/basic-use/):
+Generate an app with [ember-cli](https://cli.emberjs.com/release/basic-use/):
 
 ```bash
 ember new <APP_NAME>
 ```
 
-Then, use [heroku/website-nodejs](../../meta-buildpacks/website-nodejs/README.md) meta-buildpack.
+Now, the app should be ready to build, with Ember auto-detected by `heroku/builder`:
+
+```bash
+pack build \
+  --builder heroku/builder:24 \
+  <APP_NAME>
+```
+
+To be explicit with the buildpacks required, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) containing:
+
+```toml
+[_]
+schema-version = "0.2"
+
+[[io.buildpacks.group]]
+  id = "heroku/nodejs"
+[[io.buildpacks.group]]
+  id = "heroku/static-web-server"
+[[io.buildpacks.group]]
+  id = "heroku/website-ember"
+```
+
+See [Static Web Server](../static-web-server/README.md) for all capabilities and configuration options.

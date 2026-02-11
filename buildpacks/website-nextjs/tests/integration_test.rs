@@ -3,13 +3,13 @@
 
 use libcnb_test::{assert_contains, ContainerConfig};
 use test_support::{
-    retry, start_container, website_nodejs_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
+    retry, start_container, website_nextjs_integration_test, DEFAULT_RETRIES, DEFAULT_RETRY_DELAY,
 };
 
 #[test]
 #[ignore = "integration test"]
 fn nextjs_app() {
-    website_nodejs_integration_test("./fixtures/next_app", |ctx| {
+    website_nextjs_integration_test("./fixtures/next_app", |ctx| {
         assert_contains!(ctx.pack_stdout, "Website (Next.js)");
         assert_contains!(ctx.pack_stdout, "Static Web Server");
         start_container(

@@ -40,11 +40,11 @@ pub fn static_web_server_integration_test_with_config(
     );
 }
 
-pub fn website_integration_test(fixture: &str, test_body: fn(TestContext)) {
-    website_integration_test_with_config(fixture, |_| {}, test_body);
+pub fn website_ember_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    website_ember_integration_test_with_config(fixture, |_| {}, test_body);
 }
 
-pub fn website_integration_test_with_config(
+pub fn website_ember_integration_test_with_config(
     fixture: &str,
     with_config: fn(&mut BuildConfig),
     test_body: fn(TestContext),
@@ -53,17 +53,19 @@ pub fn website_integration_test_with_config(
         fixture,
         with_config,
         test_body,
-        &[BuildpackReference::WorkspaceBuildpack(buildpack_id!(
-            "heroku/website"
-        ))],
+        &[
+            BuildpackReference::Other("heroku/nodejs".to_string()),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/static-web-server")),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/website-ember")),
+        ],
     );
 }
 
-pub fn website_nodejs_integration_test(fixture: &str, test_body: fn(TestContext)) {
-    website_nodejs_integration_test_with_config(fixture, |_| {}, test_body);
+pub fn website_nextjs_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    website_nextjs_integration_test_with_config(fixture, |_| {}, test_body);
 }
 
-pub fn website_nodejs_integration_test_with_config(
+pub fn website_nextjs_integration_test_with_config(
     fixture: &str,
     with_config: fn(&mut BuildConfig),
     test_body: fn(TestContext),
@@ -72,9 +74,52 @@ pub fn website_nodejs_integration_test_with_config(
         fixture,
         with_config,
         test_body,
-        &[BuildpackReference::WorkspaceBuildpack(buildpack_id!(
-            "heroku/website-nodejs"
-        ))],
+        &[
+            BuildpackReference::Other("heroku/nodejs".to_string()),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/static-web-server")),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/website-nextjs")),
+        ],
+    );
+}
+
+pub fn website_vite_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    website_vite_integration_test_with_config(fixture, |_| {}, test_body);
+}
+
+pub fn website_vite_integration_test_with_config(
+    fixture: &str,
+    with_config: fn(&mut BuildConfig),
+    test_body: fn(TestContext),
+) {
+    integration_test_with_config(
+        fixture,
+        with_config,
+        test_body,
+        &[
+            BuildpackReference::Other("heroku/nodejs".to_string()),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/static-web-server")),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/website-vite")),
+        ],
+    );
+}
+
+pub fn website_public_html_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    website_public_html_integration_test_with_config(fixture, |_| {}, test_body);
+}
+
+pub fn website_public_html_integration_test_with_config(
+    fixture: &str,
+    with_config: fn(&mut BuildConfig),
+    test_body: fn(TestContext),
+) {
+    integration_test_with_config(
+        fixture,
+        with_config,
+        test_body,
+        &[
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/static-web-server")),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/website-public-html")),
+        ],
     );
 }
 
