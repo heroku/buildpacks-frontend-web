@@ -1,6 +1,8 @@
 mod errors;
 mod o11y;
 
+use std::process::Command;
+
 use crate::errors::{on_error, WebsiteNextjsBuildpackError};
 use crate::o11y::*;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
@@ -90,6 +92,27 @@ impl Buildpack for WebsiteNextjsBuildpack {
 
     fn build(&self, _context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
+
+        // Ensure comptibility with the static web server,
+        // that Next's build output is set to static exports.
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", "npm exec next info"]);
+        let next_info = cmd
+            .output()
+            .map_err(WebsiteNextjsBuildpackError::NextInfoCommandError)?;
+        let next_info_stdout = String::from_utf8_lossy(&next_info.stdout);
+        let next_info_stderr = String::from_utf8_lossy(&next_info.stderr);
+        if !next_info.status.success() {
+            return Err(libcnb::Error::BuildpackError(
+                WebsiteNextjsBuildpackError::NextInfoFailure(next_info_stderr.to_string()),
+            ));
+        }
+        if !next_info_stdout.contains(&"output: export".to_string()) {
+            return Err(libcnb::Error::BuildpackError(
+                WebsiteNextjsBuildpackError::RequiresStaticExport,
+            ));
+        }
+
         BuildResultBuilder::new().build()
     }
 
