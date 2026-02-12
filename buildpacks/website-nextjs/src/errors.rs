@@ -83,10 +83,23 @@ fn buildpack_error_message(error: WebsiteNextjsBuildpackError) -> ErrorMessage {
             error_id: "read_package_json_error".to_string(),
         },
         WebsiteNextjsBuildpackError::RequiresStaticExport => ErrorMessage {
-            message: formatdoc! {"
+            message: formatdoc! {r#"
                 {buildpack_name} requires `output: 'export'` set in `next.config.js`.
-                See https://nextjs.org/docs/app/guides/static-exports
-            ", buildpack_name = style::value(BUILDPACK_NAME) },
+
+                This buildpack deploys Next.js as a static website, for enhanced
+                performance and security. Some features of Next.js are not supported
+                in static mode. More info at:
+                
+                https://nextjs.org/docs/app/guides/static-exports
+
+                You may choose to build a Node.js app, instead of `output: 'export'`.
+                Set or replace the buildpacks in the `project.toml` file, and then
+                retry the build:
+
+                    [[io.buildpacks.group]]
+                    id = "heroku/nodejs"
+
+            "#, buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: "Next.js build output must target static exports".to_string(),
             error_id: "requires_static_export_error".to_string(),
         },
