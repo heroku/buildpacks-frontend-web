@@ -427,6 +427,22 @@ fn caddy_clean_urls() {
                         panic!("should respond 200 ok, but got other error: {error:?}");
                     }
                 }
+                let nested_second_response_result =
+                    retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                        ureq::get(&format!("http://{socket_addr}/nested/second")).call()
+                    });
+                match nested_second_response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(response_body, "Clean URLs (Nested Second) Test");
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
                 let nested_deeper_response_result =
                     retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                         ureq::get(&format!("http://{socket_addr}/nested/deeper")).call()
