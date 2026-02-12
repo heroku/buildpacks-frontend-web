@@ -4,6 +4,7 @@ use crate::heroku_web_server_config::{
 };
 use crate::o11y::*;
 use crate::{StaticWebServerBuildpack, StaticWebServerBuildpackError, BUILD_PLAN_ID};
+use glob::glob;
 use libcnb::additional_buildpack_binary_path;
 use libcnb::data::layer_name;
 use libcnb::layer::LayerRef;
@@ -12,7 +13,7 @@ use libcnb::{build::BuildContext, layer::UncachedLayerDefinition};
 use libherokubuildpack::log::log_info;
 use static_web_server_utils::read_project_config;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use toml::Table;
 
@@ -108,13 +109,12 @@ pub(crate) fn config_web_server(
             Scope::Process("web".to_string()),
             ModificationBehavior::Override,
             "ENV_AS_HTML_DATA_TARGET_FILES",
-            runtime_config
-                .html_files
-                .unwrap_or(vec![doc_index])
-                .iter()
-                .map(|doc| format!("{}/{}", doc_root_path.to_string_lossy(), doc))
-                .collect::<Vec<_>>()
-                .join(", "),
+            list_runtime_config_target_files(
+                &context.app_dir,
+                &doc_root_path,
+                &doc_index,
+                &runtime_config,
+            ),
         );
         configuration_layer.write_env(configuration_layer_env)?;
     } else {
@@ -183,6 +183,44 @@ fn generate_config_with_inheritance(
     Ok(heroku_config)
 }
 
+fn list_runtime_config_target_files(
+    real_root_path: &Path,
+    doc_root_path: &Path,
+    doc_index: &str,
+    runtime_config: &RuntimeConfig,
+) -> String {
+    runtime_config
+        .html_files
+        .clone()
+        .unwrap_or(vec![doc_index.to_owned()])
+        .iter()
+        .fold(vec![], |mut acc: Vec<String>, doc| {
+            let doc_path = format!("{}/{}", doc_root_path.to_string_lossy(), doc);
+            if doc_path.contains('*') {
+                for glob_matched_path in glob(&format!(
+                    "{}/{}",
+                    real_root_path.to_string_lossy(),
+                    doc_path
+                ))
+                .expect("glob pattern should match files for runtime config")
+                .flatten()
+                {
+                    let relative_path = glob_matched_path
+                        .to_string_lossy()
+                        .into_owned()
+                        .replace::<&String>(&format!("{}/", real_root_path.to_string_lossy()), "");
+                    acc.append(&mut vec![relative_path]);
+                }
+            } else {
+                acc.append(&mut vec![doc_path]);
+            }
+            acc
+        })
+        .into_iter()
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 #[cfg(test)]
 mod tests {
     use libcnb::{
@@ -195,11 +233,18 @@ mod tests {
         generic::GenericPlatform,
         Env, Target,
     };
-    use std::{collections::HashSet, path::PathBuf};
+    use std::{
+        collections::HashSet,
+        path::{Path, PathBuf},
+    };
     use toml::toml;
 
     use crate::{
-        config_web_server::{generate_build_plan_config, generate_config_with_inheritance},
+        config_web_server::{
+            generate_build_plan_config, generate_config_with_inheritance,
+            list_runtime_config_target_files,
+        },
+        heroku_web_server_config::{RuntimeConfig, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT},
         StaticWebServerBuildpack, BUILD_PLAN_ID,
     };
 
@@ -410,5 +455,48 @@ mod tests {
             store: None,
         };
         test_context
+    }
+
+    #[test]
+    fn list_runtime_config_target_files_custom() {
+        let real_root_path = Path::new("tests/fixtures/runtime_config")
+            .to_path_buf()
+            .canonicalize()
+            .expect("real root path exists in test/fixtures");
+        let doc_root_path = Path::new(&DEFAULT_DOC_ROOT.to_string()).to_path_buf();
+        let result = list_runtime_config_target_files(
+            &real_root_path,
+            &doc_root_path,
+            DEFAULT_DOC_INDEX,
+            &RuntimeConfig {
+                enabled: Some(true),
+                html_files: Some(vec![
+                    "index.html".to_string(),
+                    "subsection/index.html".to_string(),
+                    "non-existent.html".to_string(),
+                    "subsection/subsubsection/**/*.html".to_string(),
+                ]),
+            },
+        );
+        assert_eq!("public/index.html, public/subsection/index.html, public/non-existent.html, public/subsection/subsubsection/index.html, public/subsection/subsubsection/second.html, public/subsection/subsubsection/subsubsubsection/index.html", result);
+    }
+
+    #[test]
+    fn list_runtime_config_target_files_none() {
+        let real_root_path = Path::new("tests/fixtures/runtime_config")
+            .to_path_buf()
+            .canonicalize()
+            .expect("real root path exists in test/fixtures");
+        let doc_root_path = Path::new(&DEFAULT_DOC_ROOT.to_string()).to_path_buf();
+        let result = list_runtime_config_target_files(
+            &real_root_path,
+            &doc_root_path,
+            DEFAULT_DOC_INDEX,
+            &RuntimeConfig {
+                enabled: Some(true),
+                html_files: Some(vec![]),
+            },
+        );
+        assert_eq!("", result);
     }
 }

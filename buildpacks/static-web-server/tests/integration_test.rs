@@ -303,6 +303,18 @@ fn runtime_configuration_custom() {
                     log_output.stderr,
                     "Runtime configuration skipping 'public/non-existent.html'"
                 );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/subsection/subsubsection/index.html'"
+                );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/subsection/subsubsection/second.html'"
+                );
+                assert_contains!(
+                    log_output.stderr,
+                    "Runtime configuration written into 'public/subsection/subsubsection/subsubsubsection/index.html'"
+                );
             },
         );
     });
