@@ -85,6 +85,34 @@ pub(crate) fn caddy_json_config(config: HerokuWebServerConfig) -> serde_json::Va
         }));
     }
 
+    if config
+        .caddy_server_opts
+        .as_ref()
+        .is_some_and(|v| v.clean_urls.is_some_and(|vv| vv))
+    {
+        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_CLEAN_URLS } = true, "config");
+        static_file_handlers.push(json!(
+        {
+            "handler": "subroute",
+            "routes": [{
+                "match": [{
+                    "file": {
+                        "root": doc_root,
+                        "try_files": [
+                            "{http.request.uri.path}",
+                            "{http.request.uri.path}.html",
+                            "{http.request.uri.path}/",
+                        ]
+                    }
+                }],
+                "handle": [{
+                    "handler": "rewrite",
+                    "uri": "{http.matchers.file.relative}",
+                }]
+            }],
+        }));
+    }
+
     static_file_handlers.push(json!(
     {
         "handler": "file_server",

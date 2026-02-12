@@ -55,6 +55,7 @@ pub(crate) struct CaddyServerOpts {
     pub(crate) templates: Option<bool>,
     pub(crate) access_logs: Option<CaddyAccessLogsConfig>,
     pub(crate) basic_auth: Option<bool>,
+    pub(crate) clean_urls: Option<bool>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -197,6 +198,7 @@ mod tests {
             [caddy_server_opts]
             templates = true
             basic_auth = true
+            clean_urls = true
 
             [caddy_server_opts.access_logs]
             enabled = true
@@ -215,6 +217,10 @@ mod tests {
         );
         assert_eq!(
             parsed_config.caddy_server_opts.as_ref().unwrap().basic_auth,
+            Some(true)
+        );
+        assert_eq!(
+            parsed_config.caddy_server_opts.as_ref().unwrap().clean_urls,
             Some(true)
         );
         assert_eq!(

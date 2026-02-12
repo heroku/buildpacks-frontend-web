@@ -274,6 +274,22 @@ sampling_first = 1000
 sampling_thereafter = 1000
 ```
 
+#### Caddy: Clean URLs
+
+*Default: not enabled*
+
+Support for pretty, extensionless URLs, leaving `.html` off of the request path.
+
+```toml
+[com.heroku.static-web-server.caddy_server_opts.clean_urls]
+enabled = true
+```
+
+For example, a request to `example.com/support` will be tried in the document root:
+1. the literal path, `support`
+2. the path with HTML extension, `support.html`
+3. the path as a directory, `support/`
+
 #### Caddy: Basic Authorization
 
 *Default: not enabled*

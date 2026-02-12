@@ -15,6 +15,8 @@ pub(crate) const INSTALLATION_WEB_SERVER_VERSION: &str =
 const CONFIG: &str = formatcp!("{NAMESPACE}.config");
 pub(crate) const CONFIG_CADDY_SERVER_OPTS_BASIC_AUTH: &str =
     formatcp!("{CONFIG}.caddy_server_opts_basic_auth");
+pub(crate) const CONFIG_CADDY_SERVER_OPTS_CLEAN_URLS: &str =
+    formatcp!("{CONFIG}.caddy_server_opts_clean_urls");
 pub(crate) const CONFIG_CADDY_SERVER_OPTS_TEMPLATES: &str =
     formatcp!("{CONFIG}.caddy_server_opts_templates");
 pub(crate) const CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS: &str =
