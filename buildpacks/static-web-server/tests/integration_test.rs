@@ -375,6 +375,81 @@ fn caddy_csp_nonce() {
 
 #[test]
 #[ignore = "integration test"]
+fn caddy_clean_urls() {
+    static_web_server_integration_test("./fixtures/caddy_clean_urls", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            &mut ContainerConfig::new(),
+            |container, socket_addr| {
+                let index_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}")).call()
+                });
+                match index_response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(response_body, "Clean URLs Test");
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+                let other_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/other")).call()
+                });
+                match other_response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(response_body, "Clean URLs (Other) Test");
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+                let nested_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/nested")).call()
+                });
+                match nested_response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(response_body, "Clean URLs (Nested) Test");
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+                let nested_deeper_response_result =
+                    retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                        ureq::get(&format!("http://{socket_addr}/nested/deeper")).call()
+                    });
+                match nested_deeper_response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(response_body, "Clean URLs (Nested Deeper) Test");
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
 fn caddy_access_logs() {
     static_web_server_integration_test("./fixtures/caddy_access_logs", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
