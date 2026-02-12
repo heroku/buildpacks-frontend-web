@@ -1,2 +1,2 @@
 [com.heroku.static-web-server.runtime_config]
-html_files = ["index.html", "subsection/index.html", "non-existent.html"]
+html_files = ["index.html", "subsection/index.html", "non-existent.html", "subsection/subsubsection/**/*.html"]

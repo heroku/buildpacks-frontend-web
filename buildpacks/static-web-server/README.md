@@ -162,6 +162,22 @@ The files must be located within the [document root](#document-root), `public/` 
 html_files = ["index.html", "subsection/index.html"]
 ```
 
+`*` wildcards (globbing) are supported for websites that include many HTML files.
+
+```toml
+[com.heroku.static-web-server.runtime_config]
+html_files = ["*.html"]
+```
+
+Recursive globbing is also supported, for websites that include many HTML files nested within subdirectories.
+
+```toml
+[com.heroku.static-web-server.runtime_config]
+html_files = ["**/*.html"]
+```
+
+If a website contains an extremely large number (thousands) of globbed filenames, it's possible that the runtime configuration process could cause noticeable delays launching the web process.
+
 ### Document Root
 
 *Default: `public`*

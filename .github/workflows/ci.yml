@@ -56,6 +56,6 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.7.3
       - name: Install Pack CLI
-        uses: buildpacks/github-actions/setup-pack@v5.7.4
+        uses: buildpacks/github-actions/setup-pack@v5.11.0
       - name: Run integration tests
         run: cargo test --locked -- --ignored --test-threads 16
