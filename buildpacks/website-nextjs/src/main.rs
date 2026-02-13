@@ -58,14 +58,21 @@ impl Buildpack for WebsiteNextjsBuildpack {
 
         let mut static_web_server_req = Require::new("static-web-server");
 
+        // Following Next.js static deployment guidance
+        // https://nextjs.org/docs/app/guides/static-exports
         static_web_server_req
             .metadata(toml! {
                 root = "/workspace/out"
                 index = "index.html"
 
+                [runtime_config]
+                html_files = ["**/*.html"]
+
                 [errors.404]
-                file_path = "_not-found.html"
-                status = 404
+                file_path = "404.html"
+
+                [caddy_server_opts]
+                clean_urls = true
             })
             .map_err(WebsiteNextjsBuildpackError::SettingBuildPlanMetadata)?;
 
