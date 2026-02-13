@@ -297,8 +297,8 @@ sampling_thereafter = 1000
 Support for pretty, extensionless URLs, leaving `.html` off of the request path.
 
 ```toml
-[com.heroku.static-web-server.caddy_server_opts.clean_urls]
-enabled = true
+[com.heroku.static-web-server.caddy_server_opts]
+clean_urls = true
 ```
 
 For example, a request to `example.com/support` will be tried in the document root:
