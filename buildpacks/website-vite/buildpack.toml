@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-vite"
-version = "2.2.0"
+version = "3.0.0"
 name = "Heroku Website (Vite)"
 description = "Vite framework support for heroku/buildpacks-frontend-web."
 

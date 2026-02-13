@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-nextjs"
-version = "2.2.0"
+version = "3.0.0"
 name = "Heroku Website (Next.js)"
 description = "Next.js support for heroku/buildpacks-frontend-web."
 
