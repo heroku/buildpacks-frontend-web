@@ -14,7 +14,10 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum WebsiteNextjsBuildpackError {
     Detect(io::Error),
+    NextInfoCommandError(io::Error),
+    NextInfoFailure(String),
     ReadPackageJson(io::Error),
+    RequiresStaticExport,
     ParsePackageJson(serde_json::Error),
     SettingBuildPlanMetadata(toml::ser::Error),
 }
@@ -58,12 +61,47 @@ fn buildpack_error_message(error: WebsiteNextjsBuildpackError) -> ErrorMessage {
             error_string: e.to_string(),
             error_id: "detect_error".to_string(),
         },
+        WebsiteNextjsBuildpackError::NextInfoCommandError(e) => ErrorMessage {
+            message: formatdoc! {"
+                Error executing `next info` in {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: e.to_string(),
+            error_id: "next_info_command_error".to_string(),
+        },
+        WebsiteNextjsBuildpackError::NextInfoFailure(m) => ErrorMessage {
+            message: formatdoc! {"
+                `next info` command failed in {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: m,
+            error_id: "next_info_failure".to_string(),
+        },
         WebsiteNextjsBuildpackError::ReadPackageJson(e) => ErrorMessage {
             message: formatdoc! {"
                 Error reading package.json from {buildpack_name}.
             ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "read_package_json_error".to_string(),
+        },
+        WebsiteNextjsBuildpackError::RequiresStaticExport => ErrorMessage {
+            message: formatdoc! {r#"
+                {buildpack_name} requires `output: 'export'` set in `next.config.js`.
+
+                This buildpack deploys Next.js as a static website, for enhanced
+                performance and security. Some features of Next.js are not supported
+                in static mode. More info at:
+                
+                https://nextjs.org/docs/app/guides/static-exports
+
+                You may choose to build a Node.js app, instead of `output: 'export'`.
+                Set or replace the buildpacks in the `project.toml` file, and then
+                retry the build:
+
+                    [[io.buildpacks.group]]
+                    id = "heroku/nodejs"
+
+            "#, buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: "Next.js build output must target static exports".to_string(),
+            error_id: "requires_static_export_error".to_string(),
         },
         WebsiteNextjsBuildpackError::ParsePackageJson(e) => ErrorMessage {
             message: formatdoc! {"

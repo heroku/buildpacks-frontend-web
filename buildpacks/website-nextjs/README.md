@@ -3,7 +3,7 @@
 * At build:
   * Detects `next` in the app's `package.json` dependencies.
   * Requires `heroku/nodejs` installation and build.
-  * Configures `heroku/static-web-server` for `next`'s output.
+  * Configures `heroku/static-web-server` for `next`'s default output to `out/`.
 
 ## Usage
 
@@ -11,6 +11,14 @@ Create an app with [Next.js](https://nextjs.org/):
 
 ```bash
 npx create-next-app@latest
+```
+
+Configure the Next.js app to for [static exports](https://nextjs.org/docs/app/guides/static-exports). Set the output mode in `next.config.js`:
+
+```javascript
+const nextConfig = {
+  output: 'export'
+}
 ```
 
 Now, the app should be ready to build, with Next.js auto-detected by `heroku/builder`:
