@@ -1,12 +1,16 @@
-import Application from 'cnb-ember-web-app/app';
-import config from 'cnb-ember-web-app/config/environment';
+import '@warp-drive/ember/install';
+import Application from 'ember-cli-app/app';
+import config from 'ember-cli-app/config/environment';
 import * as QUnit from 'qunit';
 import { setApplication } from '@ember/test-helpers';
 import { setup } from 'qunit-dom';
-import { start } from 'ember-qunit';
+import { start as qunitStart, setupEmberOnerrorValidation } from 'ember-qunit';
 
-setApplication(Application.create(config.APP));
+export function start() {
+  setApplication(Application.create(config.APP));
 
-setup(QUnit.assert);
+  setup(QUnit.assert);
+  setupEmberOnerrorValidation();
 
-start();
+  qunitStart();
+}
