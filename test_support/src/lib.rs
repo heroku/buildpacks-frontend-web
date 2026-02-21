@@ -61,6 +61,27 @@ pub fn website_ember_integration_test_with_config(
     );
 }
 
+pub fn website_cra_integration_test(fixture: &str, test_body: fn(TestContext)) {
+    website_cra_integration_test_with_config(fixture, |_| {}, test_body);
+}
+
+pub fn website_cra_integration_test_with_config(
+    fixture: &str,
+    with_config: fn(&mut BuildConfig),
+    test_body: fn(TestContext),
+) {
+    integration_test_with_config(
+        fixture,
+        with_config,
+        test_body,
+        &[
+            BuildpackReference::Other("heroku/nodejs".to_string()),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/static-web-server")),
+            BuildpackReference::WorkspaceBuildpack(buildpack_id!("heroku/website-cra")),
+        ],
+    );
+}
+
 pub fn website_nextjs_integration_test(fixture: &str, test_body: fn(TestContext)) {
     website_nextjs_integration_test_with_config(fixture, |_| {}, test_body);
 }
