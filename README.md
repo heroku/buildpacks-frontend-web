@@ -25,7 +25,7 @@ Buildpacks that provide a specific server-side component.
 
 | ID                           | Name                                                              | Provides |
 |------------------------------|-------------------------------------------------------------------|----------|
-| `heroku/static-web-server`   | [Static Web Server](buildpacks/static-web-server/README.md)       | Web Server supporting build and runtime configuration, as well as configuration inheritance from other buildpacks |
+| `heroku/static-web-server`   | [Static Web Server](buildpacks/static-web-server/README.md)       | The CNB default `web` process; an HTTP file server configurable via `project.toml` |
 
 ### Framework Buildpacks
 
@@ -34,6 +34,7 @@ Lower-level buildpacks that detect specific source layouts, frameworks, or tools
 | ID                           | Name                                                              | Provides                            |
 |------------------------------|-------------------------------------------------------------------|-------------------------------------|
 | `heroku/website-ember`       | [Website (Ember.js)](buildpacks/website-ember/README.md)          | auto-detect for [Ember.js](https://cli.emberjs.com) |
+| `heroku/website-cra`         | [Website (create-react-app)](buildpacks/website-cra/README.md)    | auto-detect for [create-react-app](https://create-react-app.dev) |
 | `heroku/website-nextjs`      | [Website (Next.js)](buildpacks/website-nextjs/README.md)          | auto-detect for [Next.js](https://nextjs.org) ([static exports](https://nextjs.org/docs/app/guides/static-exports)) |
 | `heroku/website-public-html` | [Website (Public HTML)](buildpacks/website-public-html/README.md) | auto-detect for `public/index.html` |
 | `heroku/website-vite`        | [Website (Vite)](buildpacks/website-vite/README.md)               | auto-detect for [Vite](https://vite.dev) |
@@ -42,7 +43,7 @@ Lower-level buildpacks that detect specific source layouts, frameworks, or tools
 
 [Configure the Static Web Server](buildpacks/static-web-server/README.md) as the last buildpack for your app, along with other language buildpacks the build might require.
 
-The framework buildpacks are optional. They automate detection of static web apps in source code when using [`heroku/builder`](https://github.com/heroku/cnb-builder-images), such as when building a CNB app on Heroku, but are not required when manually configuring buildpacks.
+The framework buildpacks are optional. They automate detection of static web apps in source code when using [`heroku/builder`](https://github.com/heroku/cnb-builder-images), such as when building a CNB app on Heroku, but are not required when manually configuring buildpacks and web server config.
 
 ## Dev Notes
 
