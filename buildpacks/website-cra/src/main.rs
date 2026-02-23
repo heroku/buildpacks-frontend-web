@@ -2,7 +2,6 @@ mod errors;
 mod o11y;
 
 use crate::errors::{on_error, WebsiteCreateReactAppBuildpackError};
-use crate::o11y::*;
 use libcnb::build::{BuildContext, BuildResult, BuildResultBuilder};
 use libcnb::data::build_plan::{BuildPlanBuilder, Require};
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
@@ -72,12 +71,6 @@ impl Buildpack for WebsiteCreateReactAppBuildpack {
         let plan_builder = BuildPlanBuilder::new()
             .requires(static_web_server_req)
             .requires(nodejs_require);
-
-        tracing::info!({ DETECT_PROVIDES_WEBSITE_CRA } = true, "buildplan");
-        tracing::info!(
-            { DETECT_REQUIRES_WEBSITE_CRA } = depends_on_cra,
-            "buildplan"
-        );
 
         if depends_on_cra {
             DetectResultBuilder::pass()
