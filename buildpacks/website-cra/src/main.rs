@@ -47,7 +47,7 @@ impl Buildpack for WebsiteCreateReactAppBuildpack {
         };
         let json = serde_json::from_str::<serde_json::Value>(&contents)
             .map_err(WebsiteCreateReactAppBuildpackError::ParsePackageJson)?;
-        let depends_on_nextjs = json["dependencies"]
+        let depends_on_cra = json["dependencies"]
             .as_object()
             .is_some_and(|deps| deps.contains_key("react-scripts"))
             || json["devDependencies"]
@@ -75,11 +75,11 @@ impl Buildpack for WebsiteCreateReactAppBuildpack {
 
         tracing::info!({ DETECT_PROVIDES_WEBSITE_CRA } = true, "buildplan");
         tracing::info!(
-            { DETECT_REQUIRES_WEBSITE_CRA } = depends_on_nextjs,
+            { DETECT_REQUIRES_WEBSITE_CRA } = depends_on_cra,
             "buildplan"
         );
 
-        if depends_on_nextjs {
+        if depends_on_cra {
             DetectResultBuilder::pass()
                 .build_plan(plan_builder.build())
                 .build()
