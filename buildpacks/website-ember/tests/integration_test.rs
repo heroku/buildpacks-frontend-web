@@ -26,7 +26,7 @@ fn ember_cli_app() {
                 let response_body = response.into_string().unwrap();
 
                 // This is a unique part of the Ember app's rendered HTML.
-                assert_contains!(response_body, "cnb-ember-web-app/config/environment");
+                assert_contains!(response_body, "ember-cli-app/config/environment");
                 assert_contains!(
                     response_body,
                     r#"data-public_web_integration_test="runtime-config-via-container-env""#
@@ -39,7 +39,7 @@ fn ember_cli_app() {
                 let response_body = response.into_string().unwrap();
 
                 // This is a unique part of the Ember app's rendered HTML.
-                assert_contains!(response_body, "cnb-ember-web-app/config/environment");
+                assert_contains!(response_body, "ember-cli-app/config/environment");
                 assert_contains!(
                     response_body,
                     r#"data-public_web_integration_test="runtime-config-via-container-env""#

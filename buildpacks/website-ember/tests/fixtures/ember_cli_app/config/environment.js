@@ -2,7 +2,7 @@
 
 module.exports = function (environment) {
   const ENV = {
-    modulePrefix: 'cnb-ember-web-app',
+    modulePrefix: 'ember-cli-app',
     environment,
     rootURL: '/',
     locationType: 'history',
