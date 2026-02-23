@@ -2294,6 +2294,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "website-cra"
+version = "0.0.0"
+dependencies = [
+ "bullet_stream",
+ "const_format",
+ "indoc",
+ "libcnb",
+ "libcnb-test",
+ "libherokubuildpack",
+ "serde_json",
+ "tempfile",
+ "test_support",
+ "toml",
+ "tracing",
+ "ureq",
+ "uuid",
+]
+
+[[package]]
 name = "website-ember"
 version = "0.0.0"
 dependencies = [

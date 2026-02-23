@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "buildpacks/website-ember",
+    "buildpacks/website-cra",
     "buildpacks/website-nextjs",
     "buildpacks/website-public-html",
     "buildpacks/website-vite",
