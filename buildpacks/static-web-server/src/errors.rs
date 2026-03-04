@@ -23,6 +23,7 @@ pub(crate) enum StaticWebServerBuildpackError {
     BuildCommandFailed(std::io::Error),
     CannotCreateWebExecD(std::io::Error),
     CannotInstallEnvAsHtmlData(std::io::Error),
+    ConfigurationConstraint(String),
 }
 
 pub(crate) struct ErrorMessage {
@@ -135,6 +136,13 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
             ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "cannot_write_caddy_configuration_error".to_string(),
+        },
+        StaticWebServerBuildpackError::ConfigurationConstraint(e) => ErrorMessage {
+            message: formatdoc! {"
+                Configuration constraint violation for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: e,
+            error_id: "configuration_constraint_error".to_string(),
         },
     }
 }

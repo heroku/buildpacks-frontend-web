@@ -602,3 +602,46 @@ fn caddy_basic_auth() {
         );
     });
 }
+
+#[test]
+#[ignore = "integration test"]
+fn caddy_static_responses() {
+    static_web_server_integration_test("./fixtures/caddy_static_responses", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            &mut ContainerConfig::new(),
+            |_container, socket_addr| {
+                // Prevent following redirects, so that we can test them!
+                let ureq_agent: ureq::Agent = ureq::AgentBuilder::new().redirects(0).build();
+
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq_agent.get(&format!("http://{socket_addr}")).call()
+                })
+                .unwrap();
+                assert_eq!(response.status(), 200);
+                let response_body = response.into_string().unwrap();
+                assert_contains!(response_body, "Static Responses Test");
+
+                let response = ureq_agent
+                    .get(&format!("http://{socket_addr}/blog/something-special"))
+                    .call()
+                    .unwrap();
+                assert_eq!(response.status(), 301);
+                let h = response.header("Location").unwrap_or_default();
+                assert_contains!(h, "https://127.0.0.1/new-blog/something-special");
+
+                let response = ureq_agent
+                    .get(&format!("http://{socket_addr}/a-test-path?m=hello"))
+                    .set("Host", "original.example.com")
+                    .call()
+                    .unwrap();
+                assert_eq!(response.status(), 301);
+                let h = response.header("Location").unwrap_or_default();
+                assert_contains!(h, "https://new.example.com/a-test-path?m=hello");
+                let h = response.header("X-Redirected-From").unwrap_or_default();
+                assert_contains!(h, "original.example.com");
+            },
+        );
+    });
+}

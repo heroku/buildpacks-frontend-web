@@ -21,6 +21,8 @@ pub(crate) const CONFIG_CADDY_SERVER_OPTS_TEMPLATES: &str =
     formatcp!("{CONFIG}.caddy_server_opts_templates");
 pub(crate) const CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS: &str =
     formatcp!("{CONFIG}.caddy_server_opts_access_logs");
+pub(crate) const CONFIG_CADDY_SERVER_OPTS_STATIC_RESPONSES: &str =
+    formatcp!("{CONFIG}.caddy_server_opts_static_responses");
 pub(crate) const CONFIG_DOC_ROOT_PATH: &str = formatcp!("{CONFIG}.doc_root_path");
 pub(crate) const CONFIG_DOC_INDEX: &str = formatcp!("{CONFIG}.doc_index");
 pub(crate) const CONFIG_BUILD_COMMAND: &str = formatcp!("{CONFIG}.build_command");
