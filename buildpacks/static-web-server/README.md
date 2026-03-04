@@ -314,17 +314,27 @@ Define preset HTTP responses. Supports the common HTTP redirect use-case, or any
 
 ```toml
 [[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+
 # match the Host header indicated in request
 host_matcher = "hostname.example.com"
+
 # match the whole request path, supports `*` wildcards
 path_matcher = "/resources/*"
+
 # respond with HTTP status (default: 200)
 status = 200
+
 # repond with body content (default: none)
 body = "I could be anything."
+
 # set one or more response headers (default: none)
 [com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
 "X-My-Header" = "Yells at cloud"
+
+
+# For each additional static response, define another table…
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+# …
 ```
 
 `host_matcher` and `path_matcher` are both optional. At least one of them should be set for each static response. Static responses are processed in the order defined. When a static response is matched, its response is terminal. No further processing will occur for the request.
@@ -357,22 +367,6 @@ status = 301
 [com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
 "Location" = "https://new.example.com{http.request.uri}"
 "X-Redirected-From" = "original.example.com"
-```
-
-Multiple static responses may be set using additional TOML tables:
-
-```toml
-[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
-path_matcher = "/news/*"
-status = 301
-[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
-"Location" = "/media/{http.request.uri.path.file}"
-
-[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
-path_matcher = "/support/*"
-status = 301
-[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
-"Location" = "/help/{http.request.uri.path.file}"
 ```
 
 #### Caddy: Basic Authorization
