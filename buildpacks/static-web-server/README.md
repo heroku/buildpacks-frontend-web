@@ -306,6 +306,75 @@ For example, a request to `example.com/support` will be tried in the document ro
 2. the path with HTML extension, `support.html`
 3. the path as a directory, `support/`
 
+#### Caddy: Static Responses
+
+*Default: none*
+
+Define preset HTTP responses. Supports the common HTTP redirect use-case, or any custom status, headers, and body response.
+
+```toml
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+# match the Host header indicated in request
+host_matcher = "hostname.example.com"
+# match the whole request path, supports `*` wildcards
+path_matcher = "/resources/*"
+# respond with HTTP status (default: 200)
+status = 200
+# repond with body content (default: none)
+body = "I could be anything."
+# set one or more response headers (default: none)
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"X-My-Header" = "Yells at cloud"
+```
+
+`host_matcher` and `path_matcher` are both optional. At least one of them should be set for each static response. Static responses are processed in the order defined. When a static response is matched, its response is terminal. No further processing will occur for the request.
+
+[Caddy placeholders](https://caddyserver.com/docs/conventions#placeholders) can be used for per-request dynamic values. The [HTTP placeholders](https://caddyserver.com/docs/json/apps/http/#docs) are useful with this feature:
+
+- `{http.request.host}`
+- `{http.request.uri}`
+- `{http.request.uri.path}`
+- `{http.request.uri.path.dir}`
+- `{http.request.uri.path.file}`
+- `{http.request.uri.query}`
+
+For example, permanently redirect to a different path with status `301` and a `Location` header, using the requested filename in the new path:
+
+```toml
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+path_matcher = "/blog/*"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "/feed/{http.request.uri.path.file}"
+```
+
+Another example, permanently redirect any request for a specific host to a new server, passing through the original URI (path and querystring) and an additional custom header:
+
+```toml
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+host_matcher = "original.example.com"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "https://new.example.com{http.request.uri}"
+"X-Redirected-From" = "original.example.com"
+```
+
+Multiple static responses may be set using additional TOML tables:
+
+```toml
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+path_matcher = "/news/*"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "/media/{http.request.uri.path.file}"
+
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+path_matcher = "/support/*"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "/help/{http.request.uri.path.file}"
+```
+
 #### Caddy: Basic Authorization
 
 *Default: not enabled*

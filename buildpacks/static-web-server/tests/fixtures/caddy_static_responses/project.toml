@@ -1,0 +1,12 @@
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+path_matcher = "/blog/*"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "https://{http.request.host}/new-blog/{http.request.uri.path.file}"
+
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+host_matcher = "original.example.com"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "https://new.example.com{http.request.uri}"
+"X-Redirected-From" = "original.example.com"

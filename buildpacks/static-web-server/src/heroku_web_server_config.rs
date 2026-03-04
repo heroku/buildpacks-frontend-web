@@ -1,5 +1,5 @@
 use serde::de::{MapAccess, Visitor};
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Formatter;
 use std::path::PathBuf;
@@ -13,8 +13,8 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) root: Option<PathBuf>,
     pub(crate) index: Option<String>,
     pub(crate) errors: Option<ErrorsConfig>,
-    #[serde(default, deserialize_with = "deserialize_headers")]
-    pub(crate) headers: Option<Vec<Header>>,
+    #[serde(default, deserialize_with = "deserialize_path_matched_headers")]
+    pub(crate) headers: Option<Vec<PathMatchedHeader>>,
     pub(crate) runtime_config: Option<RuntimeConfig>,
     pub(crate) caddy_server_opts: Option<CaddyServerOpts>,
 }
@@ -38,7 +38,7 @@ pub(crate) struct Executable {
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
-pub(crate) struct Header {
+pub(crate) struct PathMatchedHeader {
     pub(crate) path_matcher: String,
     pub(crate) key: String,
     pub(crate) value: String,
@@ -56,6 +56,7 @@ pub(crate) struct CaddyServerOpts {
     pub(crate) access_logs: Option<CaddyAccessLogsConfig>,
     pub(crate) basic_auth: Option<bool>,
     pub(crate) clean_urls: Option<bool>,
+    pub(crate) static_responses: Option<Vec<CaddyStaticResponseConfig>>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -64,6 +65,22 @@ pub(crate) struct CaddyAccessLogsConfig {
     pub(crate) sampling_interval: Option<i64>,
     pub(crate) sampling_first: Option<i64>,
     pub(crate) sampling_thereafter: Option<i64>,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct CaddyStaticResponseConfig {
+    pub(crate) host_matcher: Option<String>,
+    pub(crate) path_matcher: Option<String>,
+    pub(crate) status: Option<u16>,
+    #[serde(default, deserialize_with = "deserialize_headers")]
+    pub(crate) headers: Option<Vec<Header>>,
+    pub(crate) body: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct Header {
+    pub(crate) key: String,
+    pub(crate) value: String,
 }
 
 fn deserialize_headers<'de, D>(d: D) -> Result<Option<Vec<Header>>, D::Error>
@@ -85,7 +102,47 @@ impl<'de> Visitor<'de> for HeadersVisitor {
     type Value = Vec<Header>;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-        write!(formatter, "a Heroku HTTP header map")
+        write!(formatter, "an HTTP header map")
+    }
+
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+        A: MapAccess<'de>,
+    {
+        let mut result = vec![];
+        while let Some((key, value)) = map.next_entry::<String, String>()? {
+            result.push(Header {
+                key: key.clone(),
+                value: value.clone(),
+            });
+        }
+
+        Ok(result)
+    }
+}
+
+fn deserialize_path_matched_headers<'de, D>(
+    d: D,
+) -> Result<Option<Vec<PathMatchedHeader>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let deserialized = d.deserialize_map(PathMatchedHeadersVisitor)?;
+
+    if deserialized.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(deserialized))
+    }
+}
+
+struct PathMatchedHeadersVisitor;
+
+impl<'de> Visitor<'de> for PathMatchedHeadersVisitor {
+    type Value = Vec<PathMatchedHeader>;
+
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        write!(formatter, "a path-matched HTTP header map")
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
@@ -95,7 +152,7 @@ impl<'de> Visitor<'de> for HeadersVisitor {
         let mut result = vec![];
         while let Some((key, value)) = map.next_entry::<String, BTreeMap<String, String>>()? {
             for (header_key, header_value) in value {
-                result.push(Header {
+                result.push(PathMatchedHeader {
                     path_matcher: key.clone(),
                     key: header_key,
                     value: header_value,
@@ -194,7 +251,7 @@ mod tests {
     fn custom_caddy_server_opts() {
         // Use a TOML string here, because the toml! macro forces integers to fit i32
         // instead of deserializing directly into the access_log's numeric type i64.
-        let toml_str = r"
+        let toml_str = r#"
             [caddy_server_opts]
             templates = true
             basic_auth = true
@@ -205,7 +262,20 @@ mod tests {
             sampling_interval = 60_000_000_000
             sampling_first = 1000
             sampling_thereafter = 1000
-        ";
+
+            [[caddy_server_opts.static_responses]]
+            host_matcher = "original.example.com"
+            status = 301
+            [caddy_server_opts.static_responses.headers]
+            "Location" = "https://new.example.com{http.request.uri}"
+            "X-Redirected-From" = "original.example.com"
+
+            [[caddy_server_opts.static_responses]]
+            path_matcher = "/blog/*"
+            status = 301
+            [caddy_server_opts.static_responses.headers]
+            "Location" = "https://new.example.com/new-blog/{http.request.uri.path.file}"
+        "#;
 
         let parsed_config: HerokuWebServerConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(parsed_config.build, None);
@@ -269,6 +339,43 @@ mod tests {
         );
         assert_eq!(parsed_config.headers, None);
         assert_eq!(parsed_config.errors, None);
+
+        assert_eq!(
+            parsed_config
+                .caddy_server_opts
+                .as_ref()
+                .unwrap()
+                .static_responses,
+            Some(vec![
+                CaddyStaticResponseConfig {
+                    host_matcher: Some("original.example.com".to_string()),
+                    path_matcher: None,
+                    status: Some(301),
+                    headers: Some(vec![
+                        Header {
+                            key: "Location".to_string(),
+                            value: "https://new.example.com{http.request.uri}".to_string()
+                        },
+                        Header {
+                            key: "X-Redirected-From".to_string(),
+                            value: "original.example.com".to_string()
+                        }
+                    ]),
+                    body: None
+                },
+                CaddyStaticResponseConfig {
+                    host_matcher: None,
+                    path_matcher: Some("/blog/*".to_string()),
+                    status: Some(301),
+                    headers: Some(vec![Header {
+                        key: "Location".to_string(),
+                        value: "https://new.example.com/new-blog/{http.request.uri.path.file}"
+                            .to_string()
+                    }]),
+                    body: None
+                }
+            ])
+        );
     }
 
     #[test]
@@ -318,22 +425,22 @@ mod tests {
         assert_eq!(
             parsed_config.headers,
             Some(vec![
-                Header {
+                PathMatchedHeader {
                     path_matcher: String::from("*"),
                     key: String::from("X-Global"),
                     value: String::from("Hello")
                 },
-                Header {
+                PathMatchedHeader {
                     path_matcher: String::from("/"),
                     key: String::from("X-Only-Default"),
                     value: String::from("Hiii")
                 },
-                Header {
+                PathMatchedHeader {
                     path_matcher: String::from("*.html"),
                     key: String::from("X-Only-HTML"),
                     value: String::from("Hi")
                 },
-                Header {
+                PathMatchedHeader {
                     path_matcher: String::from("/images/*"),
                     key: String::from("X-Only-Images"),
                     value: String::from("HAI")

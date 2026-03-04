@@ -56,7 +56,7 @@ pub(crate) fn config_web_server(
     );
 
     // Transform web server config to Caddy native JSON config
-    let caddy_config_json = serde_json::to_string(&caddy_json_config(heroku_config))
+    let caddy_config_json = serde_json::to_string(&caddy_json_config(&heroku_config))
         .map_err(StaticWebServerBuildpackError::Json)?;
 
     let config_path = configuration_layer.path().join("caddy.json");
