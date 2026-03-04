@@ -2,6 +2,7 @@ use crate::heroku_web_server_config::{
     ErrorsConfig, HerokuWebServerConfig, PathMatchedHeader, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
 };
 use crate::o11y::*;
+use crate::StaticWebServerBuildpackError;
 use indexmap::IndexMap;
 use serde::Serialize;
 use serde_json::json;
@@ -10,7 +11,9 @@ use std::collections::HashMap;
 /// Transforms the given [`HerokuWebServerConfig`] into an equivalent Caddy JSON configuration.
 /// Keeping this as a single function, because many lines are just the JSON itself being assembled.
 #[allow(clippy::too_many_lines)]
-pub(crate) fn caddy_json_config(config: &HerokuWebServerConfig) -> serde_json::Value {
+pub(crate) fn caddy_json_config(
+    config: &HerokuWebServerConfig,
+) -> Result<serde_json::Value, StaticWebServerBuildpackError> {
     let mut routes = vec![];
 
     // Header routes come first so headers will be added to any response down the chain.
@@ -75,7 +78,7 @@ pub(crate) fn caddy_json_config(config: &HerokuWebServerConfig) -> serde_json::V
         "prefer": ["zstd", "gzip"]
     }));
 
-    generate_static_response_handlers(config, &mut static_file_handlers);
+    generate_static_response_handlers(config, &mut static_file_handlers)?;
 
     if config
         .caddy_server_opts
@@ -147,7 +150,7 @@ pub(crate) fn caddy_json_config(config: &HerokuWebServerConfig) -> serde_json::V
         });
     }
 
-    json!({
+    Ok(json!({
         "apps": {
             "http": {
                 "servers": {
@@ -192,13 +195,13 @@ pub(crate) fn caddy_json_config(config: &HerokuWebServerConfig) -> serde_json::V
                 }
             }
         }
-    })
+    }))
 }
 
 fn generate_static_response_handlers(
     config: &HerokuWebServerConfig,
     static_file_handlers: &mut Vec<serde_json::Value>,
-) {
+) -> Result<(), StaticWebServerBuildpackError> {
     if let Some(static_responses) = config
         .caddy_server_opts
         .as_ref()
@@ -209,6 +212,14 @@ fn generate_static_response_handlers(
             "config"
         );
         for static_response in static_responses {
+            // Validate that at least one matcher is set
+            if static_response.host_matcher.is_none() && static_response.path_matcher.is_none() {
+                return Err(StaticWebServerBuildpackError::ConfigurationConstraint(
+                    "host_matcher or path_matcher must be set for caddy_server_opts.static_responses"
+                        .to_string(),
+                ));
+            }
+
             let mut match_array = vec![];
 
             if let Some(host_matcher) = static_response.host_matcher {
@@ -250,6 +261,7 @@ fn generate_static_response_handlers(
             }));
         }
     }
+    Ok(())
 }
 
 fn generate_response_headers_routes(headers: &Vec<PathMatchedHeader>) -> Vec<serde_json::Value> {
@@ -359,6 +371,7 @@ mod tests {
     use crate::heroku_web_server_config::{
         CaddyServerOpts, CaddyStaticResponseConfig, ErrorConfig, ErrorsConfig, Header,
     };
+    use crate::StaticWebServerBuildpackError;
     use std::path::PathBuf;
 
     #[test]
@@ -512,7 +525,7 @@ mod tests {
         };
 
         let mut handlers = vec![];
-        generate_static_response_handlers(&heroku_config, &mut handlers);
+        generate_static_response_handlers(&heroku_config, &mut handlers).unwrap();
 
         assert_eq!(handlers.len(), 3);
 
@@ -569,5 +582,35 @@ mod tests {
                 }]
             })
         );
+    }
+
+    #[test]
+    fn generates_static_response_handlers_error_when_no_matchers() {
+        let heroku_config = HerokuWebServerConfig {
+            caddy_server_opts: Some(CaddyServerOpts {
+                static_responses: Some(vec![CaddyStaticResponseConfig {
+                    host_matcher: None,
+                    path_matcher: None,
+                    status: Some(200),
+                    headers: None,
+                    body: Some("test".to_string()),
+                }]),
+                ..CaddyServerOpts::default()
+            }),
+            ..HerokuWebServerConfig::default()
+        };
+
+        let mut handlers = vec![];
+        let result = generate_static_response_handlers(&heroku_config, &mut handlers);
+
+        assert!(result.is_err());
+        if let Err(StaticWebServerBuildpackError::ConfigurationConstraint(msg)) = result {
+            assert_eq!(
+                msg,
+                "host_matcher or path_matcher must be set for caddy_server_opts.static_responses"
+            );
+        } else {
+            panic!("Expected ConfigurationConstraint error");
+        }
     }
 }
