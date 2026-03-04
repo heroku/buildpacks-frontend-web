@@ -324,7 +324,7 @@ path_matcher = "/resources/*"
 # respond with HTTP status (default: 200)
 status = 200
 
-# repond with body content (default: none)
+# respond with body content (default: none)
 body = "I could be anything."
 
 # set one or more response headers (default: none)
@@ -338,6 +338,10 @@ body = "I could be anything."
 ```
 
 `host_matcher` and `path_matcher` are both optional. At least one of them should be set for each static response. Static responses are processed in the order defined. When a static response is matched, its response is terminal. No further processing will occur for the request.
+
+`host_matcher` matches HTTP requests' `Host` header, which typically requires that either:
+- the DNS name resolves to the deployed app (such as [Heroku custom domains](https://devcenter.heroku.com/articles/custom-domains))
+- a CDN, proxy, or custom HTTP client set the `Host` header to indicate the hostname being requested.
 
 [Caddy placeholders](https://caddyserver.com/docs/conventions#placeholders) can be used for per-request dynamic values. The [HTTP placeholders](https://caddyserver.com/docs/json/apps/http/#docs) are useful with this feature:
 
