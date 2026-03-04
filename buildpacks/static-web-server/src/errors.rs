@@ -24,6 +24,8 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotCreateWebExecD(std::io::Error),
     CannotInstallEnvAsHtmlData(std::io::Error),
     ConfigurationConstraint(String),
+    ChecksumVerificationFailed(String),
+    CannotReadChecksums(std::io::Error),
 }
 
 pub(crate) struct ErrorMessage {
@@ -58,11 +60,12 @@ pub(crate) fn on_error(error: libcnb::Error<StaticWebServerBuildpackError>) {
     eprintln!();
 }
 
+#[allow(clippy::too_many_lines)]
 fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage {
     match error {
         StaticWebServerBuildpackError::Download(e) => ErrorMessage {
             message: formatdoc! {"
-                Unable to download the static web server for {buildpack_name}. 
+                Failed to download Caddy web server for {buildpack_name}. 
             ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "download_error".to_string(),
@@ -143,6 +146,23 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
             ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e,
             error_id: "configuration_constraint_error".to_string(),
+        },
+        StaticWebServerBuildpackError::ChecksumVerificationFailed(e) => ErrorMessage {
+            message: formatdoc! {"
+                Failed to verify Caddy checksum for {buildpack_name}
+
+                The downloaded Caddy binary's checksum does not match the expected value.
+                This could indicate a corrupted download or network tampering.
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: e,
+            error_id: "checksum_verification_failed_error".to_string(),
+        },
+        StaticWebServerBuildpackError::CannotReadChecksums(e) => ErrorMessage {
+            message: formatdoc! {"
+                Cannot read checksums file for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: e.to_string(),
+            error_id: "cannot_read_checksums_error".to_string(),
         },
     }
 }
