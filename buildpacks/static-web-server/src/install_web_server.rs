@@ -166,21 +166,40 @@ fn verify_checksum(
     expected_filename: &str,
 ) -> Result<(), libcnb::Error<StaticWebServerBuildpackError>> {
     // Calculate the SHA512 hash of the downloaded file
-    let mut file =
-        fs::File::open(file_path).map_err(StaticWebServerBuildpackError::CannotReadChecksums)?;
+    let mut file = fs::File::open(file_path).map_err(|error| {
+        StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: expected_filename.to_string(),
+            error,
+        }
+    })?;
     let mut hasher = Sha512::new();
-    std::io::copy(&mut file, &mut hasher)
-        .map_err(StaticWebServerBuildpackError::CannotReadChecksums)?;
+    std::io::copy(&mut file, &mut hasher).map_err(|error| {
+        StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: expected_filename.to_string(),
+            error,
+        }
+    })?;
     let calculated_hash = format!("{:x}", hasher.finalize());
 
     // Parse the checksums file to find the expected checksum
-    let checksums_file = fs::File::open(checksums_path)
-        .map_err(StaticWebServerBuildpackError::CannotReadChecksums)?;
+    let checksums_filename = checksums_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("checksums.txt");
+    let checksums_file = fs::File::open(checksums_path).map_err(|error| {
+        StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: checksums_filename.to_string(),
+            error,
+        }
+    })?;
     let reader = BufReader::new(checksums_file);
 
     let mut found_checksum = None;
     for line in reader.lines() {
-        let line = line.map_err(StaticWebServerBuildpackError::CannotReadChecksums)?;
+        let line = line.map_err(|error| StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: checksums_filename.to_string(),
+            error,
+        })?;
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() >= 2 && parts[1] == expected_filename {
             found_checksum = Some(parts[0].to_string());

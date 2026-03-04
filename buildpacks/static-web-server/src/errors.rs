@@ -25,7 +25,10 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotInstallEnvAsHtmlData(std::io::Error),
     ConfigurationConstraint(String),
     ChecksumVerificationFailed(String),
-    CannotReadChecksums(std::io::Error),
+    CannotReadChecksums {
+        filename: String,
+        error: std::io::Error,
+    },
 }
 
 pub(crate) struct ErrorMessage {
@@ -157,11 +160,11 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
             error_string: e,
             error_id: "checksum_verification_failed_error".to_string(),
         },
-        StaticWebServerBuildpackError::CannotReadChecksums(e) => ErrorMessage {
+        StaticWebServerBuildpackError::CannotReadChecksums { filename, error } => ErrorMessage {
             message: formatdoc! {"
-                Cannot read checksums file for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME) },
-            error_string: e.to_string(),
+                Failed to verify Caddy checksum, reading {filename}, for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME), filename = style::value(filename) },
+            error_string: error.to_string(),
             error_id: "cannot_read_checksums_error".to_string(),
         },
     }
