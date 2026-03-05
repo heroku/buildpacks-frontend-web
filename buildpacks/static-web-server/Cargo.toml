@@ -23,6 +23,7 @@ bullet_stream = "0.10.0"
 tracing = "0.1.44"
 const_format = "0.2.35"
 glob = "0.3.3"
+sha2 = "0.10"
 
 [dev-dependencies]
 libcnb-test = "=0.30.2"

@@ -1,4 +1,6 @@
 use std::fs;
+use std::io::{BufRead, BufReader};
+use std::path::Path;
 
 use libcnb::build::BuildContext;
 use libcnb::data::layer_name;
@@ -10,6 +12,7 @@ use libherokubuildpack::download::download_file;
 use libherokubuildpack::log::log_info;
 use libherokubuildpack::tar::decompress_tarball;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha512};
 use tempfile::NamedTempFile;
 
 use crate::o11y::*;
@@ -79,8 +82,18 @@ pub(crate) fn install_web_server(
                 { INSTALLATION_WEB_SERVER_VERSION } = web_server_version,
                 "downloading web server"
             );
-            download_file(artifact_url, web_server_tgz.path())
+            download_file(&artifact_url, web_server_tgz.path())
                 .map_err(StaticWebServerBuildpackError::Download)?;
+
+            // Verify the checksum
+            log_info("Verifying web server checksum");
+            verify_caddy_checksum(
+                web_server_version,
+                &context.target.os,
+                &context.target.arch,
+                web_server_tgz.path(),
+            )?;
+
             decompress_tarball(&mut web_server_tgz.into_file(), &web_server_dir)
                 .map_err(StaticWebServerBuildpackError::CannotUnpackCaddyTarball)?;
         }
@@ -116,4 +129,99 @@ pub(crate) struct WebServerLayerMetadata {
     web_server_version: String,
     arch: String,
     os: String,
+}
+
+/// Verifies the Caddy binary checksum against the official checksums file
+fn verify_caddy_checksum(
+    version: &str,
+    os: &str,
+    arch: &str,
+    tarball_path: &Path,
+) -> Result<(), libcnb::Error<StaticWebServerBuildpackError>> {
+    let base_url = format!("https://github.com/caddyserver/caddy/releases/download/v{version}");
+    let checksums_filename = format!("caddy_{version}_checksums.txt");
+    let artifact_filename = format!("caddy_{version}_{os}_{arch}.tar.gz");
+
+    // Download checksums file
+    let checksums_file = NamedTempFile::new()
+        .map_err(StaticWebServerBuildpackError::CannotCreateCaddyTarballFile)?;
+    download_file(
+        format!("{base_url}/{checksums_filename}"),
+        checksums_file.path(),
+    )
+    .map_err(StaticWebServerBuildpackError::Download)?;
+
+    // Verify the tarball checksum against the checksums file
+    verify_checksum(tarball_path, checksums_file.path(), &artifact_filename)?;
+
+    tracing::info!("Successfully verified Caddy checksum for version {version}");
+
+    Ok(())
+}
+
+/// Verifies the checksum of a file against a checksums file
+fn verify_checksum(
+    file_path: &Path,
+    checksums_path: &Path,
+    expected_filename: &str,
+) -> Result<(), libcnb::Error<StaticWebServerBuildpackError>> {
+    // Calculate the SHA512 hash of the downloaded file
+    let mut file = fs::File::open(file_path).map_err(|error| {
+        StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: expected_filename.to_string(),
+            error,
+        }
+    })?;
+    let mut hasher = Sha512::new();
+    std::io::copy(&mut file, &mut hasher).map_err(|error| {
+        StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: expected_filename.to_string(),
+            error,
+        }
+    })?;
+    let calculated_hash = format!("{:x}", hasher.finalize());
+
+    // Parse the checksums file to find the expected checksum
+    let checksums_filename = checksums_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("checksums.txt");
+    let checksums_file = fs::File::open(checksums_path).map_err(|error| {
+        StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: checksums_filename.to_string(),
+            error,
+        }
+    })?;
+    let reader = BufReader::new(checksums_file);
+
+    let mut found_checksum = None;
+    for line in reader.lines() {
+        let line = line.map_err(|error| StaticWebServerBuildpackError::CannotReadChecksums {
+            filename: checksums_filename.to_string(),
+            error,
+        })?;
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() >= 2 && parts[1] == expected_filename {
+            found_checksum = Some(parts[0].to_string());
+            break;
+        }
+    }
+
+    let expected_hash = found_checksum.ok_or_else(|| {
+        StaticWebServerBuildpackError::ChecksumVerificationFailed(format!(
+            "Checksum for {expected_filename} not found in checksums file"
+        ))
+    })?;
+
+    // Compare checksums
+    if calculated_hash != expected_hash {
+        return Err(
+            StaticWebServerBuildpackError::ChecksumVerificationFailed(format!(
+                "Checksum mismatch for {expected_filename}: expected {expected_hash}, got {calculated_hash}"
+            ))
+            .into(),
+        );
+    }
+
+    Ok(())
 }
