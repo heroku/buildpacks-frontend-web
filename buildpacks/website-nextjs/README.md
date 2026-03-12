@@ -3,7 +3,7 @@
 * At build:
   * Detects `next` in the app's `package.json` dependencies.
   * Requires `heroku/nodejs` installation and build.
-  * Configures `heroku/static-web-server` for `next`'s default output to `out/`.
+  * Configures `heroku/static-web-server` to deliver a clean-url, multi-page app from `next`'s output, including `404.html` for not found responses.
 
 ## Usage
 
@@ -21,15 +21,7 @@ const nextConfig = {
 }
 ```
 
-Now, the app should be ready to build, with Next.js auto-detected by `heroku/builder`:
-
-```bash
-pack build \
-  --builder heroku/builder:24 \
-  <APP_NAME>
-```
-
-To be explicit with the buildpacks required, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) containing:
+Then, to configure the buildpacks, create a [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) containing:
 
 ```toml
 [_]
@@ -41,6 +33,14 @@ schema-version = "0.2"
   id = "heroku/static-web-server"
 [[io.buildpacks.group]]
   id = "heroku/website-nextjs"
+```
+
+Now, the app should be ready to build with `heroku/builder`:
+
+```bash
+pack build \
+  --builder heroku/builder:24 \
+  <APP_NAME>
 ```
 
 See [Static Web Server](../static-web-server/README.md) for all capabilities and configuration options.
