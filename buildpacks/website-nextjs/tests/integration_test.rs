@@ -20,7 +20,9 @@ fn nextjs_app() {
             ),
             |_container, socket_addr| {
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call().map_err(Box::new)
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let response_body = response.into_string().unwrap();
@@ -28,7 +30,9 @@ fn nextjs_app() {
                 assert_contains!(response_body, "To get started");
 
                 let second_response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/nested")).call().map_err(Box::new)
+                    ureq::get(&format!("http://{socket_addr}/nested"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let second_response_body = second_response.into_string().unwrap();
@@ -36,7 +40,9 @@ fn nextjs_app() {
                 assert_contains!(second_response_body, "A Nested Page");
 
                 let not_found_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call().map_err(Box::new)
+                    ureq::get(&format!("http://{socket_addr}/non-existent-path"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match not_found_result {
                     Ok(_) => {
