@@ -554,10 +554,13 @@ docker run \
 
 ## Route Precendence
 
-1. [optional] Basic Authorization
-2. Response encoding (compression)
-3. [optional] Static Responses (terminating)
-4. [optional] Templates
-5. [optional] Clean URLs
-6. File Server
-7. Not Found
+The static web server is configured to handle request URLs with the following path-matched precedence:
+
+1. [optional] [Caddy: Basic Authorization](#caddy-basic-authorization)
+2. [optional] [Caddy: Static Responses](#caddy-static-responses) (terminating)
+3. [optional] [Caddy: Clean URLs](#caddy-clean-urls)
+    1. exact URL path
+    2. URL path + `.html` (rewrite)
+4. File Server
+    1. exact URL path
+    2. for directories, URL path + default document `index.html`
