@@ -35,6 +35,6 @@ pack build \
   <APP_NAME>
 ```
 
-*Vite supports many frameworks and configuration options. Depending on these individual choices, additional static web server configuration may be required to support client-side routing, multi-page sites, error handling, redirections, and clean URLs.*
+*Vite supports many frameworks and configuration options. Depending on these individual choices, additional static web server configuration may be required to support multi-page sites, error handling, and other customizations.*
 
 See [Static Web Server](../static-web-server/README.md) for all capabilities and configuration options.
