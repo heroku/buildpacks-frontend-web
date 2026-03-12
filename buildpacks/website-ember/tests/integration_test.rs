@@ -20,7 +20,7 @@ fn ember_cli_app() {
             ),
             |_container, socket_addr| {
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/")).call().map_err(Box::new)
                 })
                 .unwrap();
                 let response_body = response.into_string().unwrap();
@@ -33,7 +33,7 @@ fn ember_cli_app() {
                 );
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/test-client-side-routing")).call()
+                    ureq::get(&format!("http://{socket_addr}/test-client-side-routing")).call().map_err(Box::new)
                 })
                 .unwrap();
                 let response_body = response.into_string().unwrap();

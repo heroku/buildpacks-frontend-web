@@ -551,3 +551,13 @@ docker run \
   -it --entrypoint bash \
   <APP_NAME>
 ```
+
+## Route Precendence
+
+1. [optional] Basic Authorization
+2. Response encoding (compression)
+3. [optional] Static Responses (terminating)
+4. [optional] Templates
+5. [optional] Clean URLs
+6. File Server
+7. Not Found
