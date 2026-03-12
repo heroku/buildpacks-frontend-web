@@ -3,7 +3,7 @@
 * At build:
   * Detects `react-scripts` in the app's `package.json` dependencies.
   * Requires `heroku/nodejs` installation and build.
-  * Configures `heroku/static-web-server` for `next`'s default output to `dist/`.
+  * Configures `heroku/static-web-server` to deliver a single-page app from `react-scripts`' output.
 
 ## Legacy Notice
 
@@ -33,6 +33,14 @@ schema-version = "0.2"
   id = "heroku/static-web-server"
 [[io.buildpacks.group]]
   id = "heroku/website-cra"
+```
+
+Now, the app should be ready to build with `heroku/builder`:
+
+```bash
+pack build \
+  --builder heroku/builder:24 \
+  <APP_NAME>
 ```
 
 See [Static Web Server](../static-web-server/README.md) for all capabilities and configuration options.

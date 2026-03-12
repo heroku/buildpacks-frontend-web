@@ -17,14 +17,18 @@ fn cra_app() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let response_body = response.into_string().unwrap();
                 assert_contains!(response_body, "Web site created using create-react-app");
 
                 let second_response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/client-side-route")).call()
+                    ureq::get(&format!("http://{socket_addr}/client-side-route"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let second_response_body = second_response.into_string().unwrap();

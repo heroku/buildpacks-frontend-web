@@ -310,7 +310,7 @@ For example, a request to `example.com/support` will be tried in the document ro
 
 *Default: none*
 
-Define preset HTTP responses. Supports the common HTTP redirect use-case, or any custom status, headers, and body response.
+Define preset HTTP responses. Supports common use-cases such as: HTTP redirects, health check endpoint, or any custom status, headers, and body response.
 
 ```toml
 [[com.heroku.static-web-server.caddy_server_opts.static_responses]]
@@ -352,7 +352,9 @@ body = "I could be anything."
 - `{http.request.uri.path.file}`
 - `{http.request.uri.query}`
 
-For example, permanently redirect to a different path with status `301` and a `Location` header, using the requested filename in the new path:
+##### Caddy: Redirect examples
+
+Permanently redirect to a different path with status `301` and a `Location` header, using the requested filename in the new path:
 
 ```toml
 [[com.heroku.static-web-server.caddy_server_opts.static_responses]]
@@ -371,6 +373,16 @@ status = 301
 [com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
 "Location" = "https://new.example.com{http.request.uri}"
 "X-Redirected-From" = "original.example.com"
+```
+
+##### Caddy: Health check example
+
+```toml
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+path_matcher = "/health"
+body = '{"status":"ok"}'
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Content-Type" = "application/json"
 ```
 
 #### Caddy: Basic Authorization
@@ -539,3 +551,16 @@ docker run \
   -it --entrypoint bash \
   <APP_NAME>
 ```
+
+## Route Precendence
+
+The static web server is configured to handle request URLs with the following path-matched precedence:
+
+1. [optional] [Caddy: Basic Authorization](#caddy-basic-authorization)
+2. [optional] [Caddy: Static Responses](#caddy-static-responses) (terminating)
+3. [optional] [Caddy: Clean URLs](#caddy-clean-urls)
+    1. exact URL path
+    2. URL path + `.html` (rewrite)
+4. File Server
+    1. exact URL path
+    2. for directories, URL path + default document `index.html`

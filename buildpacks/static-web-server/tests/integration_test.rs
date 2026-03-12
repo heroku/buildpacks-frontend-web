@@ -18,7 +18,9 @@ fn default_behavior() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}")).call()
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -48,7 +50,9 @@ fn build_command() {
             |_container, socket_addr| {
                 // Test for successful response
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let response_status = response.status();
@@ -61,7 +65,9 @@ fn build_command() {
 
                 // Test for default Not Found response
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/test-output.txt")).call()
+                    ureq::get(&format!("http://{socket_addr}/test-output.txt"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let response_status = response.status();
@@ -101,7 +107,9 @@ fn top_level_doc_root() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -120,22 +128,26 @@ fn top_level_doc_root() {
                 }
 
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+                    ureq::get(&format!("http://{socket_addr}/non-existent-path"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
-                    Err(ureq::Error::Status(code, response)) => {
-                        assert_eq!(code, 404);
-                        let h = response.header("Content-Type").unwrap_or_default();
-                        assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
-                        assert_contains!(response_body, "Custom 404");
-                    }
                     Ok(_) => {
                         panic!("should respond 404 Not Found, but got 200 ok");
                     }
-                    Err(error) => {
-                        panic!("should respond 404 Not Found, but got other error: {error:?}");
-                    }
+                    Err(err) => match *err {
+                        ureq::Error::Status(code, response) => {
+                            assert_eq!(code, 404);
+                            let h = response.header("Content-Type").unwrap_or_default();
+                            assert_contains!(h, "text/html");
+                            let response_body = response.into_string().unwrap();
+                            assert_contains!(response_body, "Custom 404");
+                        }
+                        error @ ureq::Error::Transport(_) => {
+                            panic!("should respond 404 Not Found, but got other error: {error:?}");
+                        }
+                    },
                 }
             },
         );
@@ -152,7 +164,9 @@ fn custom_headers() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let h = response.header("X-Global").unwrap_or_default();
@@ -167,7 +181,9 @@ fn custom_headers() {
                 );
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/page2.html")).call()
+                    ureq::get(&format!("http://{socket_addr}/page2.html"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 let h = response.header("X-Only-HTML").unwrap_or_default();
@@ -193,22 +209,26 @@ fn custom_errors() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+                    ureq::get(&format!("http://{socket_addr}/non-existent-path"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
-                    Err(ureq::Error::Status(code, response)) => {
-                        assert_eq!(code, 404);
-                        let h = response.header("Content-Type").unwrap_or_default();
-                        assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
-                        assert_contains!(response_body, "Custom 404");
-                    }
                     Ok(_) => {
                         panic!("should respond 404 Not Found, but got 200 ok");
                     }
-                    Err(error) => {
-                        panic!("should respond 404 Not Found, but got other error: {error:?}");
-                    }
+                    Err(err) => match *err {
+                        ureq::Error::Status(code, response) => {
+                            assert_eq!(code, 404);
+                            let h = response.header("Content-Type").unwrap_or_default();
+                            assert_contains!(h, "text/html");
+                            let response_body = response.into_string().unwrap();
+                            assert_contains!(response_body, "Custom 404");
+                        }
+                        error @ ureq::Error::Transport(_) => {
+                            panic!("should respond 404 Not Found, but got other error: {error:?}");
+                        }
+                    },
                 }
             },
         );
@@ -225,7 +245,9 @@ fn client_side_routing() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/non-existent-path")).call()
+                    ureq::get(&format!("http://{socket_addr}/non-existent-path"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -260,7 +282,9 @@ fn runtime_configuration_custom() {
             ),
             |container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -275,7 +299,9 @@ fn runtime_configuration_custom() {
                     }
                 }
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/subsection/")).call()
+                    ureq::get(&format!("http://{socket_addr}/subsection/"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -333,7 +359,9 @@ fn runtime_configuration_default() {
             ),
             |_container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/")).call()
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -362,7 +390,9 @@ fn caddy_csp_nonce() {
             &mut ContainerConfig::new(),
             |container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}")).call()
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -395,7 +425,9 @@ fn caddy_clean_urls() {
             &mut ContainerConfig::new(),
             |container, socket_addr| {
                 let index_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}")).call()
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match index_response_result {
                     Ok(response) => {
@@ -410,7 +442,9 @@ fn caddy_clean_urls() {
                     }
                 }
                 let other_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/other")).call()
+                    ureq::get(&format!("http://{socket_addr}/other"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match other_response_result {
                     Ok(response) => {
@@ -425,7 +459,9 @@ fn caddy_clean_urls() {
                     }
                 }
                 let nested_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}/nested")).call()
+                    ureq::get(&format!("http://{socket_addr}/nested"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match nested_response_result {
                     Ok(response) => {
@@ -441,7 +477,9 @@ fn caddy_clean_urls() {
                 }
                 let nested_second_response_result =
                     retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                        ureq::get(&format!("http://{socket_addr}/nested/second")).call()
+                        ureq::get(&format!("http://{socket_addr}/nested/second"))
+                            .call()
+                            .map_err(Box::new)
                     });
                 match nested_second_response_result {
                     Ok(response) => {
@@ -457,7 +495,9 @@ fn caddy_clean_urls() {
                 }
                 let nested_deeper_response_result =
                     retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                        ureq::get(&format!("http://{socket_addr}/nested/deeper")).call()
+                        ureq::get(&format!("http://{socket_addr}/nested/deeper"))
+                            .call()
+                            .map_err(Box::new)
                     });
                 match nested_deeper_response_result {
                     Ok(response) => {
@@ -486,7 +526,9 @@ fn caddy_access_logs() {
             &mut ContainerConfig::new(),
             |container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}")).call()
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -522,17 +564,23 @@ fn caddy_basic_auth() {
                 ),
             |container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}")).call()
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
-                    Err(ureq::Error::Status(code, _response)) => {
-                        assert_eq!(code, 401);
-                    }
                     Ok(_) => {
                         panic!("should respond 401 Unauthorized, but got 200 ok");
                     }
-                    Err(error) => {
-                        panic!("should respond 401 Unauthorized, but got other error: {error:?}");
+                    Err(err) => {
+                        match *err {
+                            ureq::Error::Status(code, _response) => {
+                                assert_eq!(code, 401);
+                            }
+                            error @ ureq::Error::Transport(_) => {
+                                panic!("should respond 401 Unauthorized, but got other error: {error:?}");
+                            }
+                        }
                     }
                 }
 
@@ -545,6 +593,7 @@ fn caddy_basic_auth() {
                             "Basic dmlzaXRvcjpvcGVuc2Vhc2FtZQ==",
                         )
                         .call()
+                        .map_err(Box::new)
                 });
                 match auth_response_result {
                     Ok(response) => {
@@ -579,7 +628,9 @@ fn caddy_basic_auth() {
                 ),
             |container, socket_addr| {
                 let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq::get(&format!("http://{socket_addr}")).call()
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 });
                 match response_result {
                     Ok(response) => {
@@ -616,7 +667,10 @@ fn caddy_static_responses() {
                 let ureq_agent: ureq::Agent = ureq::AgentBuilder::new().redirects(0).build();
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                    ureq_agent.get(&format!("http://{socket_addr}")).call()
+                    ureq_agent
+                        .get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
                 })
                 .unwrap();
                 assert_eq!(response.status(), 200);

@@ -239,7 +239,9 @@ pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static s
         &mut ContainerConfig::new(),
         |_container, socket_addr| {
             let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
-                ureq::get(&format!("http://{socket_addr}/")).call()
+                ureq::get(&format!("http://{socket_addr}/"))
+                    .call()
+                    .map_err(Box::new)
             })
             .unwrap();
             let response_body = response.into_string().unwrap();
