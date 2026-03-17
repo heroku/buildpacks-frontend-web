@@ -4,7 +4,9 @@ This repository is the home of Heroku Cloud Native Buildpacks for Front-end Web 
 
 ## What It Is
 
-These Front-end Web buildpacks produce an OCI (container image) that launches a web server to host a directory of HTML, CSS, and Javascript files. The build process can run Javascript or other programs to produce the website, or simply read a directory of files as the web root. All front-end frameworks are supported, while some popular frameworks are optimized with preset web server configuration.
+These Front-end Web buildpacks produce an OCI (container image) that launches a web server to host a directory of HTML, CSS, and Javascript files. The build process can run a command to generate the website, or simply read a directory of files as the web root.
+
+All front-end frameworks that output static HTML are supported, while some popular frameworks are optimized with preset web server configuration.
 
 The result is a static website:
 * high-efficiency, high-performance server
@@ -29,7 +31,7 @@ Buildpacks that provide a specific server-side component.
 
 ### Framework Buildpacks
 
-Lower-level buildpacks that detect specific source layouts, frameworks, or tools, to automate configuration of build process and `heroku/static-web-server`.
+Lower-level buildpacks that detect specific source layouts, frameworks, or tools, to automate configuration of build process and `heroku/static-web-server`. These framework buildpacks are completely optional.
 
 | ID                           | Name                                                              | Provides                            |
 |------------------------------|-------------------------------------------------------------------|-------------------------------------|
@@ -41,9 +43,7 @@ Lower-level buildpacks that detect specific source layouts, frameworks, or tools
 
 ## Usage
 
-[Configure the Static Web Server](buildpacks/static-web-server/README.md) as the last buildpack for your app, along with other language buildpacks the build might require.
-
-The framework buildpacks are optional. They automate detection of static web apps in source code when using [`heroku/builder`](https://github.com/heroku/cnb-builder-images), such as when building a CNB app on Heroku, but are not required when manually configuring buildpacks and web server config.
+[Configure the Static Web Server](buildpacks/static-web-server/README.md) as the last buildpack for your app (unless using another buildpack to setup the `web` process), along with other language buildpacks the build might require.
 
 ## Dev Notes
 
