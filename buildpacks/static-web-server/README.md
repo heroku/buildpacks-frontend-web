@@ -104,6 +104,23 @@ _Static config that controls how the app is built, and how the web server delive
 
 This is set in the app source repo [`project.toml`](https://buildpacks.io/docs/reference/config/project-descriptor/) file and processed during CNB build. Rebuild is necessary to apply any changes.
 
+### Build-time Environment
+
+The build process may be configured by setting CNB Build variables in `project.toml`. These source-based are useful for standard configuration options that apply to any build of the app:
+
+```toml
+ [[io.buildpacks.build.env]]
+ name = "CI"
+ value = "1"
+```
+
+Build environment may also be set in the platform running the build, so that they are configured for deployments. To enhance security, Heroku doesn’t automatically expose config vars to the CNB build process. To get access to Heroku config variables at build-time, enable this feature.
+
+```toml
+[com.heroku.build.labs]
+build_config_vars = true
+```
+
 ### Static Build Command
 
 *Default: (none)*
@@ -120,7 +137,7 @@ command = "sh"
 args = ["-c", "hugo"]
 ```
 
-This static build command does not have access to Heroku app config vars, but still can be configured using CNB Build variables in `project.toml`:
+Options may be passed to static build command using CNB Build variables in `project.toml`:
 
 ```toml
  [[io.buildpacks.build.env]]
