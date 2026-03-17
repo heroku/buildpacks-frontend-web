@@ -106,7 +106,7 @@ This is set in the app source repo [`project.toml`](https://buildpacks.io/docs/r
 
 ### Build-time Environment
 
-The build process may be configured by setting CNB Build variables in `project.toml`. These source-based are useful for standard configuration options that apply to any build of the app:
+The build process' environment may be configured by setting CNB Build variables in `project.toml`. These source-based variables are useful for standard configuration options that apply to any build of the app:
 
 ```toml
  [[io.buildpacks.build.env]]
