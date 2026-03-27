@@ -69,6 +69,7 @@ pub(crate) struct CaddyAccessLogsConfig {
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
 pub(crate) struct CaddyStaticResponseConfig {
+    pub(crate) expression_matcher: Option<String>,
     pub(crate) host_matcher: Option<String>,
     pub(crate) path_matcher: Option<String>,
     pub(crate) status: Option<u16>,
@@ -264,6 +265,12 @@ mod tests {
             sampling_thereafter = 1000
 
             [[caddy_server_opts.static_responses]]
+            expression_matcher = "{env.PUBLIC_WEB_APP_HOST} != {http.request.host}"
+            status = 301
+            [caddy_server_opts.static_responses.headers]
+            "Location" = "https://{env.PUBLIC_WEB_APP_HOST}{http.request.uri}"
+
+            [[caddy_server_opts.static_responses]]
             host_matcher = "original.example.com"
             status = 301
             [caddy_server_opts.static_responses.headers]
@@ -348,6 +355,20 @@ mod tests {
                 .static_responses,
             Some(vec![
                 CaddyStaticResponseConfig {
+                    expression_matcher: Some(
+                        "{env.PUBLIC_WEB_APP_HOST} != {http.request.host}".to_string()
+                    ),
+                    host_matcher: None,
+                    path_matcher: None,
+                    status: Some(301),
+                    headers: Some(vec![Header {
+                        key: "Location".to_string(),
+                        value: "https://{env.PUBLIC_WEB_APP_HOST}{http.request.uri}".to_string()
+                    }]),
+                    body: None
+                },
+                CaddyStaticResponseConfig {
+                    expression_matcher: None,
                     host_matcher: Some("original.example.com".to_string()),
                     path_matcher: None,
                     status: Some(301),
@@ -364,6 +385,7 @@ mod tests {
                     body: None
                 },
                 CaddyStaticResponseConfig {
+                    expression_matcher: None,
                     host_matcher: None,
                     path_matcher: Some("/blog/*".to_string()),
                     status: Some(301),

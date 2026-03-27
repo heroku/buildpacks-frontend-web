@@ -481,6 +481,7 @@ mod tests {
             caddy_server_opts: Some(CaddyServerOpts {
                 static_responses: Some(vec![
                     CaddyStaticResponseConfig {
+                        expression_matcher: None,
                         host_matcher: Some("original.example.com".to_string()),
                         path_matcher: None,
                         status: Some(301),
@@ -497,6 +498,7 @@ mod tests {
                         body: None,
                     },
                     CaddyStaticResponseConfig {
+                        expression_matcher: None,
                         host_matcher: Some("original.example.com".to_string()),
                         path_matcher: Some("/blog/*".to_string()),
                         status: Some(301),
@@ -509,6 +511,7 @@ mod tests {
                         body: None,
                     },
                     CaddyStaticResponseConfig {
+                        expression_matcher: None,
                         host_matcher: None,
                         path_matcher: Some("/api/*".to_string()),
                         status: Some(500),
@@ -589,6 +592,7 @@ mod tests {
         let heroku_config = HerokuWebServerConfig {
             caddy_server_opts: Some(CaddyServerOpts {
                 static_responses: Some(vec![CaddyStaticResponseConfig {
+                    expression_matcher: None,
                     host_matcher: None,
                     path_matcher: None,
                     status: Some(200),

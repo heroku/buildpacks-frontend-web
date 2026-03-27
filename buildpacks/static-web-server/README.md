@@ -354,7 +354,9 @@ body = "I could be anything."
 # …
 ```
 
-`host_matcher` and `path_matcher` are both optional. At least one of them should be set for each static response. Static responses are processed in the order defined. When a static response is matched, its response is terminal. No further processing will occur for the request.
+`expression_matcher`, `host_matcher`, and `path_matcher` are all optional. At least one of them should be set for each static response. Static responses are processed in the order defined. When a static response is matched, its response is terminal. No further processing will occur for the request.
+
+`expression_matcher` supports matching based on dynamic request-time values using [CEL syntax](https://github.com/google/cel-spec/blob/master/doc/langdef.md#standard-definitions).
 
 `host_matcher` matches HTTP requests' `Host` header, which typically requires that either:
 - the DNS name resolves to the deployed app (such as [Heroku custom domains](https://devcenter.heroku.com/articles/custom-domains))
@@ -381,7 +383,7 @@ status = 301
 "Location" = "/feed/{http.request.uri.path.file}"
 ```
 
-Another example, permanently redirect any request for a specific host to a new server, passing through the original URI (path and querystring) and an additional custom header:
+Permanently redirect to a new server, passing through the original URI (path and querystring) and an additional custom header:
 
 ```toml
 [[com.heroku.static-web-server.caddy_server_opts.static_responses]]
@@ -390,6 +392,16 @@ status = 301
 [com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
 "Location" = "https://new.example.com{http.request.uri}"
 "X-Redirected-From" = "original.example.com"
+```
+
+Redirect to the canconical hostname, the app's `PUBLIC_WEB_HOSTNAME` env var, when it is defined, using an [expression matcher](https://caddyserver.com/docs/json/apps/http/servers/routes/match/expression):
+
+```toml
+[[com.heroku.static-web-server.caddy_server_opts.static_responses]]
+expression_matcher = "{env.PUBLIC_WEB_HOSTNAME} != '' && {env.PUBLIC_WEB_HOSTNAME} != {http.request.host}"
+status = 301
+[com.heroku.static-web-server.caddy_server_opts.static_responses.headers]
+"Location" = "https://{env.PUBLIC_WEB_HOSTNAME}{http.request.uri}"
 ```
 
 ##### Caddy: Health check example
