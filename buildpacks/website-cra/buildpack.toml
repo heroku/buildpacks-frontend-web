@@ -2,7 +2,7 @@ api = "0.10"
 
 [buildpack]
 id = "heroku/website-cra"
-version = "3.2.1"
+version = "3.2.2"
 name = "Heroku Website (create-react-app)"
 description = "React.js support for heroku/buildpacks-frontend-web using the legacy create-react-app framework."
 
