@@ -3,7 +3,6 @@ use crate::{BUILDPACK_NAME, WEB_SERVER_NAME, WEB_SERVER_VERSION};
 use bullet_stream::{global::print, style, Print};
 use indoc::formatdoc;
 use libcnb::TomlFileError;
-use libherokubuildpack::inventory::ParseInventoryError;
 
 const DEBUG_INFO: &str = "Debug info";
 
@@ -27,8 +26,6 @@ pub(crate) enum StaticWebServerBuildpackError {
     ConfigurationConstraint(String),
     ChecksumVerificationFailed { expected: Vec<u8>, actual: Vec<u8> },
     ReadDownloadForChecksum(std::io::Error),
-    ParseInventory(ParseInventoryError),
-    ResolveArtifact { version_req: semver::VersionReq },
 }
 
 pub(crate) struct ErrorMessage {
@@ -172,24 +169,6 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
             ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
             error_id: "read_download_for_checksum_error".to_string(),
-        },
-        StaticWebServerBuildpackError::ParseInventory(e) => ErrorMessage {
-            message: formatdoc! {"
-                Failed to parse the bundled Caddy inventory for {buildpack_name}.
-
-                This is a buildpack bug, not a problem with your application.
-            ", buildpack_name = style::value(BUILDPACK_NAME) },
-            error_string: e.to_string(),
-            error_id: "parse_inventory_error".to_string(),
-        },
-        StaticWebServerBuildpackError::ResolveArtifact { version_req } => ErrorMessage {
-            message: formatdoc! {"
-                No Caddy artifact in the bundled inventory satisfies the version requirement {version_req} for {buildpack_name}.
-
-                This is a buildpack bug, not a problem with your application.
-            ", buildpack_name = style::value(BUILDPACK_NAME) },
-            error_string: format!("version_req={version_req}"),
-            error_id: "resolve_artifact_error".to_string(),
         },
     }
 }

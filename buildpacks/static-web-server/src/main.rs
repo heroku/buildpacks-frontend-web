@@ -15,11 +15,12 @@ use libcnb::data::launch::{LaunchBuilder, ProcessBuilder};
 use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
-use libcnb::{buildpack_main, Buildpack, Error};
-use libherokubuildpack::inventory::artifact::{Arch, Os};
+use libcnb::{buildpack_main, Buildpack, Error, Target};
+use libherokubuildpack::inventory::artifact::{Arch, Artifact, Os};
 use libherokubuildpack::inventory::Inventory;
 use libherokubuildpack::log::log_header;
-use semver::VersionReq;
+use semver::{Version, VersionReq};
+use sha2::Sha256;
 
 use env_as_html_data as _;
 use regex as _;
@@ -60,20 +61,7 @@ impl Buildpack for StaticWebServerBuildpack {
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
 
-        let version_req = VersionReq::parse(&format!("={WEB_SERVER_VERSION}")).expect(
-            "the pinned WEB_SERVER_VERSION should always parse as an exact-match requirement",
-        );
-        let inventory: Inventory<_, _, _> = include_str!("../inventory.toml")
-            .parse()
-            .map_err(StaticWebServerBuildpackError::ParseInventory)?;
-        let artifact = inventory
-            .resolve(
-                context.target.os.parse::<Os>().expect("OS should always be parseable, buildpack will not run on unsupported operating systems."),
-                context.target.arch.parse::<Arch>().expect("Arch should always be parseable, buildpack will not run on unsupported architectures."),
-                &version_req,
-            )
-            .cloned()
-            .ok_or(StaticWebServerBuildpackError::ResolveArtifact { version_req })?;
+        let artifact = resolve_caddy_artifact(&context.target);
 
         let _installation_layer = install_web_server(&context, &artifact)?;
 
@@ -118,6 +106,32 @@ impl From<StaticWebServerBuildpackError> for libcnb::Error<StaticWebServerBuildp
     fn from(value: StaticWebServerBuildpackError) -> Self {
         libcnb::Error::BuildpackError(value)
     }
+}
+
+// Resolves the Caddy artifact pinned in the bundled inventory.toml. Both
+// the inventory parse and the artifact lookup are guaranteed to succeed
+// for any combination of WEB_SERVER_VERSION + buildpack-supported target
+// that has shipped through CI; failures here mean the buildpack itself
+// is misconfigured.
+fn resolve_caddy_artifact(target: &Target) -> Artifact<Version, Sha256, Option<()>> {
+    let version_req = VersionReq::parse(&format!("={WEB_SERVER_VERSION}"))
+        .expect("the pinned WEB_SERVER_VERSION should always parse as an exact-match requirement");
+    let inventory: Inventory<_, _, _> = include_str!("../inventory.toml")
+        .parse()
+        .expect("the bundled Caddy inventory should always parse");
+    inventory
+        .resolve(
+            target.os.parse::<Os>().expect("OS should always be parseable, buildpack will not run on unsupported operating systems."),
+            target.arch.parse::<Arch>().expect("Arch should always be parseable, buildpack will not run on unsupported architectures."),
+            &version_req,
+        )
+        .cloned()
+        .unwrap_or_else(|| {
+            panic!(
+                "the bundled Caddy inventory should always have an entry matching os={}, arch={}, version requirement {version_req}",
+                target.os, target.arch,
+            )
+        })
 }
 
 buildpack_main!(StaticWebServerBuildpack);
