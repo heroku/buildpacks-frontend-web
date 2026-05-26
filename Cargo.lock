@@ -559,6 +559,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
 
 [[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
 name = "html5ever"
 version = "0.36.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -864,8 +870,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b2140276b715b1f3da7a3026ffab2b9ad691fef9f97426580ee00998fbe6197"
 dependencies = [
  "flate2",
+ "hex",
  "pathdiff",
  "reqwest",
+ "semver",
+ "serde",
+ "sha2",
  "tar",
  "termcolor",
  "thiserror",
@@ -1711,12 +1721,14 @@ dependencies = [
  "const_format",
  "env_as_html_data",
  "glob",
+ "hex",
  "indexmap",
  "indoc",
  "libcnb",
  "libcnb-test",
  "libherokubuildpack",
  "regex",
+ "semver",
  "serde",
  "serde_json",
  "sha2",

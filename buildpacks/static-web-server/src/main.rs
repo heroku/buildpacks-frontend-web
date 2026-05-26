@@ -16,7 +16,10 @@ use libcnb::data::process_type;
 use libcnb::detect::{DetectContext, DetectResult, DetectResultBuilder};
 use libcnb::generic::{GenericMetadata, GenericPlatform};
 use libcnb::{buildpack_main, Buildpack, Error};
+use libherokubuildpack::inventory::artifact::{Arch, Os};
+use libherokubuildpack::inventory::Inventory;
 use libherokubuildpack::log::log_header;
+use semver::VersionReq;
 
 use env_as_html_data as _;
 use regex as _;
@@ -57,14 +60,28 @@ impl Buildpack for StaticWebServerBuildpack {
     fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
 
-        let _installation_layer =
-            install_web_server(&context, WEB_SERVER_NAME, WEB_SERVER_VERSION)?;
+        let version_req = VersionReq::parse(&format!("={WEB_SERVER_VERSION}")).expect(
+            "the pinned WEB_SERVER_VERSION should always parse as an exact-match requirement",
+        );
+        let inventory: Inventory<_, _, _> = include_str!("../inventory.toml")
+            .parse()
+            .map_err(StaticWebServerBuildpackError::ParseInventory)?;
+        let artifact = inventory
+            .resolve(
+                context.target.os.parse::<Os>().expect("OS should always be parseable, buildpack will not run on unsupported operating systems."),
+                context.target.arch.parse::<Arch>().expect("Arch should always be parseable, buildpack will not run on unsupported architectures."),
+                &version_req,
+            )
+            .cloned()
+            .ok_or(StaticWebServerBuildpackError::ResolveArtifact { version_req })?;
+
+        let _installation_layer = install_web_server(&context, &artifact)?;
 
         let configuration_layer = config_web_server(&context)?;
 
         tracing::info!(
             { INSTALLATION_WEB_SERVER_NAME } = WEB_SERVER_NAME,
-            { INSTALLATION_WEB_SERVER_VERSION } = WEB_SERVER_VERSION,
+            { INSTALLATION_WEB_SERVER_VERSION } = %artifact.version,
             "build success"
         );
 
