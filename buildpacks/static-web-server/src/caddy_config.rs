@@ -349,12 +349,12 @@ fn generate_error_404_route(
         "body": DEFAULT_404_HTML
     }]);
 
-    let path_regex = error_config.and_then(|ec| ec.path_regex.as_ref());
+    let path_exclusions = error_config.and_then(|ec| ec.path_exclusions.as_ref());
 
-    match (custom_handlers, path_regex) {
-        (Some(handlers), Some(pattern)) => vec![
+    match (custom_handlers, path_exclusions) {
+        (Some(handlers), Some(exclusions)) => vec![
             json!({
-                "match": [{"path_regexp": {"pattern": pattern}}],
+                "match": [{"not": [{"path": exclusions}]}],
                 "handle": handlers
             }),
             json!({
@@ -465,7 +465,7 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("error-404.html"),
                     status: None,
-                    path_regex: None,
+                    path_exclusions: None,
                 }),
             }),
             ..HerokuWebServerConfig::default()
@@ -491,7 +491,7 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("index.html"),
                     status: Some(200),
-                    path_regex: None,
+                    path_exclusions: None,
                 }),
             }),
             ..HerokuWebServerConfig::default()
@@ -508,7 +508,7 @@ mod tests {
     }
 
     #[test]
-    fn generates_custom_404_error_route_with_path_regex() {
+    fn generates_custom_404_error_route_with_path_exclusions() {
         let doc_root = String::from("tests/fixtures/client_side_routing/public");
         let doc_index = "index.html".to_string();
 
@@ -517,7 +517,7 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("index.html"),
                     status: Some(200),
-                    path_regex: Some(r"^/app(/.*)?$".to_string()),
+                    path_exclusions: Some(vec!["/assets/*".to_string()]),
                 }),
             }),
             ..HerokuWebServerConfig::default()
@@ -528,14 +528,14 @@ mod tests {
         assert_eq!(
             routes,
             vec![
-                json!({"match":[{"path_regexp":{"pattern":"^/app(/.*)?$"}}],"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]}),
+                json!({"match":[{"not":[{"path":["/assets/*"]}]}],"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]}),
                 json!({"handle":[{"body":"\n    <!DOCTYPE html>\n    <html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <title>404 Not Found</title>\n    </head>\n    <body>\n        <h1>404 Not Found</h1>\n    </body>\n    </html>\n","handler":"static_response","headers":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Content-Type":["text/html"],"Pragma":["no-cache"]},"status_code":"404"}]})
             ]
         );
     }
 
     #[test]
-    fn generates_custom_404_error_route_with_negated_path_regex() {
+    fn generates_custom_404_error_route_with_multiple_path_exclusions() {
         let doc_root = String::from("tests/fixtures/client_side_routing/public");
         let doc_index = "index.html".to_string();
 
@@ -544,7 +544,10 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("index.html"),
                     status: Some(200),
-                    path_regex: Some(r"^(?!/assets/)".to_string()),
+                    path_exclusions: Some(vec![
+                        "/assets/*".to_string(),
+                        "/static/*".to_string(),
+                    ]),
                 }),
             }),
             ..HerokuWebServerConfig::default()
@@ -555,7 +558,7 @@ mod tests {
         assert_eq!(
             routes,
             vec![
-                json!({"match":[{"path_regexp":{"pattern":"^(?!/assets/)"}}],"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]}),
+                json!({"match":[{"not":[{"path":["/assets/*","/static/*"]}]}],"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]}),
                 json!({"handle":[{"body":"\n    <!DOCTYPE html>\n    <html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <title>404 Not Found</title>\n    </head>\n    <body>\n        <h1>404 Not Found</h1>\n    </body>\n    </html>\n","handler":"static_response","headers":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Content-Type":["text/html"],"Pragma":["no-cache"]},"status_code":"404"}]})
             ]
         );

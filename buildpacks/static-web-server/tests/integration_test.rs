@@ -200,7 +200,6 @@ fn custom_headers() {
 }
 
 #[test]
-#[ignore = "integration test"]
 fn custom_errors() {
     static_web_server_integration_test("./fixtures/custom_errors", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
@@ -224,6 +223,29 @@ fn custom_errors() {
                             assert_contains!(h, "text/html");
                             let response_body = response.into_string().unwrap();
                             assert_contains!(response_body, "Custom 404");
+                        }
+                        error @ ureq::Error::Transport(_) => {
+                            panic!("should respond 404 Not Found, but got other error: {error:?}");
+                        }
+                    },
+                }
+                let response_result_from_negated_path_regexp =
+                    retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                        ureq::get(&format!("http://{socket_addr}/assets/non-existent-path"))
+                            .call()
+                            .map_err(Box::new)
+                    });
+                match response_result_from_negated_path_regexp {
+                    Ok(_) => {
+                        panic!("should respond 404 Not Found, but got 200 ok");
+                    }
+                    Err(err) => match *err {
+                        ureq::Error::Status(code, response) => {
+                            assert_eq!(code, 404);
+                            let h = response.header("Content-Type").unwrap_or_default();
+                            assert_contains!(h, "text/html");
+                            let response_body = response.into_string().unwrap();
+                            assert_contains!(response_body, "404 Not Found");
                         }
                         error @ ureq::Error::Transport(_) => {
                             panic!("should respond 404 Not Found, but got other error: {error:?}");

@@ -29,7 +29,7 @@ pub(crate) struct ErrorsConfig {
 pub(crate) struct ErrorConfig {
     pub(crate) file_path: PathBuf,
     pub(crate) status: Option<u16>,
-    pub(crate) path_regex: Option<String>,
+    pub(crate) path_exclusions: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
@@ -188,29 +188,32 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("error-404.html"),
                     status: None,
-                    path_regex: None,
+                    path_exclusions: None,
                 }),
             })
         );
     }
 
     #[test]
-    fn custom_errors_with_path_regex() {
-        let toml_config = toml! {
+    fn custom_errors_with_path_exclusions() {
+        let toml_str = r#"
             [errors]
             404.file_path = "index.html"
             404.status = 200
-            404.path_regex = "^/app(/.*)?$"
-        };
+            404.path_exclusions = ["/assets/*", "/static/*"]
+        "#;
 
-        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        let parsed_config: HerokuWebServerConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(
             parsed_config.errors,
             Some(ErrorsConfig {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("index.html"),
                     status: Some(200),
-                    path_regex: Some(r"^/app(/.*)?$".to_string()),
+                    path_exclusions: Some(vec![
+                        "/assets/*".to_string(),
+                        "/static/*".to_string()
+                    ]),
                 }),
             })
         );

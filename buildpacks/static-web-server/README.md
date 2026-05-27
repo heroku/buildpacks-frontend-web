@@ -288,7 +288,7 @@ The 404 handler also accepts a path matcher (regex) to limit where the custom ha
 [com.heroku.static-web-server.errors.404]
 file_path = "index.html"
 status = 200
-path_regex = "^/app(/.*)?$" 
+path_exclusions = ["/assets/*", "/static/*"]
 ```
 
 ## Server-specific Configuration
