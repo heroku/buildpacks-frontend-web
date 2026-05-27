@@ -1,2 +1,3 @@
 [com.heroku.static-web-server.errors.404]
 file_path = "error-404.html"
+path_exclusions = ["/assets/*"]

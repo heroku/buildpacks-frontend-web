@@ -280,6 +280,17 @@ file_path = "index.html"
 status = 200
 ```
 
+#### 404 Handler Path Matching
+
+The 404 handler also accepts a path matcher (regex) to limit where the custom handler is applied, otherwise falling back to the generic 404 response,
+
+```toml
+[com.heroku.static-web-server.errors.404]
+file_path = "index.html"
+status = 200
+path_exclusions = ["/assets/*", "/static/*"]
+```
+
 ## Server-specific Configuration
 
 Beyond pure static website delivery, some use-cases require dynamic server-side capabilities. This buildpack offers some server-specific configuration options, which tie the app to the specific server. Currently, only one web server is implemented: [Caddy](https://caddyserver.com).
