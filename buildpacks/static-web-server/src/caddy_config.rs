@@ -322,6 +322,15 @@ fn generate_error_404_route(
                     "uri": error_config.file_path,
                 },
                 {
+                    "handler": "headers",
+                    "response": {
+                        "set": {
+                            "Cache-Control": ["no-store, no-cache, must-revalidate"],
+                            "Pragma": ["no-cache"]
+                        }
+                    }
+                },
+                {
                     "handler": "file_server",
                     "root": doc_root,
                     "status_code": status_code,
@@ -334,7 +343,9 @@ fn generate_error_404_route(
             "handler": "static_response",
             "status_code": "404",
             "headers": {
-                "Content-Type": ["text/html"]
+                "Content-Type": ["text/html"],
+                "Cache-Control": ["no-store, no-cache, must-revalidate"],
+                "Pragma": ["no-cache"]
             },
             "body": DEFAULT_404_HTML
         }]));
@@ -448,7 +459,7 @@ mod tests {
 
         assert_eq!(
             route,
-            json!({"handle":[{"handler":"rewrite","uri":"error-404.html"},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/custom_errors/public","status_code":"404"}]})
+            json!({"handle":[{"handler":"rewrite","uri":"error-404.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/custom_errors/public","status_code":"404"}]})
         );
     }
 
@@ -471,7 +482,7 @@ mod tests {
 
         assert_eq!(
             route,
-            json!({"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]})
+            json!({"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]})
         );
     }
 
