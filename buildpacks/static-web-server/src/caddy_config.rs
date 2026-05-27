@@ -350,9 +350,18 @@ fn generate_error_404_route(
             "body": DEFAULT_404_HTML
         }]));
 
-    json!({
-        "handle": not_found_response_handlers
-    })
+    let path_regex = error_config.and_then(|ec| ec.path_regex.as_ref());
+
+    if let Some(pattern) = path_regex {
+        json!({
+            "match": [{"path_regexp": {"pattern": pattern}}],
+            "handle": not_found_response_handlers
+        })
+    } else {
+        json!({
+            "handle": not_found_response_handlers
+        })
+    }
 }
 
 const DEFAULT_404_HTML: &str = r#"
@@ -450,6 +459,7 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("error-404.html"),
                     status: None,
+                    path_regex: None,
                 }),
             }),
             ..HerokuWebServerConfig::default()
@@ -473,6 +483,7 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("index.html"),
                     status: Some(200),
+                    path_regex: None,
                 }),
             }),
             ..HerokuWebServerConfig::default()
@@ -483,6 +494,54 @@ mod tests {
         assert_eq!(
             route,
             json!({"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]})
+        );
+    }
+
+    #[test]
+    fn generates_custom_404_error_route_with_path_regex() {
+        let doc_root = String::from("tests/fixtures/client_side_routing/public");
+        let doc_index = "index.html".to_string();
+
+        let heroku_config = HerokuWebServerConfig {
+            errors: Some(ErrorsConfig {
+                custom_404_page: Some(ErrorConfig {
+                    file_path: PathBuf::from("index.html"),
+                    status: Some(200),
+                    path_regex: Some(r"^/app(/.*)?$".to_string()),
+                }),
+            }),
+            ..HerokuWebServerConfig::default()
+        };
+
+        let route = generate_error_404_route(&doc_root, &doc_index, heroku_config.errors.as_ref());
+
+        assert_eq!(
+            route,
+            json!({"match":[{"path_regexp":{"pattern":"^/app(/.*)?$"}}],"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]})
+        );
+    }
+
+    #[test]
+    fn generates_custom_404_error_route_with_negated_path_regex() {
+        let doc_root = String::from("tests/fixtures/client_side_routing/public");
+        let doc_index = "index.html".to_string();
+
+        let heroku_config = HerokuWebServerConfig {
+            errors: Some(ErrorsConfig {
+                custom_404_page: Some(ErrorConfig {
+                    file_path: PathBuf::from("index.html"),
+                    status: Some(200),
+                    path_regex: Some(r"^(?!/assets/)".to_string()),
+                }),
+            }),
+            ..HerokuWebServerConfig::default()
+        };
+
+        let route = generate_error_404_route(&doc_root, &doc_index, heroku_config.errors.as_ref());
+
+        assert_eq!(
+            route,
+            json!({"match":[{"path_regexp":{"pattern":"^(?!/assets/)"}}],"handle":[{"handler":"rewrite","uri":"index.html"},{"handler":"headers","response":{"set":{"Cache-Control":["no-store, no-cache, must-revalidate"],"Pragma":["no-cache"]}}},{"handler":"file_server","index_names":["index.html"],"pass_thru":false,"root":"tests/fixtures/client_side_routing/public","status_code":"200"}]})
         );
     }
 
