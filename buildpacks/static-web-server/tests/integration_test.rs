@@ -200,6 +200,7 @@ fn custom_headers() {
 }
 
 #[test]
+#[ignore = "integration test"]
 fn custom_errors() {
     static_web_server_integration_test("./fixtures/custom_errors", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
