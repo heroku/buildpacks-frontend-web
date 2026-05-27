@@ -210,10 +210,7 @@ mod tests {
                 custom_404_page: Some(ErrorConfig {
                     file_path: PathBuf::from("index.html"),
                     status: Some(200),
-                    path_exclusions: Some(vec![
-                        "/assets/*".to_string(),
-                        "/static/*".to_string()
-                    ]),
+                    path_exclusions: Some(vec!["/assets/*".to_string(), "/static/*".to_string()]),
                 }),
             })
         );
