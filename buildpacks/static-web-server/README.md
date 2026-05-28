@@ -268,11 +268,11 @@ The path to this file is relative to the [Document Root](#document-root). The fi
 file_path = "error-404.html"
 ```
 
-#### Replacement Status Code
+#### 404 Replacement Status Code
 
 Change the error response's HTTP status code.
 
-Single-page app (SPA) client-side routing, where not found request URLs should respond with a single page (the app),
+Example is for single-page app (SPA, JavaScript) client-side routing, where not found request URLs should respond ok, with `index.html` (the app),
 
 ```toml
 [com.heroku.static-web-server.errors.404]
@@ -280,9 +280,11 @@ file_path = "index.html"
 status = 200
 ```
 
-#### 404 Handler Path Matching
+#### 404 Handling Path Exclusions
 
-The 404 handler also accepts a path matcher (regex) to limit where the custom handler is applied, otherwise falling back to the generic 404 response,
+The 404 handler also accepts a list of paths to exclude, to limit where the custom handler is applied, otherwise falling back to the generic text/html 404 response.
+
+Example is for single-page app (SPA, JavaScript) client-side routing, where special directories like the assets (JS bundle, source maps) and static resources (images, fonts) should return default 404 Not Found, when the path missing on the server's filesystem,
 
 ```toml
 [com.heroku.static-web-server.errors.404]
