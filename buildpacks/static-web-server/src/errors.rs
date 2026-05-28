@@ -24,11 +24,8 @@ pub(crate) enum StaticWebServerBuildpackError {
     CannotCreateWebExecD(std::io::Error),
     CannotInstallEnvAsHtmlData(std::io::Error),
     ConfigurationConstraint(String),
-    ChecksumVerificationFailed(String),
-    CannotReadChecksums {
-        filename: String,
-        error: std::io::Error,
-    },
+    ChecksumVerificationFailed { expected: Vec<u8>, actual: Vec<u8> },
+    ReadDownloadForChecksum(std::io::Error),
 }
 
 pub(crate) struct ErrorMessage {
@@ -150,22 +147,28 @@ fn buildpack_error_message(error: StaticWebServerBuildpackError) -> ErrorMessage
             error_string: e,
             error_id: "configuration_constraint_error".to_string(),
         },
-        StaticWebServerBuildpackError::ChecksumVerificationFailed(e) => ErrorMessage {
-            message: formatdoc! {"
-                Failed to verify Caddy checksum for {buildpack_name}
+        StaticWebServerBuildpackError::ChecksumVerificationFailed { expected, actual } => {
+            ErrorMessage {
+                message: formatdoc! {"
+                    Failed to verify Caddy checksum for {buildpack_name}
 
-                The downloaded Caddy binary's checksum does not match the expected value.
-                This could indicate a corrupted download or network tampering.
-            ", buildpack_name = style::value(BUILDPACK_NAME) },
-            error_string: e,
-            error_id: "checksum_verification_failed_error".to_string(),
-        },
-        StaticWebServerBuildpackError::CannotReadChecksums { filename, error } => ErrorMessage {
+                    The downloaded Caddy archive's checksum does not match the expected value.
+                    This could indicate a corrupted download or network tampering.
+                ", buildpack_name = style::value(BUILDPACK_NAME) },
+                error_string: format!(
+                    "expected sha256:{}, got sha256:{}",
+                    hex::encode(&expected),
+                    hex::encode(&actual),
+                ),
+                error_id: "checksum_verification_failed_error".to_string(),
+            }
+        }
+        StaticWebServerBuildpackError::ReadDownloadForChecksum(e) => ErrorMessage {
             message: formatdoc! {"
-                Failed to verify Caddy checksum, reading {filename}, for {buildpack_name}
-            ", buildpack_name = style::value(BUILDPACK_NAME), filename = style::value(filename) },
-            error_string: error.to_string(),
-            error_id: "cannot_read_checksums_error".to_string(),
+                Failed to read downloaded Caddy archive for checksum verification for {buildpack_name}
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: e.to_string(),
+            error_id: "read_download_for_checksum_error".to_string(),
         },
     }
 }

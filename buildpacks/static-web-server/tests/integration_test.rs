@@ -722,3 +722,33 @@ fn caddy_static_responses() {
         );
     });
 }
+
+#[test]
+#[ignore = "integration test"]
+fn web_server_installation_and_caching() {
+    static_web_server_integration_test("./fixtures/no_project_toml", |ctx| {
+        // First build: artifact downloaded, verified, and installed.
+        assert_contains!(
+            ctx.pack_stdout,
+            "Downloading web server from https://github.com/caddyserver/caddy/releases/download/v"
+        );
+        assert_contains!(ctx.pack_stdout, "Verifying web server checksum");
+        // Sanity-check the invalidate branch is not taken on a fresh build.
+        assert!(
+            !ctx.pack_stdout.contains("Invalidating cached web server"),
+            "first build should not invalidate a cache that does not exist; stdout was:\n{}",
+            ctx.pack_stdout,
+        );
+
+        // Rebuild without changing the artifact: cache should hit.
+        let config = ctx.config.clone();
+        ctx.rebuild(config, |rebuilt| {
+            assert_contains!(rebuilt.pack_stdout, "Using cached web server");
+            assert!(
+                !rebuilt.pack_stdout.contains("Downloading web server from"),
+                "cached rebuild should not redownload; stdout was:\n{}",
+                rebuilt.pack_stdout,
+            );
+        });
+    });
+}
