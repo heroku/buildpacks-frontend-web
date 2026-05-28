@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Update Caddy web server version to 2.11.3.
+
 ## [3.3.0] - 2026-05-27
 
 - No changes.
