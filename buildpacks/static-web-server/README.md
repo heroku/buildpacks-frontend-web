@@ -179,7 +179,7 @@ The files must be located within the [document root](#document-root), `public/` 
 html_files = ["index.html", "subsection/index.html"]
 ```
 
-`*` wildcards (globbing) are supported for websites that include many HTML files.
+`*` wildcards are supported for websites that include many HTML files. (See [Rust `glob` crate](https://docs.rs/glob/latest/glob/) for syntax details.)
 
 ```toml
 [com.heroku.static-web-server.runtime_config]
@@ -234,6 +234,8 @@ X-Server = "hot stuff"
 
 Respond with custom headers. These match exactly against the request URL's path.
 
+Wildcards `*` are supported as implemented. (See [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
+
 ```toml
 # The index page (index.html is not specified in the URL).
 [com.heroku.static-web-server.headers."/"]
@@ -283,6 +285,8 @@ status = 200
 #### 404 Handling Path Exclusions
 
 The 404 handler also accepts a list of paths to exclude, to limit where the custom handler is applied, otherwise falling back to the generic text/html 404 response.
+
+Wildcards `*` are supported as implemented by the static web server. (See [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
 
 Example is for single-page app (SPA, JavaScript) client-side routing, where special directories like the assets (JS bundle, source maps) and static resources (images, fonts) should return default 404 Not Found, when the path missing on the server's filesystem,
 
@@ -372,6 +376,8 @@ body = "I could be anything."
 `host_matcher` matches HTTP requests' `Host` header, which typically requires that either:
 - the DNS name resolves to the deployed app (such as [Heroku custom domains](https://devcenter.heroku.com/articles/custom-domains))
 - a CDN, proxy, or custom HTTP client set the `Host` header to indicate the hostname being requested.
+
+`path_matcher` supports `*` wildcards implemented by the static web server. (See [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
 
 [Caddy placeholders](https://caddyserver.com/docs/conventions#placeholders) can be used for per-request dynamic values. The [HTTP placeholders](https://caddyserver.com/docs/json/apps/http/#docs) are useful with this feature:
 

@@ -63,6 +63,7 @@ impl Buildpack for WebsiteCreateReactAppBuildpack {
                 [errors.404]
                 file_path = "index.html"
                 status = 200
+                path_exclusions = ["/static/*"]
             })
             .map_err(WebsiteCreateReactAppBuildpackError::SettingBuildPlanMetadata)?;
 

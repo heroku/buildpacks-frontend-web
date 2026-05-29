@@ -64,6 +64,7 @@ impl Buildpack for WebsiteViteBuildpack {
                 [errors.404]
                 file_path = "index.html"
                 status = 200
+                path_exclusions = ["/assets/*"]
             })
             .map_err(WebsiteViteBuildpackError::SettingBuildPlanMetadata)?;
 

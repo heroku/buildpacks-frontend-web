@@ -70,6 +70,7 @@ impl Buildpack for WebsiteNextjsBuildpack {
 
                 [errors.404]
                 file_path = "404.html"
+                path_exclusions = ["/_next/*", "/_not-found/*", "/nested/*"]
 
                 [caddy_server_opts]
                 clean_urls = true
