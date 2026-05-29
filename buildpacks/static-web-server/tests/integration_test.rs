@@ -725,6 +725,47 @@ fn caddy_static_responses() {
 
 #[test]
 #[ignore = "integration test"]
+fn caddy_templates_and_runtime_config() {
+    static_web_server_integration_test("./fixtures/caddy_templates_and_runtime_config", |ctx| {
+        assert_contains!(ctx.pack_stdout, "Static Web Server");
+        start_container(
+            &ctx,
+            ContainerConfig::new().env(
+                "PUBLIC_WEB_INTEGRATION_TEST",
+                "runtime-config-via-container-env",
+            ),
+            |container, socket_addr| {
+                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}"))
+                        .call()
+                        .map_err(Box::new)
+                });
+                match response_result {
+                    Ok(response) => {
+                        assert_eq!(response.status(), 200);
+                        let response_body = response.into_string().unwrap();
+                        assert_contains!(
+                            response_body,
+                            r#"data-public_web_integration_test="runtime-config-via-container-env""#
+                        );
+                        assert_contains!(
+                            response_body,
+                            r#"data-template-variable="value-from-template-variable""#
+                        );
+                    }
+                    Err(error) => {
+                        let logs = container.logs_now();
+                        eprint!("Server logs: {logs}");
+                        panic!("should respond 200 ok, but got other error: {error:?}");
+                    }
+                }
+            },
+        );
+    });
+}
+
+#[test]
+#[ignore = "integration test"]
 fn web_server_installation_and_caching() {
     static_web_server_integration_test("./fixtures/no_project_toml", |ctx| {
         // First build: artifact downloaded, verified, and installed.
