@@ -1,5 +1,7 @@
+<!--
 {{ $nonce := uuidv4 }}
 {{ .RespHeader.Add "Content-Security-Policy" (print "nonce-" $nonce) }}
+-->
 <!DOCTYPE html>
 <html lang="en">
 

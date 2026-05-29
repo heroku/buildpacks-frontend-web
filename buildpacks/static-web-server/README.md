@@ -498,6 +498,12 @@ To avoid stale content being displayed in browsers and served through CDNs, dyna
 templates = true
 ```
 
+##### Caddy Templates and Runtime Configuration
+
+In order to be compatible with the HTML document rewriting of [Runtime Configuration](#runtime-app-configuration), Caddy template tags `{{ }}` that are outside of HTML tags, must be contained in an HTML comment `<!-- {{ }} -->`.
+
+Invalid HTML5 is stripped by the runtime configuration process. If you must write Caddy template tags outside of HTML comments, the safe approach would be to [disable Runtime Configuration](#runtime-configuration-enabled) to prevent possibly stripping them during the HTML rewriting.
+
 #### Caddy: Nonces for Content-Security-Policy
 
 *Requires: [Templates](#caddy-templates) enabled*
@@ -511,9 +517,10 @@ Use [CSP nonces](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Hea
 For example:
 
 ```html
+<!--
 {{ $nonce := uuidv4 }}
 {{ .RespHeader.Add "Content-Security-Policy" (print "nonce-" $nonce) }}
-
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -523,6 +530,8 @@ For example:
 
 </html>
 ```
+
+Note that the example Caddy template tags `{{ }}` are contained in an HTML comment. See [Caddy Templates and Runtime Configuration](#caddy-templates-and-runtime-configuration).
 
 ## Inherited Build-time Configuration
 
