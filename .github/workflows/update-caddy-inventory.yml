@@ -2,9 +2,10 @@ name: Update Caddy Inventory
 on:
   workflow_dispatch:
   schedule:
-    # Mondays at 08:00 UTC. Caddy releases roughly every 1-3 months,
-    # so weekly is plenty.
-    - cron: '0 8 * * 1'
+    # Weekdays at 08:00 UTC. Caddy releases roughly every 1-3 months,
+    # but checking daily means we pick up a new release within a day
+    # of it shipping rather than up to a week later.
+    - cron: '0 8 * * 1-5'
 
 permissions:
   actions: write
@@ -32,6 +33,7 @@ jobs:
         run: ./.github/scripts/update-caddy-inventory.sh
 
       - name: Create Pull Request
+        id: pr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -42,3 +44,9 @@ jobs:
           branch: update-caddy-inventory
           body: |
             Automated pull request to bump Caddy in `buildpacks/static-web-server/inventory.toml` from v${{ steps.refresh.outputs.old_version }} to [v${{ steps.refresh.outputs.new_version }}](https://github.com/caddyserver/caddy/releases/tag/v${{ steps.refresh.outputs.new_version }}).
+
+      - name: Enable auto-merge
+        if: steps.pr.outputs.pull-request-operation == 'created'
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: gh pr merge --squash --auto "${{ steps.pr.outputs.pull-request-number }}"
