@@ -1,13 +1,13 @@
 [[artifacts]]
-version = "2.11.3"
+version = "2.11.4"
 os = "linux"
 arch = "amd64"
-url = "https://github.com/caddyserver/caddy/releases/download/v2.11.3/caddy_2.11.3_linux_amd64.tar.gz"
-checksum = "sha256:3894577b14657feab3624d782f64175050211e52a228a6f57b4f24f4b0d970f3"
+url = "https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_linux_amd64.tar.gz"
+checksum = "sha256:527fbf917c39189a1e3b31d34fa955601680b2d5c8055d2a87b8b9588dec7bb9"
 
 [[artifacts]]
-version = "2.11.3"
+version = "2.11.4"
 os = "linux"
 arch = "arm64"
-url = "https://github.com/caddyserver/caddy/releases/download/v2.11.3/caddy_2.11.3_linux_arm64.tar.gz"
-checksum = "sha256:866d2b226a4c07adc38aea7df653ee63b98890691d4cd41db1f1c83e18300bbe"
+url = "https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_linux_arm64.tar.gz"
+checksum = "sha256:52d42ae12b3462097e9868da6dfed3c9648ae12edd3b3638102312af84cb6904"
