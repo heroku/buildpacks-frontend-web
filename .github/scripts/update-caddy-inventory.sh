@@ -30,14 +30,16 @@ UPSTREAM_REPO="caddyserver/caddy"
 ARCHES=(amd64 arm64)
 
 main() {
-    local release_json new
+    local release_json new old
     release_json="$(gh api "repos/${UPSTREAM_REPO}/releases/latest")"
     new="$(jq -er '.tag_name | sub("^v"; "")' <<<"$release_json")" || {
         echo "Failed to read latest Caddy version from upstream." >&2
         exit 1
     }
 
-    echo "Latest upstream Caddy is v${new}."
+    old="$(awk -F'"' '/^version = / { print $2; exit }' "$INVENTORY")"
+
+    echo "Latest upstream Caddy is v${new} (currently pinned: v${old:-unknown})."
 
     # Rewrite inventory.toml from upstream. For each arch we ship,
     # extract the matching asset's browser_download_url + digest.
@@ -79,21 +81,24 @@ EOF
     ' "$MAIN_RS")"
     printf '%s\n' "$updated_main_rs" > "$MAIN_RS"
 
-    # Add a changelog entry under [Unreleased]. Each run starts from
-    # main (the workflow's PR action force-pushes update-caddy-inventory
-    # on every run), so we never see a previous entry to dedupe against.
-    local updated_changelog
-    updated_changelog="$(awk -v ver="$new" '
-        /^## \[Unreleased\]$/ && !done {
-            print
-            print ""
-            print "- Update Caddy web server version to " ver "."
-            done = 1
-            next
-        }
-        { print }
-    ' "$CHANGELOG")"
-    printf '%s\n' "$updated_changelog" > "$CHANGELOG"
+    # Add a changelog entry under [Unreleased], but only when the version
+    # actually changed. Otherwise a re-run on an already-current inventory
+    # would inject a duplicate entry and trick create-pull-request into
+    # opening a no-op PR.
+    if [[ "$old" != "$new" ]]; then
+        local updated_changelog
+        updated_changelog="$(awk -v ver="$new" '
+            /^## \[Unreleased\]$/ && !done {
+                print
+                print ""
+                print "- Update Caddy web server version to " ver "."
+                done = 1
+                next
+            }
+            { print }
+        ' "$CHANGELOG")"
+        printf '%s\n' "$updated_changelog" > "$CHANGELOG"
+    fi
 }
 
 main "$@"
