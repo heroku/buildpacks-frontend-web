@@ -99,6 +99,15 @@ EOF
         ' "$CHANGELOG")"
         printf '%s\n' "$updated_changelog" > "$CHANGELOG"
     fi
+
+    # Expose old/new versions so the workflow can include them in the PR
+    # title, commit message, and body.
+    if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+        {
+            echo "old_version=${old}"
+            echo "new_version=${new}"
+        } >> "$GITHUB_OUTPUT"
+    fi
 }
 
 main "$@"
