@@ -17,8 +17,11 @@ pub(crate) fn caddy_json_config(
     let mut routes = vec![];
 
     // Header routes come first so headers will be added to any response down the chain.
+    tracing::info!(
+        { CONFIG_RESPONSE_HEADERS_ENABLED } = config.headers.is_some(),
+        "config"
+    );
     if let Some(ref headers) = config.headers {
-        tracing::info!({ CONFIG_RESPONSE_HEADERS_ENABLED } = true, "config");
         routes.extend(generate_response_headers_routes(headers));
     }
 
