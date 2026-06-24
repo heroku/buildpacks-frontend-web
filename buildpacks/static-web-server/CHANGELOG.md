@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Report the `cnb.static-web-server.config.runtime_config_enabled` metric with its actual boolean value, so a disabled runtime config emits `false` instead of being omitted.
+
 ## [3.3.1] - 2026-05-29
 
 - Update Caddy web server version to 2.11.3.
