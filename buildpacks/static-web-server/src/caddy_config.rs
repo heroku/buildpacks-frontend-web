@@ -152,8 +152,13 @@ pub(crate) fn caddy_json_config(
         .caddy_server_opts
         .as_ref()
         .and_then(|v| v.access_logs.as_ref());
-    if caddy_access_logs_config.is_some_and(|vv| vv.enabled.is_some_and(|vvv| vvv)) {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS } = true, "config");
+    let access_logs_enabled =
+        caddy_access_logs_config.is_some_and(|vv| vv.enabled.is_some_and(|vvv| vvv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS } = access_logs_enabled,
+        "config"
+    );
+    if access_logs_enabled {
         server_logs_config = json!({
             "default_logger_name": "public"
         });
