@@ -98,12 +98,15 @@ pub(crate) fn caddy_json_config(
         }));
     }
 
-    if config
+    let clean_urls_enabled = config
         .caddy_server_opts
         .as_ref()
-        .is_some_and(|v| v.clean_urls.is_some_and(|vv| vv))
-    {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_CLEAN_URLS } = true, "config");
+        .is_some_and(|v| v.clean_urls.is_some_and(|vv| vv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_CLEAN_URLS } = clean_urls_enabled,
+        "config"
+    );
+    if clean_urls_enabled {
         static_file_handlers.push(json!(
         {
             "handler": "subroute",
