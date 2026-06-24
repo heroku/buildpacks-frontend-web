@@ -36,12 +36,15 @@ pub(crate) fn caddy_json_config(
 
     let mut static_file_handlers = vec![];
 
-    if config
+    let basic_auth_enabled = config
         .caddy_server_opts
         .as_ref()
-        .is_some_and(|v| v.basic_auth.is_some_and(|vv| vv))
-    {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_BASIC_AUTH } = true, "config");
+        .is_some_and(|v| v.basic_auth.is_some_and(|vv| vv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_BASIC_AUTH } = basic_auth_enabled,
+        "config"
+    );
+    if basic_auth_enabled {
         static_file_handlers.push(json!(
         {
             "handler": "subroute",
