@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report the `cnb.static-web-server.config.caddy_server_opts_access_logs` metric with its actual boolean value, so disabled access logs emits `false` instead of being omitted.
 - Report the `cnb.static-web-server.config.response_headers_enabled` metric on every build, emitting `false` when no response headers are configured instead of being omitted.
 - Report the `cnb.static-web-server.config.caddy_server_opts_static_responses` metric on every build, emitting `false` when no static responses are configured instead of being omitted.
+- Update Caddy web server version to 2.11.4.
 
 ## [3.3.1] - 2026-05-29
 
