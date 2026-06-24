@@ -83,12 +83,15 @@ pub(crate) fn caddy_json_config(
 
     generate_static_response_handlers(config, &mut static_file_handlers)?;
 
-    if config
+    let templates_enabled = config
         .caddy_server_opts
         .as_ref()
-        .is_some_and(|v| v.templates.is_some_and(|vv| vv))
-    {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_TEMPLATES } = true, "config");
+        .is_some_and(|v| v.templates.is_some_and(|vv| vv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_TEMPLATES } = templates_enabled,
+        "config"
+    );
+    if templates_enabled {
         static_file_handlers.push(json!(
         {
             "handler": "templates",
