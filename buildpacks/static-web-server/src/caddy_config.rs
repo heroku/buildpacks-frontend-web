@@ -219,15 +219,15 @@ fn generate_static_response_handlers(
     config: &HerokuWebServerConfig,
     static_file_handlers: &mut Vec<serde_json::Value>,
 ) -> Result<(), StaticWebServerBuildpackError> {
-    if let Some(static_responses) = config
+    let static_responses_opt = config
         .caddy_server_opts
         .as_ref()
-        .and_then(|v| v.static_responses.clone())
-    {
-        tracing::info!(
-            { CONFIG_CADDY_SERVER_OPTS_STATIC_RESPONSES } = true,
-            "config"
-        );
+        .and_then(|v| v.static_responses.clone());
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_STATIC_RESPONSES } = static_responses_opt.is_some(),
+        "config"
+    );
+    if let Some(static_responses) = static_responses_opt {
         for static_response in static_responses {
             // Validate that at least one matcher is set
             if static_response.host_matcher.is_none() && static_response.path_matcher.is_none() {
