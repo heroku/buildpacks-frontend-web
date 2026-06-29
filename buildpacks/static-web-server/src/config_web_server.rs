@@ -86,12 +86,13 @@ pub(crate) fn config_web_server(
         enabled: None,
         html_files: None,
     });
-    if runtime_config.enabled.unwrap_or(true) {
+    let runtime_config_enabled = runtime_config.enabled.unwrap_or(true);
+    tracing::info!(
+        { CONFIG_RUNTIME_CONFIG_ENABLED } = runtime_config_enabled,
+        "runtime configuration"
+    );
+    if runtime_config_enabled {
         log_info("Installing runtime configuration process…");
-        tracing::info!(
-            { CONFIG_RUNTIME_CONFIG_ENABLED } = true,
-            "runtime configuration"
-        );
         let web_exec_destination = configuration_layer.path().join("exec.d/web");
         let exec_path = web_exec_destination.join("env-as-html-data");
         log_info(format!("  {}", exec_path.display()));

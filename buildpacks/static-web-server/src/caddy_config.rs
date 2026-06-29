@@ -17,8 +17,11 @@ pub(crate) fn caddy_json_config(
     let mut routes = vec![];
 
     // Header routes come first so headers will be added to any response down the chain.
+    tracing::info!(
+        { CONFIG_RESPONSE_HEADERS_ENABLED } = config.headers.is_some(),
+        "config"
+    );
     if let Some(ref headers) = config.headers {
-        tracing::info!({ CONFIG_RESPONSE_HEADERS_ENABLED } = true, "config");
         routes.extend(generate_response_headers_routes(headers));
     }
 
@@ -36,12 +39,15 @@ pub(crate) fn caddy_json_config(
 
     let mut static_file_handlers = vec![];
 
-    if config
+    let basic_auth_enabled = config
         .caddy_server_opts
         .as_ref()
-        .is_some_and(|v| v.basic_auth.is_some_and(|vv| vv))
-    {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_BASIC_AUTH } = true, "config");
+        .is_some_and(|v| v.basic_auth.is_some_and(|vv| vv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_BASIC_AUTH } = basic_auth_enabled,
+        "config"
+    );
+    if basic_auth_enabled {
         static_file_handlers.push(json!(
         {
             "handler": "subroute",
@@ -80,24 +86,30 @@ pub(crate) fn caddy_json_config(
 
     generate_static_response_handlers(config, &mut static_file_handlers)?;
 
-    if config
+    let templates_enabled = config
         .caddy_server_opts
         .as_ref()
-        .is_some_and(|v| v.templates.is_some_and(|vv| vv))
-    {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_TEMPLATES } = true, "config");
+        .is_some_and(|v| v.templates.is_some_and(|vv| vv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_TEMPLATES } = templates_enabled,
+        "config"
+    );
+    if templates_enabled {
         static_file_handlers.push(json!(
         {
             "handler": "templates",
         }));
     }
 
-    if config
+    let clean_urls_enabled = config
         .caddy_server_opts
         .as_ref()
-        .is_some_and(|v| v.clean_urls.is_some_and(|vv| vv))
-    {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_CLEAN_URLS } = true, "config");
+        .is_some_and(|v| v.clean_urls.is_some_and(|vv| vv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_CLEAN_URLS } = clean_urls_enabled,
+        "config"
+    );
+    if clean_urls_enabled {
         static_file_handlers.push(json!(
         {
             "handler": "subroute",
@@ -143,8 +155,13 @@ pub(crate) fn caddy_json_config(
         .caddy_server_opts
         .as_ref()
         .and_then(|v| v.access_logs.as_ref());
-    if caddy_access_logs_config.is_some_and(|vv| vv.enabled.is_some_and(|vvv| vvv)) {
-        tracing::info!({ CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS } = true, "config");
+    let access_logs_enabled =
+        caddy_access_logs_config.is_some_and(|vv| vv.enabled.is_some_and(|vvv| vvv));
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_ACCESS_LOGS } = access_logs_enabled,
+        "config"
+    );
+    if access_logs_enabled {
         server_logs_config = json!({
             "default_logger_name": "public"
         });
@@ -202,15 +219,15 @@ fn generate_static_response_handlers(
     config: &HerokuWebServerConfig,
     static_file_handlers: &mut Vec<serde_json::Value>,
 ) -> Result<(), StaticWebServerBuildpackError> {
-    if let Some(static_responses) = config
+    let static_responses_opt = config
         .caddy_server_opts
         .as_ref()
-        .and_then(|v| v.static_responses.clone())
-    {
-        tracing::info!(
-            { CONFIG_CADDY_SERVER_OPTS_STATIC_RESPONSES } = true,
-            "config"
-        );
+        .and_then(|v| v.static_responses.clone());
+    tracing::info!(
+        { CONFIG_CADDY_SERVER_OPTS_STATIC_RESPONSES } = static_responses_opt.is_some(),
+        "config"
+    );
+    if let Some(static_responses) = static_responses_opt {
         for static_response in static_responses {
             // Validate that at least one matcher is set
             if static_response.host_matcher.is_none() && static_response.path_matcher.is_none() {
