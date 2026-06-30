@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.2] - 2026-06-30
+
 - Report the `cnb.static-web-server.config.runtime_config_enabled` metric with its actual boolean value, so a disabled runtime config emits `false` instead of being omitted.
 - Report the `cnb.static-web-server.config.caddy_server_opts_basic_auth` metric with its actual boolean value, so disabled basic auth emits `false` instead of being omitted.
 - Report the `cnb.static-web-server.config.caddy_server_opts_templates` metric with its actual boolean value, so disabled templates emits `false` instead of being omitted.
@@ -88,7 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No changes.
 
-[unreleased]: https://github.com/heroku/buildpacks-frontend-web/compare/v3.3.1...HEAD
+[unreleased]: https://github.com/heroku/buildpacks-frontend-web/compare/v3.3.2...HEAD
+[3.3.2]: https://github.com/heroku/buildpacks-frontend-web/compare/v3.3.1...v3.3.2
 [3.3.1]: https://github.com/heroku/buildpacks-frontend-web/compare/v3.3.0...v3.3.1
 [3.3.0]: https://github.com/heroku/buildpacks-frontend-web/compare/v3.2.2...v3.3.0
 [3.2.2]: https://github.com/heroku/buildpacks-frontend-web/compare/v3.2.1...v3.2.2
