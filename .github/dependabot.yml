@@ -25,10 +25,6 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    labels:
-      - "dependencies"
-      - "github actions"
-      - "skip changelog"
     groups:
       github-actions:
         update-types:
