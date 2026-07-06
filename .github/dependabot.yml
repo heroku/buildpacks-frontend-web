@@ -4,10 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    labels:
-      - "dependencies"
-      - "rust"
-      - "skip changelog"
     groups:
       rust-dependencies:
         update-types:
