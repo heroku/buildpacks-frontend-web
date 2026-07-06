@@ -169,7 +169,7 @@ fn inject_html_data_attrs<S: BuildHasher>(
         ..
     } = &element.data
     else {
-        return Err(Error::ElementExpected(format!("{:?}", &element.data)));
+        return Err(Error::ElementExpected(format!("{:?}", element.data)));
     };
 
     let keys = runtime_env_keys(data);
