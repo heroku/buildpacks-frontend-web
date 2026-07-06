@@ -919,7 +919,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
- "toml",
+ "toml 0.9.12+spec-1.1.0",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
@@ -933,7 +933,7 @@ checksum = "dc87f4bc36bb1b1c288675164a431029af30e1aaf7377c8e6254517a921fa60c"
 dependencies = [
  "serde",
  "thiserror",
- "toml",
+ "toml 0.9.12+spec-1.1.0",
 ]
 
 [[package]]
@@ -946,7 +946,7 @@ dependencies = [
  "libcnb-proc-macros",
  "serde",
  "thiserror",
- "toml",
+ "toml 0.9.12+spec-1.1.0",
  "uriparse",
 ]
 
@@ -1011,7 +1011,7 @@ dependencies = [
  "tar",
  "termcolor",
  "thiserror",
- "toml",
+ "toml 0.9.12+spec-1.1.0",
 ]
 
 [[package]]
@@ -1904,7 +1904,7 @@ dependencies = [
  "static_web_server_utils",
  "tempfile",
  "test_support",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
  "tracing",
  "ureq",
 ]
@@ -1915,7 +1915,7 @@ version = "0.0.0"
 dependencies = [
  "libcnb",
  "libherokubuildpack",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
 ]
 
 [[package]]
@@ -2129,10 +2129,25 @@ dependencies = [
  "indexmap",
  "serde_core",
  "serde_spanned",
- "toml_datetime",
+ "toml_datetime 0.7.5+spec-1.1.0",
  "toml_parser",
  "toml_writer",
  "winnow 0.7.15",
+]
+
+[[package]]
+name = "toml"
+version = "1.1.2+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81f3d15e84cbcd896376e6730314d59fb5a87f31e4b038454184435cd57defee"
+dependencies = [
+ "indexmap",
+ "serde_core",
+ "serde_spanned",
+ "toml_datetime 1.1.1+spec-1.1.0",
+ "toml_parser",
+ "toml_writer",
+ "winnow 1.0.3",
 ]
 
 [[package]]
@@ -2140,6 +2155,15 @@ name = "toml_datetime"
 version = "0.7.5+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92e1cfed4a3038bc5a127e35a2d360f145e1f4b971b551a2ba5fd7aedf7e1347"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "1.1.1+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
 dependencies = [
  "serde_core",
 ]
@@ -2577,7 +2601,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "test_support",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
  "tracing",
  "ureq",
  "uuid",
@@ -2596,7 +2620,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "test_support",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
  "tracing",
  "ureq",
  "uuid",
@@ -2615,7 +2639,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "test_support",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
  "tracing",
  "ureq",
  "uuid",
@@ -2633,7 +2657,7 @@ dependencies = [
  "libherokubuildpack",
  "static_web_server_utils",
  "test_support",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
  "tracing",
 ]
 
@@ -2650,7 +2674,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "test_support",
- "toml",
+ "toml 1.1.2+spec-1.1.0",
  "tracing",
  "ureq",
  "uuid",
