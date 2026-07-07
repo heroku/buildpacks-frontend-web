@@ -31,7 +31,11 @@ missing_panics_doc = "allow"
 module_name_repetitions = "allow"
 
 [workspace.dependencies]
+libcnb = { version = "=0.31.0", features = ["trace"] }
+libcnb-test = "=0.31.0"
+libherokubuildpack = { version = "=0.31.0", default-features = false }
 test_support = { path = "./test_support" }
+toml = { version = "1.1", features = ["preserve_order"] }
 
 [profile.release]
 strip = true
