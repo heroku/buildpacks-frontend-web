@@ -16,7 +16,7 @@ static_web_server_utils = { path = "../../common/static_web_server_utils" }
 env_as_html_data = { path = "../../common/env_as_html_data" }
 tempfile = "3"
 toml.workspace = true
-ureq = "2"
+ureq = "3"
 indexmap = "2"
 regex = "1.12.2"
 bullet_stream = "0.11.0"

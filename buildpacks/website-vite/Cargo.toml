@@ -20,5 +20,5 @@ const_format = "0.2.35"
 libcnb-test.workspace = true
 tempfile = "3"
 test_support.workspace = true
-ureq = "2"
+ureq = "3"
 uuid = { version = "1.10.0", features = ["v4", "serde"] }
