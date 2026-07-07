@@ -22,7 +22,7 @@ fn cra_app() {
                         .map_err(Box::new)
                 })
                 .unwrap();
-                let response_body = response.into_string().unwrap();
+                let response_body = response.into_body().read_to_string().unwrap();
                 assert_contains!(response_body, "Web site created using create-react-app");
 
                 let second_response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
@@ -31,7 +31,7 @@ fn cra_app() {
                         .map_err(Box::new)
                 })
                 .unwrap();
-                let second_response_body = second_response.into_string().unwrap();
+                let second_response_body = second_response.into_body().read_to_string().unwrap();
                 assert_contains!(
                     second_response_body,
                     "Web site created using create-react-app"

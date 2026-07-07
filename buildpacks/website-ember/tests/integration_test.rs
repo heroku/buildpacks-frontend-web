@@ -25,7 +25,7 @@ fn ember_cli_app() {
                         .map_err(Box::new)
                 })
                 .unwrap();
-                let response_body = response.into_string().unwrap();
+                let response_body = response.into_body().read_to_string().unwrap();
 
                 // This is a unique part of the Ember app's rendered HTML.
                 assert_contains!(response_body, "ember-cli-app/config/environment");
@@ -40,7 +40,7 @@ fn ember_cli_app() {
                         .map_err(Box::new)
                 })
                 .unwrap();
-                let response_body = response.into_string().unwrap();
+                let response_body = response.into_body().read_to_string().unwrap();
 
                 // This is a unique part of the Ember app's rendered HTML.
                 assert_contains!(response_body, "ember-cli-app/config/environment");
