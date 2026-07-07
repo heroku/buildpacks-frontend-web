@@ -7,15 +7,15 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-libcnb = { version = "=0.31.0", features = ["trace"] }
-libherokubuildpack = { version = "=0.31.0", default-features = false, features = ["download", "fs", "inventory", "inventory-semver", "inventory-sha2", "log", "tar", "toml"] }
+libcnb.workspace = true
+libherokubuildpack = { workspace = true, features = ["download", "fs", "inventory", "inventory-semver", "inventory-sha2", "log", "tar", "toml"] }
 indoc = "2"
 serde = "1"
 serde_json = { version = "1", features = ["raw_value"] }
 static_web_server_utils = { path = "../../common/static_web_server_utils" }
 env_as_html_data = { path = "../../common/env_as_html_data" }
 tempfile = "3"
-toml = { version = "1.1", features = ["preserve_order"] }
+toml.workspace = true
 ureq = "2"
 indexmap = "2"
 regex = "1.12.2"
@@ -28,5 +28,5 @@ semver = "1"
 hex = "0.4"
 
 [dev-dependencies]
-libcnb-test = "=0.31.0"
+libcnb-test.workspace = true
 test_support.workspace = true

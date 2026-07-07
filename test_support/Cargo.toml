@@ -7,6 +7,6 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-libcnb = { version = "=0.31.0", features = ["trace"] }
-libcnb-test = "=0.31.0"
+libcnb.workspace = true
+libcnb-test.workspace = true
 ureq = "2"

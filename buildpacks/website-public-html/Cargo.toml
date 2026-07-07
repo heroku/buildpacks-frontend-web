@@ -7,15 +7,15 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-libcnb = { version = "=0.31.0", features = ["trace"] }
-libherokubuildpack = { version = "=0.31.0", default-features = false, features = ["fs", "log"] }
+libcnb.workspace = true
+libherokubuildpack = { workspace = true, features = ["fs", "log"] }
 indoc = "2"
 static_web_server_utils = { path = "../../common/static_web_server_utils" }
-toml = { version = "1.1", features = ["preserve_order"] }
+toml.workspace = true
 bullet_stream = "0.11.0"
 tracing = "0.1.44"
 const_format = "0.2.35"
 
 [dev-dependencies]
-libcnb-test = "=0.31.0"
+libcnb-test.workspace = true
 test_support.workspace = true
