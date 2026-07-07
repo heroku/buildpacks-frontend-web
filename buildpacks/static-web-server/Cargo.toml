@@ -8,7 +8,7 @@ workspace = true
 
 [dependencies]
 libcnb.workspace = true
-libherokubuildpack = { workspace = true, features = ["download", "fs", "inventory", "inventory-semver", "inventory-sha2", "log", "tar", "toml"] }
+libherokubuildpack = { workspace = true, features = ["download", "inventory", "inventory-semver", "inventory-sha2", "log", "tar"] }
 indoc = "2"
 serde = "1"
 serde_json = { version = "1", features = ["raw_value"] }
