@@ -11,6 +11,10 @@ updates:
           - "libcnb-*"
           - "libherokubuildpack"
           - "sha2"
+      html5ever:
+        patterns:
+          - "html5ever"
+          - "markup5ever_rcdom"
       rust-dependencies:
         update-types:
           - "minor"
@@ -21,6 +25,8 @@ updates:
           - "libcnb-*"
           - "libherokubuildpack"
           - "sha2"
+          - "html5ever"
+          - "markup5ever_rcdom"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
