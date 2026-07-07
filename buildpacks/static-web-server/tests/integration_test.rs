@@ -25,9 +25,13 @@ fn default_behavior() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let h = response.header("Content-Type").unwrap_or_default();
+                        let h = response
+                            .headers()
+                            .get("Content-Type")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default();
                         assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(response_body, "Welcome to CNB Static Web Server Test!");
                     }
                     Err(error) => {
@@ -57,7 +61,7 @@ fn build_command() {
                 .unwrap();
                 let response_status = response.status();
                 assert_eq!(response_status, 200);
-                let response_body = response.into_string().unwrap();
+                let response_body = response.into_body().read_to_string().unwrap();
                 assert_contains!(
                     response_body,
                     "Welcome to CNB Static Web Server Build Command Test!"
@@ -72,7 +76,7 @@ fn build_command() {
                 .unwrap();
                 let response_status = response.status();
                 assert_eq!(response_status, 200);
-                let response_body = response.into_string().unwrap();
+                let response_body = response.into_body().read_to_string().unwrap();
                 assert_contains!(response_body, "Build Command Output Test!");
             },
         );
@@ -114,9 +118,13 @@ fn top_level_doc_root() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let h = response.header("Content-Type").unwrap_or_default();
+                        let h = response
+                            .headers()
+                            .get("Content-Type")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default();
                         assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             "Welcome to CNB Static Web Server Top-level Doc Root Test!"
@@ -127,28 +135,24 @@ fn top_level_doc_root() {
                     }
                 }
 
-                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}/non-existent-path"))
+                        .config()
+                        .http_status_as_error(false)
+                        .build()
                         .call()
                         .map_err(Box::new)
-                });
-                match response_result {
-                    Ok(_) => {
-                        panic!("should respond 404 Not Found, but got 200 ok");
-                    }
-                    Err(err) => match *err {
-                        ureq::Error::Status(code, response) => {
-                            assert_eq!(code, 404);
-                            let h = response.header("Content-Type").unwrap_or_default();
-                            assert_contains!(h, "text/html");
-                            let response_body = response.into_string().unwrap();
-                            assert_contains!(response_body, "Custom 404");
-                        }
-                        error @ ureq::Error::Transport(_) => {
-                            panic!("should respond 404 Not Found, but got other error: {error:?}");
-                        }
-                    },
-                }
+                })
+                .unwrap();
+                assert_eq!(response.status(), 404);
+                let h = response
+                    .headers()
+                    .get("Content-Type")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "text/html");
+                let response_body = response.into_body().read_to_string().unwrap();
+                assert_contains!(response_body, "Custom 404");
             },
         );
     });
@@ -169,14 +173,20 @@ fn custom_headers() {
                         .map_err(Box::new)
                 })
                 .unwrap();
-                let h = response.header("X-Global").unwrap_or_default();
+                let h = response
+                    .headers()
+                    .get("X-Global")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
                 assert_contains!(h, "Hello");
-                let h = response.header("X-Only-Default").unwrap_or_default();
+                let h = response
+                    .headers()
+                    .get("X-Only-Default")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
                 assert_contains!(h, "Hiii");
                 assert!(
-                    !response
-                        .headers_names()
-                        .contains(&String::from("X-Only-HTML")),
+                    !response.headers().contains_key("X-Only-HTML"),
                     "should not include X-Only-HTML header"
                 );
 
@@ -186,12 +196,14 @@ fn custom_headers() {
                         .map_err(Box::new)
                 })
                 .unwrap();
-                let h = response.header("X-Only-HTML").unwrap_or_default();
+                let h = response
+                    .headers()
+                    .get("X-Only-HTML")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
                 assert_contains!(h, "Hi");
                 assert!(
-                    !response
-                        .headers_names()
-                        .contains(&String::from("X-Only-Default")),
+                    !response.headers().contains_key("X-Only-Default"),
                     "should not include X-Only-Default header"
                 );
             },
@@ -208,51 +220,47 @@ fn custom_errors() {
             &ctx,
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
-                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}/non-existent-path"))
+                        .config()
+                        .http_status_as_error(false)
+                        .build()
                         .call()
                         .map_err(Box::new)
-                });
-                match response_result {
-                    Ok(_) => {
-                        panic!("should respond 404 Not Found, but got 200 ok");
-                    }
-                    Err(err) => match *err {
-                        ureq::Error::Status(code, response) => {
-                            assert_eq!(code, 404);
-                            let h = response.header("Content-Type").unwrap_or_default();
-                            assert_contains!(h, "text/html");
-                            let response_body = response.into_string().unwrap();
-                            assert_contains!(response_body, "Custom 404");
-                        }
-                        error @ ureq::Error::Transport(_) => {
-                            panic!("should respond 404 Not Found, but got other error: {error:?}");
-                        }
-                    },
-                }
-                let response_result_from_negated_path_regexp =
+                })
+                .unwrap();
+                assert_eq!(response.status(), 404);
+                let h = response
+                    .headers()
+                    .get("Content-Type")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "text/html");
+                let response_body = response.into_body().read_to_string().unwrap();
+                assert_contains!(response_body, "Custom 404");
+
+                let response_from_negated_path_regexp =
                     retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                         ureq::get(&format!("http://{socket_addr}/assets/non-existent-path"))
+                            .config()
+                            .http_status_as_error(false)
+                            .build()
                             .call()
                             .map_err(Box::new)
-                    });
-                match response_result_from_negated_path_regexp {
-                    Ok(_) => {
-                        panic!("should respond 404 Not Found, but got 200 ok");
-                    }
-                    Err(err) => match *err {
-                        ureq::Error::Status(code, response) => {
-                            assert_eq!(code, 404);
-                            let h = response.header("Content-Type").unwrap_or_default();
-                            assert_contains!(h, "text/html");
-                            let response_body = response.into_string().unwrap();
-                            assert_contains!(response_body, "404 Not Found");
-                        }
-                        error @ ureq::Error::Transport(_) => {
-                            panic!("should respond 404 Not Found, but got other error: {error:?}");
-                        }
-                    },
-                }
+                    })
+                    .unwrap();
+                assert_eq!(response_from_negated_path_regexp.status(), 404);
+                let h = response_from_negated_path_regexp
+                    .headers()
+                    .get("Content-Type")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "text/html");
+                let response_body = response_from_negated_path_regexp
+                    .into_body()
+                    .read_to_string()
+                    .unwrap();
+                assert_contains!(response_body, "404 Not Found");
             },
         );
     });
@@ -275,9 +283,13 @@ fn client_side_routing() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let h = response.header("Content-Type").unwrap_or_default();
+                        let h = response
+                            .headers()
+                            .get("Content-Type")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default();
                         assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             "Welcome to CNB Static Web Server Client Side Routing Test!"
@@ -311,7 +323,7 @@ fn runtime_configuration_custom() {
                 });
                 match response_result {
                     Ok(response) => {
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             r#"data-public_web_integration_test="runtime-config-via-container-env""#
@@ -328,7 +340,7 @@ fn runtime_configuration_custom() {
                 });
                 match response_result {
                     Ok(response) => {
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             r#"data-public_web_integration_test="runtime-config-via-container-env""#
@@ -388,7 +400,7 @@ fn runtime_configuration_default() {
                 });
                 match response_result {
                     Ok(response) => {
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             r#"data-public_web_integration_test="runtime-config-via-container-env""#
@@ -421,10 +433,12 @@ fn caddy_csp_nonce() {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
                         let h = response
-                            .header("Content-Security-Policy")
+                            .headers()
+                            .get("Content-Security-Policy")
+                            .and_then(|v| v.to_str().ok())
                             .unwrap_or_default();
                         assert_contains_match!(h, "nonce-[0-9a-f-]+");
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains_match!(response_body, r#"nonce="[0-9a-f-]+""#);
                     }
                     Err(error) => {
@@ -455,7 +469,7 @@ fn caddy_clean_urls() {
                 match index_response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(response_body, "Clean URLs Test");
                     }
                     Err(error) => {
@@ -472,7 +486,7 @@ fn caddy_clean_urls() {
                 match other_response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(response_body, "Clean URLs (Other) Test");
                     }
                     Err(error) => {
@@ -489,7 +503,7 @@ fn caddy_clean_urls() {
                 match nested_response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(response_body, "Clean URLs (Nested) Test");
                     }
                     Err(error) => {
@@ -507,7 +521,7 @@ fn caddy_clean_urls() {
                 match nested_second_response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(response_body, "Clean URLs (Nested Second) Test");
                     }
                     Err(error) => {
@@ -525,7 +539,7 @@ fn caddy_clean_urls() {
                 match nested_deeper_response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(response_body, "Clean URLs (Nested Deeper) Test");
                     }
                     Err(error) => {
@@ -586,30 +600,20 @@ fn caddy_basic_auth() {
                     "$2y$10$Uc4licEvYDo2DqtNnTkfV.o0Bvr4Sqw0Vpdh7UMrmkqwTZ92EMkZ6",
                 ),
             |container, socket_addr| {
-                let response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}"))
+                        .config()
+                        .http_status_as_error(false)
+                        .build()
                         .call()
                         .map_err(Box::new)
-                });
-                match response_result {
-                    Ok(_) => {
-                        panic!("should respond 401 Unauthorized, but got 200 ok");
-                    }
-                    Err(err) => {
-                        match *err {
-                            ureq::Error::Status(code, _response) => {
-                                assert_eq!(code, 401);
-                            }
-                            error @ ureq::Error::Transport(_) => {
-                                panic!("should respond 401 Unauthorized, but got other error: {error:?}");
-                            }
-                        }
-                    }
-                }
+                })
+                .unwrap();
+                assert_eq!(response.status(), 401);
 
                 let auth_response_result = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}"))
-                        .set(
+                        .header(
                             "Authorization",
                             // encoded basic auth data generated with that password:
                             //   echo -n 'visitor:openseasame' | base64
@@ -621,9 +625,13 @@ fn caddy_basic_auth() {
                 match auth_response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let h = response.header("Content-Type").unwrap_or_default();
+                        let h = response
+                            .headers()
+                            .get("Content-Type")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default();
                         assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             "Welcome to CNB Static Web Server Basic Auth Test!"
@@ -658,9 +666,13 @@ fn caddy_basic_auth() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let h = response.header("Content-Type").unwrap_or_default();
+                        let h = response
+                            .headers()
+                            .get("Content-Type")
+                            .and_then(|v| v.to_str().ok())
+                            .unwrap_or_default();
                         assert_contains!(h, "text/html");
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             "Welcome to CNB Static Web Server Basic Auth Test!"
@@ -687,7 +699,10 @@ fn caddy_static_responses() {
             &mut ContainerConfig::new(),
             |_container, socket_addr| {
                 // Prevent following redirects, so that we can test them!
-                let ureq_agent: ureq::Agent = ureq::AgentBuilder::new().redirects(0).build();
+                let ureq_agent: ureq::Agent = ureq::Agent::config_builder()
+                    .max_redirects(0)
+                    .build()
+                    .into();
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq_agent
@@ -697,7 +712,7 @@ fn caddy_static_responses() {
                 })
                 .unwrap();
                 assert_eq!(response.status(), 200);
-                let response_body = response.into_string().unwrap();
+                let response_body = response.into_body().read_to_string().unwrap();
                 assert_contains!(response_body, "Static Responses Test");
 
                 let response = ureq_agent
@@ -705,18 +720,30 @@ fn caddy_static_responses() {
                     .call()
                     .unwrap();
                 assert_eq!(response.status(), 301);
-                let h = response.header("Location").unwrap_or_default();
+                let h = response
+                    .headers()
+                    .get("Location")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
                 assert_contains!(h, "https://127.0.0.1/new-blog/something-special");
 
                 let response = ureq_agent
                     .get(&format!("http://{socket_addr}/a-test-path?m=hello"))
-                    .set("Host", "original.example.com")
+                    .header("Host", "original.example.com")
                     .call()
                     .unwrap();
                 assert_eq!(response.status(), 301);
-                let h = response.header("Location").unwrap_or_default();
+                let h = response
+                    .headers()
+                    .get("Location")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
                 assert_contains!(h, "https://new.example.com/a-test-path?m=hello");
-                let h = response.header("X-Redirected-From").unwrap_or_default();
+                let h = response
+                    .headers()
+                    .get("X-Redirected-From")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
                 assert_contains!(h, "original.example.com");
             },
         );
@@ -743,7 +770,7 @@ fn caddy_templates_and_runtime_config() {
                 match response_result {
                     Ok(response) => {
                         assert_eq!(response.status(), 200);
-                        let response_body = response.into_string().unwrap();
+                        let response_body = response.into_body().read_to_string().unwrap();
                         assert_contains!(
                             response_body,
                             r#"data-public_web_integration_test="runtime-config-via-container-env""#

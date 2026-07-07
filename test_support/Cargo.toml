@@ -9,4 +9,4 @@ workspace = true
 [dependencies]
 libcnb.workspace = true
 libcnb-test.workspace = true
-ureq = "2"
+ureq = "3"

@@ -244,7 +244,7 @@ pub fn assert_web_response(ctx: &TestContext, expected_response_body: &'static s
                     .map_err(Box::new)
             })
             .unwrap();
-            let response_body = response.into_string().unwrap();
+            let response_body = response.into_body().read_to_string().unwrap();
             assert_contains!(response_body, expected_response_body);
         },
     );
