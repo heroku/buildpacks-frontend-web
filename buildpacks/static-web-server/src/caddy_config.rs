@@ -1,5 +1,6 @@
 use crate::heroku_web_server_config::{
-    ErrorsConfig, HerokuWebServerConfig, PathMatchedHeader, DEFAULT_DOC_INDEX, DEFAULT_DOC_ROOT,
+    EnvMatchedHeader, ErrorsConfig, HerokuWebServerConfig, PathMatchedHeader, DEFAULT_DOC_INDEX,
+    DEFAULT_DOC_ROOT,
 };
 use crate::o11y::*;
 use crate::StaticWebServerBuildpackError;
@@ -23,6 +24,17 @@ pub(crate) fn caddy_json_config(
     );
     if let Some(ref headers) = config.headers {
         routes.extend(generate_response_headers_routes(headers));
+    }
+
+    // Env-matched header routes come after the build-time header routes, so that when both
+    // set the same header key for a matching request, the env-matched value wins (Caddy runs
+    // the non-terminal `headers` handlers in route order, and the later `set` takes effect).
+    tracing::info!(
+        { CONFIG_ENV_MATCHED_HEADERS_ENABLED } = config.headers_for_env.is_some(),
+        "config"
+    );
+    if let Some(ref headers_for_env) = config.headers_for_env {
+        routes.extend(generate_env_matched_headers_routes(headers_for_env));
     }
 
     let doc_root = config
@@ -316,6 +328,54 @@ fn generate_response_headers_routes(headers: &Vec<PathMatchedHeader>) -> Vec<ser
         .collect()
 }
 
+fn generate_env_matched_headers_routes(headers: &Vec<EnvMatchedHeader>) -> Vec<serde_json::Value> {
+    // Group headers sharing the same (env term, path matcher) while preserving the order of
+    // the groups by "when-first-seen".
+    let mut groups = IndexMap::<(String, String), Vec<&EnvMatchedHeader>>::new();
+    for header in headers {
+        let key = (header.env_matcher.clone(), header.path_matcher.clone());
+        if let Some(existing) = groups.get_mut(&key) {
+            existing.push(header);
+        } else {
+            groups.insert(key, vec![header]);
+        }
+    }
+
+    groups
+        .into_iter()
+        .map(|((env_matcher, path_matcher), headers)| {
+            let headers_as_hash_map = headers
+                .into_iter()
+                .map(|header| (header.key.clone(), vec![header.value.clone()]))
+                .collect::<HashMap<_, _>>();
+
+            // The `path` and `WEB_ENV` `expression` matchers share one match-set object, so
+            // Caddy requires BOTH to match (matchers within a single object are ANDed).
+            // `{env.WEB_ENV}` is resolved by Caddy at runtime, matching the basic-auth precedent.
+            json!({
+                "match": [{
+                    "path": vec![path_matcher],
+                    "expression": {
+                        "expr": format!("{{env.WEB_ENV}} == '{}'", cel_escape(&env_matcher)),
+                        "name": format!("web_env_{env_matcher}")
+                    }
+                }],
+                "handle": [{
+                    "handler": "headers",
+                    "response": {
+                        "set": headers_as_hash_map
+                    }
+                }]
+            })
+        })
+        .collect()
+}
+
+/// Escapes a value for safe interpolation into a single-quoted CEL string literal.
+fn cel_escape(value: &str) -> String {
+    value.replace('\\', "\\\\").replace('\'', "\\'")
+}
+
 fn generate_error_404_route(
     doc_root: &str,
     doc_index: &str,
@@ -468,6 +528,74 @@ mod tests {
             routes,
             vec![
                 json!({"handle": [{"handler":"headers","response":{"set":{"X-Foo":["Bar"]}}}],"match":[{"path":["*"]}]})
+            ]
+        );
+    }
+
+    #[test]
+    fn generates_env_matched_headers_routes() {
+        let headers = vec![
+            EnvMatchedHeader {
+                env_matcher: String::from("staging"),
+                path_matcher: String::from("*"),
+                key: String::from("Content-Security-Policy"),
+                value: String::from(
+                    "default-src https: 'self'; connect-src 'self' api.staging.example.com;",
+                ),
+            },
+            EnvMatchedHeader {
+                env_matcher: String::from("production"),
+                path_matcher: String::from("*"),
+                key: String::from("Content-Security-Policy"),
+                value: String::from(
+                    "default-src https: 'self'; connect-src 'self' api.example.com;",
+                ),
+            },
+        ];
+
+        let routes = generate_env_matched_headers_routes(&headers);
+
+        assert_eq!(
+            routes,
+            vec![
+                json!({"handle":[{"handler":"headers","response":{"set":{"Content-Security-Policy":["default-src https: 'self'; connect-src 'self' api.staging.example.com;"]}}}],"match":[{"path":["*"],"expression":{"expr":"{env.WEB_ENV} == 'staging'","name":"web_env_staging"}}]}),
+                json!({"handle":[{"handler":"headers","response":{"set":{"Content-Security-Policy":["default-src https: 'self'; connect-src 'self' api.example.com;"]}}}],"match":[{"path":["*"],"expression":{"expr":"{env.WEB_ENV} == 'production'","name":"web_env_production"}}]})
+            ]
+        );
+    }
+
+    #[test]
+    fn groups_env_matched_headers_by_env_and_path() {
+        let headers = vec![
+            EnvMatchedHeader {
+                env_matcher: String::from("staging"),
+                path_matcher: String::from("*"),
+                key: String::from("X-Foo"),
+                value: String::from("Bar"),
+            },
+            EnvMatchedHeader {
+                env_matcher: String::from("staging"),
+                path_matcher: String::from("/admin/*"),
+                key: String::from("X-Robots-Tag"),
+                value: String::from("noindex"),
+            },
+            EnvMatchedHeader {
+                env_matcher: String::from("staging"),
+                path_matcher: String::from("*"),
+                key: String::from("X-Zuu"),
+                value: String::from("Zem"),
+            },
+        ];
+
+        let routes = generate_env_matched_headers_routes(&headers);
+
+        // Same env + path collapse into one route with both keys; the different path is its
+        // own route.
+        assert_eq!(
+            routes,
+            vec![
+                json!({"handle":[{"handler":"headers","response":{"set":{"X-Foo":["Bar"],"X-Zuu":["Zem"]}}}],"match":[{"path":["*"],"expression":{"expr":"{env.WEB_ENV} == 'staging'","name":"web_env_staging"}}]}),
+                json!({"handle":[{"handler":"headers","response":{"set":{"X-Robots-Tag":["noindex"]}}}],"match":[{"path":["/admin/*"],"expression":{"expr":"{env.WEB_ENV} == 'staging'","name":"web_env_staging"}}]})
             ]
         );
     }

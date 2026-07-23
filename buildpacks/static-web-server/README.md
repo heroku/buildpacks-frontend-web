@@ -255,6 +255,20 @@ Cache-Control = "public, max-age=604800"
 Content-Disposition = "attachment"
 ```
 
+#### Env-matched Headers
+
+Respond with custom [global](#global-headers) and [path-matched](#path-matched-headers) headers, when the `WEB_ENV` env var matches a term at runtime.
+
+```toml
+# Any request `*` when the server's WEB_ENV == staging
+[com.heroku.static-web-server.headers_for_env."staging"."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+
+# Any request `*` when the server's WEB_ENV == production
+[com.heroku.static-web-server.headers_for_env."production"."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
+```
+
 ### Custom Errors
 
 *Default: (server's built-in errors)*
@@ -601,11 +615,13 @@ docker run \
 
 The static web server is configured to handle request URLs with the following path-matched precedence:
 
-1. [optional] [Caddy: Basic Authorization](#caddy-basic-authorization)
-2. [optional] [Caddy: Static Responses](#caddy-static-responses) (terminating)
-3. [optional] [Caddy: Clean URLs](#caddy-clean-urls)
+1. [optional] [Response Headers](#response-headers)
+2. [optional] [Caddy: Basic Authorization](#caddy-basic-authorization)
+3. [optional] [Caddy: Static Responses](#caddy-static-responses) (terminating)
+4. [optional] [Caddy: Clean URLs](#caddy-clean-urls)
     1. exact URL path
     2. URL path + `.html` (rewrite)
-4. File Server
+5. File Server
     1. exact URL path
     2. for directories, URL path + default document `index.html`
+6. [Not Found handler](#404-not-found)
