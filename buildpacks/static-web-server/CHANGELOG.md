@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add env-matched response headers configuration, `[com.heroku.static-web-server.headers_for_env]`, applying custom response headers only when the runtime `WEB_ENV` env var matches. Report the new `cnb.static-web-server.config.env_matched_headers_enabled` metric on every build.
+
 ## [3.3.2] - 2026-06-30
 
 - Report the `cnb.static-web-server.config.runtime_config_enabled` metric with its actual boolean value, so a disabled runtime config emits `false` instead of being omitted.

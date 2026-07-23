@@ -3,3 +3,9 @@
 "/".X-Only-Default = "Hiii"
 "*.html".X-Only-HTML = "Hi"
 "/images/*".X-Only-Images = "HAI"
+
+[com.heroku.static-web-server.headers_for_env]
+"staging"."*".Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+# Overrides the build-time `headers."*".X-Global` value above, to verify env-matched wins.
+"staging"."*".X-Global = "Hello-Staging"
+"production"."*".Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"

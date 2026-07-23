@@ -160,6 +160,7 @@ fn top_level_doc_root() {
 
 #[test]
 #[ignore = "integration test"]
+#[allow(clippy::too_many_lines)]
 fn custom_headers() {
     static_web_server_integration_test("./fixtures/custom_headers", |ctx| {
         assert_contains!(ctx.pack_stdout, "Static Web Server");
@@ -189,6 +190,11 @@ fn custom_headers() {
                     !response.headers().contains_key("X-Only-HTML"),
                     "should not include X-Only-HTML header"
                 );
+                // Without WEB_ENV set, no `headers_for_env` headers apply.
+                assert!(
+                    !response.headers().contains_key("Content-Security-Policy"),
+                    "should not include Content-Security-Policy header when WEB_ENV is unset"
+                );
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}/page2.html"))
@@ -206,6 +212,64 @@ fn custom_headers() {
                     !response.headers().contains_key("X-Only-Default"),
                     "should not include X-Only-Default header"
                 );
+            },
+        );
+
+        // WEB_ENV=staging applies the staging `headers_for_env` headers.
+        start_container(
+            &ctx,
+            ContainerConfig::new().env("WEB_ENV", "staging"),
+            |_container, socket_addr| {
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
+                })
+                .unwrap();
+                let h = response
+                    .headers()
+                    .get("Content-Security-Policy")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "api.staging.example.com");
+                // Env-matched headers override the build-time `headers` value for the same key.
+                let h = response
+                    .headers()
+                    .get("X-Global")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "Hello-Staging");
+            },
+        );
+
+        // WEB_ENV=production applies the production `headers_for_env` headers.
+        start_container(
+            &ctx,
+            ContainerConfig::new().env("WEB_ENV", "production"),
+            |_container, socket_addr| {
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/"))
+                        .call()
+                        .map_err(Box::new)
+                })
+                .unwrap();
+                let h = response
+                    .headers()
+                    .get("Content-Security-Policy")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "api.example.com");
+                assert!(
+                    !h.contains("staging"),
+                    "production Content-Security-Policy must not contain the staging host"
+                );
+                // The production env does not override X-Global, so the build-time value stands.
+                let h = response
+                    .headers()
+                    .get("X-Global")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "Hello");
             },
         );
     });

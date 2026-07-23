@@ -15,6 +15,8 @@ pub(crate) struct HerokuWebServerConfig {
     pub(crate) errors: Option<ErrorsConfig>,
     #[serde(default, deserialize_with = "deserialize_path_matched_headers")]
     pub(crate) headers: Option<Vec<PathMatchedHeader>>,
+    #[serde(default, deserialize_with = "deserialize_env_matched_headers")]
+    pub(crate) headers_for_env: Option<Vec<EnvMatchedHeader>>,
     pub(crate) runtime_config: Option<RuntimeConfig>,
     pub(crate) caddy_server_opts: Option<CaddyServerOpts>,
 }
@@ -40,6 +42,14 @@ pub(crate) struct Executable {
 
 #[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
 pub(crate) struct PathMatchedHeader {
+    pub(crate) path_matcher: String,
+    pub(crate) key: String,
+    pub(crate) value: String,
+}
+
+#[derive(Deserialize, Eq, PartialEq, Debug, Default, Clone)]
+pub(crate) struct EnvMatchedHeader {
+    pub(crate) env_matcher: String,
     pub(crate) path_matcher: String,
     pub(crate) key: String,
     pub(crate) value: String,
@@ -158,6 +168,52 @@ impl<'de> Visitor<'de> for PathMatchedHeadersVisitor {
                     key: header_key,
                     value: header_value,
                 });
+            }
+        }
+
+        Ok(result)
+    }
+}
+
+fn deserialize_env_matched_headers<'de, D>(d: D) -> Result<Option<Vec<EnvMatchedHeader>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let deserialized = d.deserialize_map(EnvMatchedHeadersVisitor)?;
+
+    if deserialized.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(deserialized))
+    }
+}
+
+struct EnvMatchedHeadersVisitor;
+
+impl<'de> Visitor<'de> for EnvMatchedHeadersVisitor {
+    type Value = Vec<EnvMatchedHeader>;
+
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        write!(formatter, "an env-matched, path-matched HTTP header map")
+    }
+
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+        A: MapAccess<'de>,
+    {
+        let mut result = vec![];
+        while let Some((env_matcher, path_map)) =
+            map.next_entry::<String, BTreeMap<String, BTreeMap<String, String>>>()?
+        {
+            for (path_matcher, headers) in path_map {
+                for (header_key, header_value) in headers {
+                    result.push(EnvMatchedHeader {
+                        env_matcher: env_matcher.clone(),
+                        path_matcher: path_matcher.clone(),
+                        key: header_key,
+                        value: header_value,
+                    });
+                }
             }
         }
 
@@ -468,6 +524,49 @@ mod tests {
                     path_matcher: String::from("/images/*"),
                     key: String::from("X-Only-Images"),
                     value: String::from("HAI")
+                },
+            ])
+        );
+    }
+
+    #[test]
+    fn custom_headers_for_env() {
+        let toml_config = toml! {
+            [headers_for_env]
+            "staging"."*".Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+            "staging"."/admin/*".X-Robots-Tag = "noindex"
+            "production"."*".Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
+        };
+
+        let parsed_config = toml_config.try_into::<HerokuWebServerConfig>().unwrap();
+        assert_eq!(parsed_config.headers, None);
+
+        // Outer env terms preserve TOML document order (staging, then production).
+        // Inner path matchers are BTreeMap-sorted ("*" sorts before "/admin/*").
+        assert_eq!(
+            parsed_config.headers_for_env,
+            Some(vec![
+                EnvMatchedHeader {
+                    env_matcher: String::from("staging"),
+                    path_matcher: String::from("*"),
+                    key: String::from("Content-Security-Policy"),
+                    value: String::from(
+                        "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+                    )
+                },
+                EnvMatchedHeader {
+                    env_matcher: String::from("staging"),
+                    path_matcher: String::from("/admin/*"),
+                    key: String::from("X-Robots-Tag"),
+                    value: String::from("noindex")
+                },
+                EnvMatchedHeader {
+                    env_matcher: String::from("production"),
+                    path_matcher: String::from("*"),
+                    key: String::from("Content-Security-Policy"),
+                    value: String::from(
+                        "default-src https: 'self'; connect-src 'self' api.example.com;"
+                    )
                 },
             ])
         );
