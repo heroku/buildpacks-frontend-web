@@ -5,11 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Types of changes:
+
+- `Added` for new features.
+- `Changed` for changes in existing functionality.
+- `Deprecated` for soon-to-be removed features.
+- `Removed` for now removed features.
+- `Fixed` for any bug fixes.
+- `Security` in case of vulnerabilities.
+
 ## [Unreleased]
+
+### Added
 
 - Add env-matched response headers configuration, `[com.heroku.static-web-server.headers_for_env]`, applying custom response headers only when the runtime `WEB_ENV` env var matches. Report the new `cnb.static-web-server.config.env_matched_headers_enabled` metric on every build.
 
 ## [3.3.2] - 2026-06-30
+
+### Fixed
 
 - Report the `cnb.static-web-server.config.runtime_config_enabled` metric with its actual boolean value, so a disabled runtime config emits `false` instead of being omitted.
 - Report the `cnb.static-web-server.config.caddy_server_opts_basic_auth` metric with its actual boolean value, so disabled basic auth emits `false` instead of being omitted.
@@ -18,9 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report the `cnb.static-web-server.config.caddy_server_opts_access_logs` metric with its actual boolean value, so disabled access logs emits `false` instead of being omitted.
 - Report the `cnb.static-web-server.config.response_headers_enabled` metric on every build, emitting `false` when no response headers are configured instead of being omitted.
 - Report the `cnb.static-web-server.config.caddy_server_opts_static_responses` metric on every build, emitting `false` when no static responses are configured instead of being omitted.
+
+### Changed
+
 - Update Caddy web server version to 2.11.4.
 
 ## [3.3.1] - 2026-05-29
+
+### Changed
 
 - Update Caddy web server version to 2.11.3.
 
