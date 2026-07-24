@@ -223,7 +223,7 @@ index = "main.html"
 
 #### Global Headers
 
-Respond with custom headers for any request path, the wildcard `*`.
+`headers."*"` applies headers for every request, unless overriden by a subsequent or more specific header path or env.
 
 ```toml
 [com.heroku.static-web-server.headers."*"]
@@ -232,9 +232,11 @@ X-Server = "hot stuff"
 
 #### Path-matched Headers
 
-Respond with custom headers. These match exactly against the request URL's path.
+*Default: (the configured global headers)*
 
-Wildcards `*` are supported as implemented. (See [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
+`headers.PATH` selectively applies headers for `PATH`. These match exactly against the request URL's path.
+
+Wildcards in the path `*` are supported. (Server-specific implementation, see [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
 
 ```toml
 # The index page (index.html is not specified in the URL).
@@ -257,15 +259,26 @@ Content-Disposition = "attachment"
 
 #### Env-matched Headers
 
-Respond with custom [global](#global-headers) and [path-matched](#path-matched-headers) headers, when the `WEB_ENV` env var matches a term at runtime.
+*Default: (the configured global and path-matched headers)*
+
+`headers_for_env.NAME.PATH` selectively applies headers for `PATH` by matching `NAME` to the value of `WEB_ENV` environment variable. 
+
+Supports custom [global](#global-headers) and [path-matched](#path-matched-headers) headers, scoped to the `WEB_ENV`.
 
 ```toml
-# Any request `*` when the server's WEB_ENV == staging
-[com.heroku.static-web-server.headers_for_env."staging"."*"]
-Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+[com.heroku.static-web-server.headers_for_env.production."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
+```
 
-# Any request `*` when the server's WEB_ENV == production
-[com.heroku.static-web-server.headers_for_env."production"."*"]
+For example, set default and production-specific CSP headers,
+
+```toml
+# Globally set headers
+[com.heroku.static-web-server.headers."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' *.example.com;"
+
+# and then override the default, when the server's WEB_ENV == "production"
+[com.heroku.static-web-server.headers_for_env.production."*"]
 Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
 ```
 
