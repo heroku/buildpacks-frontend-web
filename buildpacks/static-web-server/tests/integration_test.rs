@@ -182,6 +182,15 @@ fn custom_headers() {
                 assert_contains!(h, "Hello");
                 let h = response
                     .headers()
+                    .get("Content-Security-Policy")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(
+                    h,
+                    "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+                );
+                let h = response
+                    .headers()
                     .get("X-Only-Default")
                     .and_then(|v| v.to_str().ok())
                     .unwrap_or_default();
@@ -190,11 +199,6 @@ fn custom_headers() {
                     !response.headers().contains_key("X-Only-HTML"),
                     "should not include X-Only-HTML header"
                 );
-                // Without WEB_ENV set, no `headers_for_env` headers apply.
-                assert!(
-                    !response.headers().contains_key("Content-Security-Policy"),
-                    "should not include Content-Security-Policy header when WEB_ENV is unset"
-                );
 
                 let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
                     ureq::get(&format!("http://{socket_addr}/page2.html"))
@@ -202,6 +206,21 @@ fn custom_headers() {
                         .map_err(Box::new)
                 })
                 .unwrap();
+                let h = response
+                    .headers()
+                    .get("X-Global")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "Hello");
+                let h = response
+                    .headers()
+                    .get("Content-Security-Policy")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(
+                    h,
+                    "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
+                );
                 let h = response
                     .headers()
                     .get("X-Only-HTML")
@@ -270,6 +289,38 @@ fn custom_headers() {
                     .and_then(|v| v.to_str().ok())
                     .unwrap_or_default();
                 assert_contains!(h, "Hello");
+
+                let response = retry(DEFAULT_RETRIES, DEFAULT_RETRY_DELAY, || {
+                    ureq::get(&format!("http://{socket_addr}/page2.html"))
+                        .call()
+                        .map_err(Box::new)
+                })
+                .unwrap();
+                let h = response
+                    .headers()
+                    .get("X-Global")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "Hello-in-prod-page-2");
+                let h = response
+                    .headers()
+                    .get("Content-Security-Policy")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(
+                    h,
+                    "default-src https: 'self'; connect-src 'self' api.example.com;"
+                );
+                let h = response
+                    .headers()
+                    .get("X-Only-HTML")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or_default();
+                assert_contains!(h, "Hi");
+                assert!(
+                    !response.headers().contains_key("X-Only-Default"),
+                    "should not include X-Only-Default header"
+                );
             },
         );
     });
