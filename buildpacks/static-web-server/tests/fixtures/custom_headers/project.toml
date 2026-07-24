@@ -1,5 +1,15 @@
 [com.heroku.static-web-server.headers]
 "*".X-Global = "Hello"
+"*".Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.staging.example.com;"
 "/".X-Only-Default = "Hiii"
 "*.html".X-Only-HTML = "Hi"
 "/images/*".X-Only-Images = "HAI"
+
+[com.heroku.static-web-server.headers_for_env.staging."*"]
+X-Global = "Hello-Staging"
+
+[com.heroku.static-web-server.headers_for_env.production."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
+
+[com.heroku.static-web-server.headers_for_env.production."/page2.html"]
+X-Global = "Hello-in-prod-page-2"

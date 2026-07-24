@@ -31,6 +31,8 @@ pub(crate) const CONFIG_ERROR_404_FILE_PATH: &str = formatcp!("{CONFIG}.error_40
 pub(crate) const CONFIG_ERROR_404_STATUS_CODE: &str = formatcp!("{CONFIG}.error_404_status_code");
 pub(crate) const CONFIG_RESPONSE_HEADERS_ENABLED: &str =
     formatcp!("{CONFIG}.response_headers_enabled");
+pub(crate) const CONFIG_ENV_MATCHED_HEADERS_ENABLED: &str =
+    formatcp!("{CONFIG}.env_matched_headers_enabled");
 
 const ERROR: &str = formatcp!("{NAMESPACE}.error");
 pub(crate) const ERROR_ID: &str = formatcp!("{ERROR}.id");

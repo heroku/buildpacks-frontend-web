@@ -223,7 +223,7 @@ index = "main.html"
 
 #### Global Headers
 
-Respond with custom headers for any request path, the wildcard `*`.
+`headers."*"` applies headers for every request, unless overriden by a subsequent or more specific header path or env.
 
 ```toml
 [com.heroku.static-web-server.headers."*"]
@@ -232,9 +232,11 @@ X-Server = "hot stuff"
 
 #### Path-matched Headers
 
-Respond with custom headers. These match exactly against the request URL's path.
+*Default: (the configured global headers)*
 
-Wildcards `*` are supported as implemented. (See [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
+`headers.PATH` selectively applies headers for `PATH`. These match exactly against the request URL's path.
+
+Wildcards in the path `*` are supported. (Server-specific implementation, see [Caddy "path" matcher](https://caddyserver.com/docs/json//apps/http/servers/routes/match/path) for syntax details.)
 
 ```toml
 # The index page (index.html is not specified in the URL).
@@ -253,6 +255,31 @@ Cache-Control = "max-age=31536000, immutable"
 [com.heroku.static-web-server.headers."/downloads/*"]
 Cache-Control = "public, max-age=604800"
 Content-Disposition = "attachment"
+```
+
+#### Env-matched Headers
+
+*Default: (the configured global and path-matched headers)*
+
+`headers_for_env.NAME.PATH` selectively applies headers for `PATH` by matching `NAME` to the value of `WEB_ENV` environment variable. 
+
+Supports custom [global](#global-headers) and [path-matched](#path-matched-headers) headers, scoped to the `WEB_ENV`.
+
+```toml
+[com.heroku.static-web-server.headers_for_env.production."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
+```
+
+For example, set default and production-specific CSP headers,
+
+```toml
+# Globally set headers
+[com.heroku.static-web-server.headers."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' *.example.com;"
+
+# and then override the default, when the server's WEB_ENV == "production"
+[com.heroku.static-web-server.headers_for_env.production."*"]
+Content-Security-Policy = "default-src https: 'self'; connect-src 'self' api.example.com;"
 ```
 
 ### Custom Errors
@@ -601,11 +628,13 @@ docker run \
 
 The static web server is configured to handle request URLs with the following path-matched precedence:
 
-1. [optional] [Caddy: Basic Authorization](#caddy-basic-authorization)
-2. [optional] [Caddy: Static Responses](#caddy-static-responses) (terminating)
-3. [optional] [Caddy: Clean URLs](#caddy-clean-urls)
+1. [optional] [Response Headers](#response-headers)
+2. [optional] [Caddy: Basic Authorization](#caddy-basic-authorization)
+3. [optional] [Caddy: Static Responses](#caddy-static-responses) (terminating)
+4. [optional] [Caddy: Clean URLs](#caddy-clean-urls)
     1. exact URL path
     2. URL path + `.html` (rewrite)
-4. File Server
+5. File Server
     1. exact URL path
     2. for directories, URL path + default document `index.html`
+6. [Not Found handler](#404-not-found)
