@@ -22,27 +22,26 @@ describe('injectEnvToHtmlFiles', function () {
     await fs.rm(testDir, {recursive: true});
   });
 
-  it('rewrites files with env variables set in body data-* attributes', async function () {
+  async function loadDocument(relativePath) {
+    return cheerio.load(await fs.readFile(path.join(testDir, relativePath)));
+  }
+
+  it('rewrites the default index document with env variables set in head data-* attributes', async function () {
     const testEnv = {
       PUBLIC_WEB_TEST: 'example value',
       PUBLIC_WEB_TEST_2: 'another value',
       SECRET_TEST: 'should not be exposed'
     };
-    await injectEnvToHtmlFiles(testEnv, path.join(testDir, 'public'));
+    await injectEnvToHtmlFiles(testEnv, testDir);
 
-    const expectedFiles = ['index.html', 'page-2.html'];
-    for (const filename of expectedFiles) {
-      const fileHandle = await fs.open(path.join(testDir, 'public', filename), 'r+');
-      const contents = await fileHandle.readFile();
-      const document = cheerio.load(contents);
-      await fileHandle.close();
-      const bodyElement = document('body');
-      const bodyAttrs = bodyElement.attr();
+    const indexDocument = await loadDocument('public/index.html');
+    const pageDocument = await loadDocument('public/page-2.html');
 
-      assert.equal(bodyAttrs['data-public_web_test'], 'example value', `PUBLIC_WEB_TEST env var is set incorrectly in ${filename}`);
-      assert.equal(bodyAttrs['data-public_web_test_2'], 'another value', `PUBLIC_WEB_TEST_2 env var is set incorrectly in ${filename}`);
-      assert.equal(bodyAttrs['data-secret_test'], null, `SECRET_TEST env var should not be set in ${filename}, because its name is not prefixed with PUBLIC_WEB_`);
-    }
+    assert.equal(indexDocument('head').attr('data-public_web_test'), 'example value');
+    assert.equal(indexDocument('head').attr('data-public_web_test_2'), 'another value');
+    assert.equal(indexDocument('head').attr('data-secret_test'), null);
+    assert.equal(indexDocument('body').attr('data-public_web_test'), undefined);
+    assert.equal(pageDocument('head').attr('data-public_web_test'), undefined);
   });
 
   it('without env variables leaves files untouched', async function () {
@@ -58,7 +57,7 @@ describe('injectEnvToHtmlFiles', function () {
       expectedFileHashes.push(createHash('sha256').update(contents).digest('base64'));
     }
 
-    await injectEnvToHtmlFiles(testEnv, path.join(testDir, 'public'));
+    await injectEnvToHtmlFiles(testEnv, testDir);
 
     for (const filename of expectedFiles) {
       const fileHandle = await fs.open(path.join(testDir, 'public', filename), 'r+');
@@ -70,46 +69,43 @@ describe('injectEnvToHtmlFiles', function () {
     assert.deepStrictEqual(resultFileHashes, expectedFileHashes);
   });
 
-  it('uses ENV_AS_HTML_DATA_DIR instead of the default public directory', async function () {
+  it('uses project.toml to configure the document root and index document', async function () {
+    await fs.writeFile(path.join(testDir, 'project.toml'), `
+[com.heroku.static-web-server]
+root = "configured-directory"
+index = "index.html"
+`);
+
     await execFileAsync(process.execPath, [executablePath], {
       cwd: testDir,
       env: {
         ...process.env,
-        ENV_AS_HTML_DATA_DIR: 'configured-directory',
         PUBLIC_WEB_TEST: 'configured directory value'
       }
     });
 
-    const configuredDocument = cheerio.load(
-      await fs.readFile(path.join(testDir, 'configured-directory', 'index.html'))
-    );
-    const defaultDocument = cheerio.load(
-      await fs.readFile(path.join(testDir, 'public', 'index.html'))
-    );
+    const configuredDocument = await loadDocument('configured-directory/index.html');
+    const defaultDocument = await loadDocument('public/index.html');
 
-    assert.equal(configuredDocument('body').attr('data-public_web_test'), 'configured directory value');
-    assert.equal(defaultDocument('body').attr('data-public_web_test'), undefined);
+    assert.equal(configuredDocument('head').attr('data-public_web_test'), 'configured directory value');
+    assert.equal(defaultDocument('head').attr('data-public_web_test'), undefined);
   });
 
-  it('uses ENV_AS_HTML_DATA_FILE_EXT to select files to process', async function () {
-    await execFileAsync(process.execPath, [executablePath], {
-      cwd: testDir,
-      env: {
-        ...process.env,
-        ENV_AS_HTML_DATA_DIR: 'configured-extension',
-        ENV_AS_HTML_DATA_FILE_EXT: '.template',
-        PUBLIC_WEB_TEST: 'configured extension value'
-      }
-    });
+  it('uses project.toml html_files with nested paths and globs', async function () {
+    await fs.mkdir(path.join(testDir, 'public', 'subsection', 'nested'), {recursive: true});
+    await fs.cp(path.join(testDir, 'public', 'index.html'), path.join(testDir, 'public', 'subsection', 'index.html'));
+    await fs.cp(path.join(testDir, 'public', 'index.html'), path.join(testDir, 'public', 'subsection', 'nested', 'page.html'));
+    await fs.writeFile(path.join(testDir, 'project.toml'), `
+[com.heroku.static-web-server.runtime_config]
+html_files = ["page-2.html", "subsection/**/*.html"]
+`);
 
-    const matchingDocument = cheerio.load(
-      await fs.readFile(path.join(testDir, 'configured-extension', 'index.template'))
-    );
-    const nonMatchingDocument = cheerio.load(
-      await fs.readFile(path.join(testDir, 'configured-extension', 'index.html'))
-    );
+    await injectEnvToHtmlFiles({PUBLIC_WEB_TEST: 'nested value'}, testDir);
 
-    assert.equal(matchingDocument('body').attr('data-public_web_test'), 'configured extension value');
-    assert.equal(nonMatchingDocument('body').attr('data-public_web_test'), undefined);
+    assert.equal((await loadDocument('public/page-2.html'))('head').attr('data-public_web_test'), 'nested value');
+    assert.equal((await loadDocument('public/subsection/index.html'))('head').attr('data-public_web_test'), 'nested value');
+    assert.equal((await loadDocument('public/subsection/nested/page.html'))('head').attr('data-public_web_test'), 'nested value');
+    assert.equal((await loadDocument('public/index.html'))('head').attr('data-public_web_test'), undefined);
   });
+
 });
