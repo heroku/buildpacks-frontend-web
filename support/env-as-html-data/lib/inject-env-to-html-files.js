@@ -30,14 +30,18 @@ module.exports = async function injectEnvToHtmlFiles(env, appDir) {
   for (const htmlFile of filePaths) {
     const filepath = path.join(documentRoot, htmlFile);
     const fileHandle = await fs.open(filepath, 'r+');
-    const contents = await fileHandle.readFile();
-    const document = cheerio.load(contents);
-    const headElement = document('head');
+    try {
+      const contents = await fileHandle.readFile();
+      const document = cheerio.load(contents);
+      const headElement = document('head');
 
-    publicEnv.forEach(([envName, envValue]) => {
-      headElement.attr(`data-${envName.toLowerCase()}`, envValue);
-    });
-    await fileHandle.write(document.html(), 0);
-    await fileHandle.close();
+      publicEnv.forEach(([envName, envValue]) => {
+        headElement.attr(`data-${envName.toLowerCase()}`, envValue);
+      });
+      await fileHandle.truncate(0);
+      await fileHandle.write(document.html(), 0);
+    } finally {
+      await fileHandle.close();
+    }
   }
 }

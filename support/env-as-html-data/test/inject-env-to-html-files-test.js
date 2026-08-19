@@ -108,4 +108,16 @@ html_files = ["page-2.html", "subsection/**/*.html"]
     assert.equal((await loadDocument('public/index.html'))('head').attr('data-public_web_test'), undefined);
   });
 
+  it('truncates files after rewriting', async function () {
+    const filePath = path.join(testDir, 'public', 'index.html');
+    const original = await fs.readFile(filePath, 'utf8');
+    await fs.writeFile(filePath, `${original}${'x'.repeat(1000)}`);
+
+    await injectEnvToHtmlFiles({PUBLIC_WEB_TEST: 'shorter value'}, testDir);
+
+    const rewritten = await fs.readFile(filePath, 'utf8');
+    assert.equal(rewritten.endsWith('x'), false);
+    assert.doesNotThrow(() => cheerio.load(rewritten));
+  });
+
 });
