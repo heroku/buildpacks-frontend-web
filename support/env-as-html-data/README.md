@@ -2,20 +2,31 @@
 
 *Supports local development of Front-end Web JavaScript apps, providing the same [runtime configuration strategy as the buildpacks/static web server](../../buildpacks/static-web-server/README.md#runtime-app-configuration), without requiring the local CNB `pack build` and `docker run` workflow for runtime configuration.*
 
-This module will inject the current environment variables as [HTML `data-*` global attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*) into the app's HTML files. These variables can be updated everytime the app starts.
+This module injects the current environment variables as [HTML `data-*` global attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*) into the app's HTML files. These variables can be updated every time the app starts.
+
+HTML files are parsed and serialized while updating the `<head>` element. This can normalize invalid HTML and reformat the document.
 
 ## Using this Module
 
-The general strategy to use this module in a JavaScript web app, is to invoke this module as part of the build process or immediately before dev server start-up.
+The general strategy to use this module in a JavaScript web app is to invoke it as part of the build process or immediately before dev-server start-up.
 
 Install to the JavaScript project:  
 ```shell
 npm install @heroku/env-as-html-data@">= 2.0.0"
 ```
 
-Configuration options (set as shell/environment variables):
-+ `ENV_AS_HTML_DATA_DIR` (default `public`) the directory to search for HTML files to process.
-+ `ENV_AS_HTML_DATA_FILE_EXT` (default `.html`) the file extension to match for files to process.
+Configure the target HTML files in the app's `project.toml`, using the same settings as [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration):
+
+```toml
+[com.heroku.static-web-server]
+root = "public"
+index = "index.html"
+
+[com.heroku.static-web-server.runtime_config]
+html_files = ["index.html", "subsection/index.html"]
+```
+
+By default, the module rewrites the configured index document, or `public/index.html` when no `project.toml` settings are present. Paths in `html_files` are relative to `root` and may include `*` or `**` glob patterns.
 
 Execute HTML injection with `npx env-as-html-data`.
 
@@ -23,7 +34,7 @@ Execute HTML injection with `npx env-as-html-data`.
 
 **Do not set secret values into these environment variables.** They will be injected into the website, where anyone on the internet can see the values. As a precaution, only environment variables prefixed with `PUBLIC_WEB_` prefix will be exposed.
 
-**The variable names are case-insensitive, accessed as lowercase.** Although enviroment variables are colloquially uppercased, the resulting HTML Data Attributes are set & accessed lowercased, because [they are case-insensitive XML names](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
+**Use uppercase `PUBLIC_WEB_` environment-variable names and access their HTML data attributes in lowercase.** Although environment variables are colloquially uppercased, the resulting HTML data attributes are set and accessed in lowercase because [they are case-insensitive XML names](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/data-*).
 
 For example, if this app is started:
 
@@ -34,17 +45,17 @@ export PORT=3000
 npm start
 ```
 
-When the app is loaded in the web browser's javascript environment, these can be accessed using the [HTML Data Attribtes](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/Use_data_attributes):
+When the app is loaded in the web browser's JavaScript environment, these can be accessed using the [HTML data attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/Use_data_attributes):
 
 ```javascript
-const body = document.querySelector("body")
+const head = document.head
 
 // These contain the env vars' values
-body.dataset.public_web_api_url
-body.dataset.public_web_release_version
+head.dataset.public_web_api_url
+head.dataset.public_web_release_version
 
 // PORT is not set, because it isn't prefixed with PUBLIC_WEB_
-body.dataset.port == null
+head.dataset.port == null
 ```
 
 ## Using Build-time Variables
@@ -69,6 +80,16 @@ npm test --workspace @heroku/env-as-html-data
 
 When this module runs during app start-up, it:
 1. reads all `PUBLIC_WEB_*` environment variables
-2. updates each `public/*.html` file, writing these env vars as `<body data-*>` attributes
-3. serves the `public/` directory as static files
-4. the body data attributes are available within javascript & CSS running in the pages.
+2. reads `project.toml` to determine the document root and target HTML files
+3. updates the selected HTML files, writing these env vars as `<head data-*>` attributes
+4. leaves serving static files to the application's web server
+5. makes the head data attributes available within JavaScript and CSS running in the pages.
+
+## Breaking Changes in v2.0
+
+Version 2.0.0 closely aligns the behavior of this module with the implementation in [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
+
++ reads its own configuration from `project.toml` (instead of `ENV_AS_HTML_DATA_` env vars)
++ reads env vars from with `PUBLIC_WEB_` prefix (instead of `PUBLIC_`)
++ writes HTML Data attributes to `<head>` element (instead of `<body>`)
++ safely rewrites HTML files.
