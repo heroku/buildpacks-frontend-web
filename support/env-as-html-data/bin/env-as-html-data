@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+const { injectEnvToHtmlFiles } = require('../index.js');
+
+const webroot = process.env.ENV_AS_HTML_DATA_DIR || 'public';
+const fileExt = process.env.ENV_AS_HTML_DATA_FILE_EXT || '.html';
+
+(async function envAsHtmlData() {
+  await injectEnvToHtmlFiles(process.env, webroot, fileExt);
+})();
