@@ -2,8 +2,12 @@ version: 2
 updates:
   - package-ecosystem: "cargo"
     directory: "/"
+    open-pull-requests-limit: 5
     schedule:
-      interval: "monthly"
+      interval: "weekly"
+      time: "12:00"
+      day: "sunday"
+      timezone: "America/Los_Angeles"
     groups:
       libcnb:
         patterns:
@@ -29,10 +33,22 @@ updates:
           - "markup5ever_rcdom"
   - package-ecosystem: "github-actions"
     directory: "/"
+    open-pull-requests-limit: 5
     schedule:
-      interval: "monthly"
+      interval: "weekly"
+      time: "12:00"
+      day: "sunday"
+      timezone: "America/Los_Angeles"
     groups:
       github-actions:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: "npm"
+    directory: "/"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+      time: "12:00"
+      day: "sunday"
+      timezone: "America/Los_Angeles"
