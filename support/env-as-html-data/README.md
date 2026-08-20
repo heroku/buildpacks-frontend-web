@@ -28,7 +28,15 @@ html_files = ["index.html", "subsection/index.html"]
 
 By default, the module rewrites the configured index document, or `public/index.html` when no `project.toml` settings are present. Paths in `html_files` are relative to `root` and may include `*` or `**` glob patterns.
 
-Execute HTML injection with `npx env-as-html-data`.
+### Invoking env-to-html-data
+
+Invoke via CLI/shell with `npx env-as-html-data`.
+
+Or, import the module to invoke programmatically:
+```javascript
+const { injectEnvToHtmlFiles } = require('@heroku/env-to-html-data');
+await injectEnvToHtmlFiles();
+```
 
 ## Using Runtime Environment Variables
 
@@ -87,9 +95,11 @@ When this module runs during app start-up, it:
 
 ## Breaking Changes in v2.0
 
-Version 2.0.0 closely aligns the behavior of this module with the implementation in [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
+Version 2.0.0 of this module closely aligns its behavior with the implementation in [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
 
 + reads its own configuration from `project.toml` (instead of `ENV_AS_HTML_DATA_` env vars)
-+ reads env vars from with `PUBLIC_WEB_` prefix (instead of `PUBLIC_`)
++ reads env vars with `PUBLIC_WEB_` prefix (instead of `PUBLIC_`)
 + writes HTML Data attributes to `<head>` element (instead of `<body>`)
 + safely rewrites HTML files.
+
+All of this ensures that v2 behavior matches the Runtime Configuration behavior of `heroku/static-web-server` CNB, supporting local app dev without needing to run the full `pack build` and `docker run` CNB lifecycle.
