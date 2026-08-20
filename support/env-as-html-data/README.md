@@ -30,7 +30,7 @@ By default, the module rewrites the configured index document, or `public/index.
 
 ### Invoking env-to-html-data
 
-Invoke via CLI/shell with `npx env-as-html-data`.
+Invoke via CLI/shell with `npx @heroku/env-as-html-data`.
 
 Or, import the module to invoke programmatically:
 ```javascript
