@@ -86,16 +86,14 @@ npm test --workspace @heroku/env-as-html-data
 
 ## How does the runtime variable injection work?
 
-When this module runs during app start-up, it:
+When injection is invoked:
 1. reads all `PUBLIC_WEB_*` environment variables
 2. reads `project.toml` to determine the document root and target HTML files
-3. updates the selected HTML files, writing these env vars as `<head data-*>` attributes
-4. leaves serving static files to the application's web server
-5. makes the head data attributes available within JavaScript and CSS running in the pages.
+3. rewrites the HTML files, injecting these env vars as `<head data-*>` attributes.
 
 ## Breaking Changes in v2.0
 
-Version 2.0.0 of this module closely aligns its behavior with the implementation in [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
+Version 2.0 of this module closely aligns its behavior with the implementation in [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration).
 
 + reads its own configuration from `project.toml` (instead of `ENV_AS_HTML_DATA_` env vars)
 + reads env vars with `PUBLIC_WEB_` prefix (instead of `PUBLIC_`)
