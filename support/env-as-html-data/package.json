@@ -1,6 +1,6 @@
 {
   "name": "@heroku/env-as-html-data",
-  "version": "2.1.0",
+  "version": "2.1.0-pre.1-wasm",
   "description": "Inject environment variables into HTML pages as data-* attributes.",
   "main": "index.js",
   "types": "index.d.ts",
