@@ -128,9 +128,10 @@ cargo check -p env_as_html_data_wasm --target wasm32-unknown-unknown --locked
 
 ## Release
 
-This package is not yet wired into the buildpack release workflow. The existing reusable buildpack release integration publishes CNB artifacts only; it does not publish npm packages.
-
-Before publishing this package, add a dedicated npm release workflow using npm trusted publishing and GitHub OIDC. The package must be manually published once and configured for trusted publishing before automated releases can use OIDC. Keep its versioning separate from the buildpack release until a deliberate version-sync policy is introduced.
+1. Update the version in `npm version 2.1.0-pre.1-wasm --workspace @heroku/env-as-html-data`.
+2. Commit this change (and push it to origin)
+3. Build the package: `npm run build --workspace @heroku/env-as-html-data`
+4. Publish: `npm publish --workspaces --access public --otp=XXXXXX`
 
 ## How does the runtime variable injection work?
 
