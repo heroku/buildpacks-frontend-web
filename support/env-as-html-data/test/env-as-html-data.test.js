@@ -30,7 +30,7 @@ test('transformHtml rejects non-string environment values', () => {
 });
 
 test('injectEnvToHtmlFiles uses runtime configuration and glob target files', async () => {
-  const appDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'env-as-html-data-wasm-'));
+  const appDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'env-as-html-data-'));
   const publicDirectory = path.join(appDirectory, 'web');
   await fs.mkdir(path.join(publicDirectory, 'nested'), { recursive: true });
   await fs.writeFile(path.join(appDirectory, 'project.toml'), [

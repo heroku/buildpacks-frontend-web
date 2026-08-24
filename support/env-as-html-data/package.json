@@ -1,5 +1,5 @@
 {
-  "name": "@heroku/env-as-html-data-wasm",
+  "name": "@heroku/env-as-html-data",
   "version": "0.0.0",
   "description": "Inject PUBLIC_WEB environment variables into HTML head data attributes using WebAssembly.",
   "main": "index.js",
@@ -15,7 +15,7 @@
     "env-as-html-data": "bin/env-as-html-data"
   },
   "scripts": {
-    "build": "rm -rf pkg && wasm-pack build ../../common/env_as_html_data_wasm --target nodejs --release --out-dir ../../support/env-as-html-data-wasm/pkg && rm pkg/.gitignore",
+    "build": "rm -rf pkg && wasm-pack build ../../common/env_as_html_data_wasm --target nodejs --release --out-dir ../../support/env-as-html-data/pkg && rm pkg/.gitignore",
     "pretest": "npm run build",
     "test": "node --test"
   },

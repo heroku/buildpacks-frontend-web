@@ -2,6 +2,6 @@
   "name": "frontend-web-support",
   "private": true,
   "workspaces": [
-    "support/env-as-html-data-wasm"
+    "support/env-as-html-data"
   ]
 }

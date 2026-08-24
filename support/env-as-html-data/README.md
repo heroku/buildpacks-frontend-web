@@ -1,6 +1,6 @@
 # WebAssembly Module to Inject Environment Variables as HTML Data Attributes
 
-`@heroku/env-as-html-data-wasm` supports local development of front-end web applications by applying the same HTML runtime-configuration transformation as `heroku/static-web-server`, without running the CNB lifecycle.
+`@heroku/env-as-html-data` supports local development of front-end web applications by applying the same HTML runtime-configuration transformation as `heroku/static-web-server`, without running the CNB lifecycle.
 
 The package uses the Rust `html5ever` implementation compiled to WebAssembly. It writes matching environment variables as HTML `data-*` attributes on the document's `<head>` element.
 
@@ -11,7 +11,7 @@ HTML is parsed and serialized during this process. Invalid HTML may be normalize
 Install the package in a Node.js application:
 
 ```shell
-npm install @heroku/env-as-html-data-wasm
+npm install @heroku/env-as-html-data
 ```
 
 Invoke it before starting a local development server or as part of a build command:
@@ -29,7 +29,7 @@ PUBLIC_WEB_API_URL=https://localhost:3001 npx env-as-html-data
 Or invoke it programmatically:
 
 ```javascript
-const { injectEnvToHtmlFiles } = require('@heroku/env-as-html-data-wasm');
+const { injectEnvToHtmlFiles } = require('@heroku/env-as-html-data');
 
 await injectEnvToHtmlFiles(process.env, process.cwd());
 ```
@@ -37,7 +37,7 @@ await injectEnvToHtmlFiles(process.env, process.cwd());
 A lower-level, function is also available, to perform the injection in memory:
 
 ```javascript
-const { transformHtml } = require('@heroku/env-as-html-data-wasm');
+const { transformHtml } = require('@heroku/env-as-html-data');
 
 const html = transformHtml(
   '<html><head></head><body></body></html>',
@@ -100,14 +100,14 @@ cargo install wasm-pack --version 0.15.0 --locked
 Build the Node.js WebAssembly package:
 
 ```shell
-npm run build --workspace @heroku/env-as-html-data-wasm
+npm run build --workspace @heroku/env-as-html-data
 ```
 
 The generated Node.js binding and `.wasm` module are placed in `pkg/` and are intentionally not committed. Run the package tests and inspect publish contents with:
 
 ```shell
-npm test --workspace @heroku/env-as-html-data-wasm
-npm pack --dry-run --workspace @heroku/env-as-html-data-wasm
+npm test --workspace @heroku/env-as-html-data
+npm pack --dry-run --workspace @heroku/env-as-html-data
 ```
 
 The repository CI job performs the same Node package verification, plus:
