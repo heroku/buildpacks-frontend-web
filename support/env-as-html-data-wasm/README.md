@@ -20,7 +20,7 @@ Invoke it before starting a local development server or as part of a build comma
 npx env-as-html-data
 ```
 
-The command reads the current directory's `project.toml` and environment. For example:
+The command reads the current directory's `project.toml` and environment, and then rewrites each target HTML file with the new Data attributes. For example:
 
 ```shell
 PUBLIC_WEB_API_URL=https://localhost:3001 npx env-as-html-data
@@ -29,9 +29,15 @@ PUBLIC_WEB_API_URL=https://localhost:3001 npx env-as-html-data
 Or invoke it programmatically:
 
 ```javascript
-const { injectEnvToHtmlFiles, transformHtml } = require('@heroku/env-as-html-data-wasm');
+const { injectEnvToHtmlFiles } = require('@heroku/env-as-html-data-wasm');
 
 await injectEnvToHtmlFiles(process.env, process.cwd());
+```
+
+A lower-level, function is also available, to perform the injection in memory:
+
+```javascript
+const { transformHtml } = require('@heroku/env-as-html-data-wasm');
 
 const html = transformHtml(
   '<html><head></head><body></body></html>',
