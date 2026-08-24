@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+const { injectEnvToHtmlFiles } = require('../index.js');
+
+injectEnvToHtmlFiles(process.env, process.cwd()).catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
+});
