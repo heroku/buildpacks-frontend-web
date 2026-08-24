@@ -44,20 +44,6 @@ const { injectEnvToHtmlFiles } = require('@heroku/env-as-html-data');
 await injectEnvToHtmlFiles(process.env, process.cwd());
 ```
 
-A lower-level, function is also available, to perform the injection in memory:
-
-```javascript
-const { transformHtml } = require('@heroku/env-as-html-data');
-
-const html = transformHtml(
-  '<html><head></head><body></body></html>',
-  { PUBLIC_WEB_API_URL: 'https://localhost:3001' },
-);
-```
-
-`transformHtml` is synchronous and does not read or write files. It returns the supplied HTML unchanged when the environment contains no `PUBLIC_WEB_` or `public_web_` variables.
-
-
 ## Using Runtime Environment Variables
 
 **Do not set secret values into these environment variables.** They will be injected into the website, where anyone on the internet can see the values. As a precaution, only environment variables prefixed with `PUBLIC_WEB_` prefix will be exposed.
