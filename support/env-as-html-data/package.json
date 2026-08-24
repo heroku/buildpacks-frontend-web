@@ -1,7 +1,7 @@
 {
   "name": "@heroku/env-as-html-data",
-  "version": "0.0.0",
-  "description": "Inject PUBLIC_WEB environment variables into HTML head data attributes using WebAssembly.",
+  "version": "2.1.0",
+  "description": "Inject environment variables into HTML pages as data-* attributes.",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
