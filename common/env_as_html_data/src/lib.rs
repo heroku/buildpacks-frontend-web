@@ -2,7 +2,7 @@ extern crate html5ever;
 extern crate markup5ever_rcdom as rcdom;
 
 mod errors;
-use errors::Error;
+pub use errors::Error;
 
 use std::fs::File;
 use std::io::{Read, Write};
@@ -41,7 +41,10 @@ pub fn env_as_html_data<S: BuildHasher>(
         .read_to_end(&mut buffer)
         .map_err(|e| Error::FileError(e, format!("Tried to read {}", file_path.display())))?;
 
-    match parse_html_and_inject_data(data, &buffer)? {
+    let html = std::str::from_utf8(&buffer)
+        .map_err(|e| Error::ParseError(format!("could not decode HTML as UTF-8 {e:?}")))?;
+
+    match transform_html(data, html)? {
         HtmlChanged::Yes(html_result) => {
             let mut rewrite_html_file = File::options()
                 .write(true)
@@ -64,14 +67,14 @@ pub fn env_as_html_data<S: BuildHasher>(
     }
 }
 
-pub(crate) enum HtmlChanged {
+pub enum HtmlChanged {
     Yes(String),
     No,
 }
 
-pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
+pub fn transform_html<S: BuildHasher>(
     data: &HashMap<String, String, S>,
-    html_bytes: &[u8],
+    html: &str,
 ) -> Result<HtmlChanged, Error> {
     let opts = ParseOpts {
         tree_builder: TreeBuilderOpts {
@@ -79,8 +82,6 @@ pub(crate) fn parse_html_and_inject_data<S: BuildHasher>(
         },
         ..Default::default()
     };
-    let html = std::str::from_utf8(html_bytes)
-        .map_err(|e| Error::ParseError(format!("could not decode HTML as UTF-8 {e:?}")))?;
     let dom = parse_document(RcDom::default(), opts).one(html);
 
     if let DataInjected::No = match_html_head_and_inject_data(data, &dom.document)? {
@@ -218,7 +219,7 @@ fn format_html_data_attr_name(name: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::{env_as_html_data, parse_html_and_inject_data, HtmlChanged, HtmlRewritten};
+    use crate::{env_as_html_data, transform_html, HtmlChanged, HtmlRewritten};
     use std::{
         collections::HashMap,
         fs::{self, File},
@@ -285,7 +286,7 @@ mod tests {
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
         let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, html.as_bytes()) {
+        match transform_html(&data, html) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
             Ok(HtmlChanged::No) => panic!("should have changed the HTML"),
             Err(e) => panic!("returned error {e:?}"),
@@ -307,7 +308,7 @@ mod tests {
         let html = "<html><head><title>Hello World</title></head><h1>Hello World</h1></html>";
         let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, html.as_bytes()) {
+        match transform_html(&data, html) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
             Ok(HtmlChanged::No) => panic!("should have returned HtmlChanged::Yes"),
             Err(e) => panic!("returned error {e:?}"),
@@ -326,7 +327,7 @@ mod tests {
         let html = r#"<html><head data-public_web_api_url="http://localhost:3001/v1" data-public_web_release_version="v0"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
         let expected_html = r#"<html><head data-public_web_api_url="https://api.example.com/v1" data-public_web_release_version="v101" data-public_web_debug_mode="true"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>"#;
 
-        match parse_html_and_inject_data(&data, html.as_bytes()) {
+        match transform_html(&data, html) {
             Ok(HtmlChanged::Yes(result_value)) => assert_eq!(&result_value, expected_html),
             Ok(HtmlChanged::No) => panic!("should have returned HtmlChanged::Yes"),
             Err(e) => panic!("returned error {e:?}"),
@@ -343,7 +344,7 @@ mod tests {
         let html =
             "<html><head><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
 
-        match parse_html_and_inject_data(&data, html.as_bytes()) {
+        match transform_html(&data, html) {
             Ok(HtmlChanged::No) => (),
             Ok(HtmlChanged::Yes(_)) => {
                 panic!("should have returned HtmlChanged::No")
