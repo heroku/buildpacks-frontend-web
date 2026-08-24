@@ -128,10 +128,11 @@ cargo check -p env_as_html_data_wasm --target wasm32-unknown-unknown --locked
 
 ## Release
 
-1. Update the version in `npm version 2.1.0-pre.1-wasm --workspace @heroku/env-as-html-data`.
+1. Update the version in `npm version X.Y.Z --workspace @heroku/env-as-html-data`.
 2. Commit this change (and push it to origin)
 3. Build the package: `npm run build --workspace @heroku/env-as-html-data`
 4. Publish: `npm publish --workspaces --access public --otp=XXXXXX`
+    1. include `--tag next` if a pre-release.
 
 ## How does the runtime variable injection work?
 
