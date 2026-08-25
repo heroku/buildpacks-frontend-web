@@ -112,14 +112,6 @@ The repository CI job performs the same Node package verification, plus:
 cargo check -p env_as_html_data_wasm --target wasm32-unknown-unknown --locked
 ```
 
-## Release
-
-1. Update the version in `npm version X.Y.Z --workspace @heroku/env-as-html-data`.
-2. Commit this change (and push it to origin)
-3. Build the package: `npm run build --workspace @heroku/env-as-html-data`
-4. Publish: `npm publish --workspaces --access public --otp=XXXXXX`
-    1. include `--tag next` if a pre-release.
-
 ## How does the runtime variable injection work?
 
 When injection is invoked:
@@ -137,3 +129,17 @@ Version 2.0 of this module closely aligns its behavior with the implementation i
 + safely rewrites HTML files.
 
 All of this ensures that v2 behavior matches the Runtime Configuration behavior of `heroku/static-web-server` CNB, supporting local app dev without needing to run the full `pack build` and `docker run` CNB lifecycle.
+
+# Contributor Notes
+
+## Release process
+
+⚠️ _This manual process will be replaced with automated, trusted publishing._
+
+Local build/package/release flow requires permissions for `@heroku` npm org.
+
+1. Update the version in `npm version X.Y.Z --workspace @heroku/env-as-html-data`.
+2. Commit this change (and push it to origin)
+3. Build the package: `npm run build --workspace @heroku/env-as-html-data`
+4. Publish: `npm publish --workspaces --access public --otp=XXXXXX`
+    1. include `--tag next` if a pre-release.
