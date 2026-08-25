@@ -98,6 +98,12 @@ const response = await fetch(document.head.dataset.public_web_api_url, {
 });
 ```
 
+### Runtime Config for Local Development
+
+Local development on a JavaScript app typically does not include the [CNB lifecycle](#launching-the-server), and therefore misses the env-as-html-data runtime configuration behavior.
+
+This buildpack provides a [JS support module `@heroku/env-as-html-data`](../../support/env-as-html-data/) that can be integrated into an app's local dev server, so that configuration for local development matches production CNB-based deployment.
+
 ## Build-time Configuration
 
 _Static config that controls how the app is built, and how the web server delivers it._

@@ -8,6 +8,7 @@ members = [
     "buildpacks/website-vite",
     "buildpacks/static-web-server",
     "common/env_as_html_data",
+    "common/env_as_html_data_wasm",
     "common/static_web_server_utils",
     "test_support"
 ]

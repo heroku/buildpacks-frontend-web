@@ -40,6 +40,34 @@ jobs:
       - name: Run unit tests
         run: cargo test --locked
 
+  wasm-node-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Update Rust toolchain
+        run: rustup update
+      - name: Install Rust WebAssembly target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.15.0 --locked
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2.9.1
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Check WebAssembly target
+        run: cargo check -p env_as_html_data_wasm --target wasm32-unknown-unknown --locked
+      - name: Test Node package
+        run: npm test --workspace @heroku/env-as-html-data
+      - name: Verify package contents
+        run: npm pack --dry-run --workspace @heroku/env-as-html-data
+
   rust-integration-test:
     runs-on: ubuntu-24.04
     steps:
