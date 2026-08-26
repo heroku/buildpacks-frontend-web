@@ -12,7 +12,7 @@ The general strategy to use this module in a JavaScript web app is to invoke it 
 
 Install to the JavaScript project:  
 ```shell
-npm install @heroku/env-as-html-data@">= 2.0.0"
+npm install @heroku/env-as-html-data@">= 2.1.0"
 ```
 
 Configure the target HTML files in the app's `project.toml`, using the same settings as [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration):
