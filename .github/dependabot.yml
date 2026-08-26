@@ -39,10 +39,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      time: "12:00"
-      day: "sunday"
-      timezone: "America/Los_Angeles"
+      interval: "monthly"
     groups:
       javascript-dependencies:
         update-types:
