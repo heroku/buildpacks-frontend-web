@@ -1,0 +1,24 @@
+name: Check env-as-html-data release scope
+
+on:
+  pull_request:
+    paths:
+      - 'common/env_as_html_data/**'
+      - 'common/env_as_html_data_wasm/**'
+
+permissions:
+  contents: read
+
+jobs:
+  package-visible-change:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Require a package-visible change
+        run: |
+          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- support/env-as-html-data; then
+            echo "::error::Changes to the env-as-html-data Rust implementation require a matching change under support/env-as-html-data so release-please can publish the package."
+            exit 1
+          fi
