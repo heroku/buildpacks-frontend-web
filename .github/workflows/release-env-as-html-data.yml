@@ -12,6 +12,8 @@ on:
 jobs:
   validate:
     runs-on: pub-hk-ubuntu-24.04-ip
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App token
         id: app-token
