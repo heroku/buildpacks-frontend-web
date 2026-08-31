@@ -18,7 +18,11 @@ jobs:
           fetch-depth: 0
       - name: Require a package-visible change
         run: |
-          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- support/env-as-html-data; then
+          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- \
+            support/env-as-html-data/index.js \
+            support/env-as-html-data/index.d.ts \
+            support/env-as-html-data/lib/ \
+            support/env-as-html-data/bin/; then
             echo "::error::Changes to the env-as-html-data Rust implementation require a matching change under support/env-as-html-data so release-please can publish the package."
             exit 1
           fi
