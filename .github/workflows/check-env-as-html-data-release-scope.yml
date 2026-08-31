@@ -25,4 +25,10 @@ jobs:
             support/env-as-html-data/bin/; then
             echo "::error::Changes to the env-as-html-data Rust implementation require a matching change under support/env-as-html-data so release-please can publish the package."
             exit 1
+          else
+            status=$?
+            if [ "$status" -ne 1 ]; then
+              echo "::error::Unable to determine package-visible changes; git diff exited with status $status."
+              exit "$status"
+            fi
           fi
