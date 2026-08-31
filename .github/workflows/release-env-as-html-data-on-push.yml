@@ -18,6 +18,7 @@ jobs:
           app-id: ${{ vars.DEV_TOOLS_RELEASE_WORKFLOW_APP_ID }}
           private-key: ${{ secrets.DEV_TOOLS_RELEASE_WORKFLOW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }},npm-release-workflows
       - uses: actions/checkout@v7
       - name: Checkout release workflows
         uses: actions/checkout@v7
