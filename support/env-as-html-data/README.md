@@ -26,7 +26,7 @@ index = "index.html"
 html_files = ["index.html", "subsection/index.html"]
 ```
 
-### Rewrites HTML Files
+### Avoid committing rewritten HTML Files
 
 By default, the module rewrites the configured index document, or `public/index.html` when no `project.toml` settings are present. Paths in `html_files` are relative to `root` and may include `*` or `**` glob patterns.
 
