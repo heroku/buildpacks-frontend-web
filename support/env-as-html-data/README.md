@@ -12,7 +12,7 @@ The general strategy to use this module in a JavaScript web app is to invoke it 
 
 Install to the JavaScript project:  
 ```shell
-npm install @heroku/env-as-html-data@">= 2.0.0"
+npm install @heroku/env-as-html-data@">= 2.1.0"
 ```
 
 Configure the target HTML files in the app's `project.toml`, using the same settings as [`heroku/static-web-server`](../../buildpacks/static-web-server/README.md#runtime-app-configuration):
@@ -26,7 +26,11 @@ index = "index.html"
 html_files = ["index.html", "subsection/index.html"]
 ```
 
+### Rewrites HTML Files
+
 By default, the module rewrites the configured index document, or `public/index.html` when no `project.toml` settings are present. Paths in `html_files` are relative to `root` and may include `*` or `**` glob patterns.
+
+**Avoid committing or deploying the rewritten HTML documents.** This will result in build-time environment values being captured into the document. For developer tooling/scripts, exclude `env-as-html-data` from the production build command. For example, only execute `env-as-html-data` for `npm start` (the dev server), not `npm build` (the production app).
 
 ### Invoking env-to-html-data
 
