@@ -1,0 +1,5 @@
+channels:
+  main:
+    branch: main
+    prerelease: false
+    npm-tag: latest

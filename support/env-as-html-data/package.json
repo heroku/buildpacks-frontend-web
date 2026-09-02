@@ -2,6 +2,15 @@
   "name": "@heroku/env-as-html-data",
   "version": "2.1.0",
   "description": "Inject environment variables into HTML pages as data-* attributes.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/heroku/buildpacks-frontend-web.git",
+    "directory": "support/env-as-html-data"
+  },
+  "homepage": "https://github.com/heroku/buildpacks-frontend-web/tree/main/support/env-as-html-data",
+  "bugs": {
+    "url": "https://github.com/heroku/buildpacks-frontend-web/issues"
+  },
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -20,6 +29,9 @@
     "test": "node --test"
   },
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "glob": "^13.0.6",
     "toml": "^5.0.0"

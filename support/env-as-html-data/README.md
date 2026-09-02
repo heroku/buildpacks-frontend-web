@@ -138,12 +138,13 @@ All of this ensures that v2 behavior matches the Runtime Configuration behavior 
 
 ## Release process
 
-⚠️ _This manual process will be replaced with automated, trusted publishing._
+Releases are managed with [release-please](https://github.com/googleapis/release-please) and npm trusted publishing. Start the **Release env-as-html-data** GitHub Actions workflow from `main`. Use its `dry_run` input to create or update a release PR without publishing.
 
-Local build/package/release flow requires permissions for `@heroku` npm org.
+Release-please derives the next SemVer version from conventional commits that touch `support/env-as-html-data/`. Changes to the Rust implementation directories must include a corresponding package-visible change so they are eligible for an npm release:
 
-1. Update the version in `npm version X.Y.Z --workspace @heroku/env-as-html-data`.
-2. Commit this change (and push it to origin)
-3. Build the package: `npm run build --workspace @heroku/env-as-html-data`
-4. Publish: `npm publish --workspaces --access public --otp=XXXXXX`
-    1. include `--tag next` if a pre-release.
+- `common/env_as_html_data/`
+- `common/env_as_html_data_wasm/`
+
+After a non-dry run publishes the release PR's package version, merge the release PR. The push-triggered workflow creates the component-specific GitHub release and tag, `env-as-html-data-vX.Y.Z`.
+
+The trusted publisher must be configured in npm for `@heroku/env-as-html-data`, repository `heroku/buildpacks-frontend-web`, and workflow `.github/workflows/release-env-as-html-data.yml`.
