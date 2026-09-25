@@ -1,0 +1,118 @@
+name: Release env-as-html-data
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Create or update the release PR without publishing to npm
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate:
+    runs-on: pub-hk-ubuntu-24.04-ip
+    permissions:
+      contents: read
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.DEV_TOOLS_RELEASE_WORKFLOW_APP_ID }}
+          private-key: ${{ secrets.DEV_TOOLS_RELEASE_WORKFLOW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }},npm-release-workflows
+      - uses: actions/checkout@v7
+      - name: Checkout release workflows
+        uses: actions/checkout@v7
+        with:
+          repository: heroku/npm-release-workflows
+          token: ${{ steps.app-token.outputs.token }}
+          path: workflows-repo
+          ref: main
+      - name: Validate and test
+        uses: ./workflows-repo/.github/actions/release-validate-public
+        with:
+          package-manager: npm
+          package-directory: support/env-as-html-data
+          setup-command: rustup update && rustup target add wasm32-unknown-unknown && cargo install wasm-pack --version 0.15.0 --locked
+          lint_command: ''
+          test_command: test
+
+  release-please-pr:
+    needs: validate
+    runs-on: pub-hk-ubuntu-24.04-ip
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      npm_tag: ${{ steps.release.outputs.npm_tag }}
+      package_name: ${{ steps.release.outputs.package_name }}
+      pr_number: ${{ steps.release.outputs.pr_number }}
+      pr_already_exists: ${{ steps.release.outputs.pr_already_exists }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.DEV_TOOLS_RELEASE_WORKFLOW_APP_ID }}
+          private-key: ${{ secrets.DEV_TOOLS_RELEASE_WORKFLOW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }},npm-release-workflows
+      - uses: actions/checkout@v7
+      - name: Checkout release workflows
+        uses: actions/checkout@v7
+        with:
+          repository: heroku/npm-release-workflows
+          token: ${{ steps.app-token.outputs.token }}
+          path: workflows-repo
+          ref: main
+      - name: Create release PR
+        id: release
+        uses: ./workflows-repo/.github/actions/release-please-pr-public
+        with:
+          package-manager: npm
+          package-directory: support/env-as-html-data
+          branch_name: ${{ github.ref_name }}
+          dry_run: ${{ inputs.dry_run }}
+          token: ${{ steps.app-token.outputs.token }}
+
+  publish:
+    needs: release-please-pr
+    if: needs.release-please-pr.outputs.pr_number != '' || needs.release-please-pr.outputs.pr_already_exists == 'true'
+    runs-on: pub-hk-ubuntu-24.04-ip
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.DEV_TOOLS_RELEASE_WORKFLOW_APP_ID }}
+          private-key: ${{ secrets.DEV_TOOLS_RELEASE_WORKFLOW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }},npm-release-workflows
+      - uses: actions/checkout@v7
+      - name: Checkout release workflows
+        uses: actions/checkout@v7
+        with:
+          repository: heroku/npm-release-workflows
+          token: ${{ steps.app-token.outputs.token }}
+          path: workflows-repo
+          ref: main
+      - name: Publish to npm
+        uses: ./workflows-repo/.github/actions/release-publish-public
+        with:
+          package-manager: npm
+          package-directory: support/env-as-html-data
+          setup-command: rustup update && rustup target add wasm32-unknown-unknown && cargo install wasm-pack --version 0.15.0 --locked
+          workflows_token: ${{ steps.app-token.outputs.token }}
+          build_command: run build
+          dry_run: ${{ inputs.dry_run }}
+          npm_tag: ${{ needs.release-please-pr.outputs.npm_tag }}
+          package_name: ${{ needs.release-please-pr.outputs.package_name }}
+          pr_number: ${{ needs.release-please-pr.outputs.pr_number }}
+          branch_name: ${{ github.ref_name }}
