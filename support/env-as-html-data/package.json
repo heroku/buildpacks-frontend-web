@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "glob": "^13.0.6",
-    "toml": "^5.0.0"
+    "toml": "^5.0.1"
   },
   "engines": {
     "node": ">=20"
