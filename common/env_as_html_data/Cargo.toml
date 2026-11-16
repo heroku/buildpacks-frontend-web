@@ -7,7 +7,7 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-html5ever = "0.39.0"
+html5ever = "0.40.1"
 markup5ever_rcdom = "0.39.0"
 
 [dev-dependencies]
