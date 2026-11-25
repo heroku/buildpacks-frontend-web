@@ -1,7 +1,7 @@
 mod errors;
 mod o11y;
 
-use std::process::Command;
+use std::path::Path;
 
 use crate::errors::{on_error, WebsiteNextjsBuildpackError};
 use crate::o11y::*;
@@ -98,28 +98,10 @@ impl Buildpack for WebsiteNextjsBuildpack {
         }
     }
 
-    fn build(&self, _context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
+    fn build(&self, context: BuildContext<Self>) -> libcnb::Result<BuildResult, Self::Error> {
         log_header(BUILDPACK_NAME);
 
-        // Ensure comptibility with the static web server,
-        // that Next's build output is set to static exports.
-        let mut cmd = Command::new("sh");
-        cmd.args(["-c", "npm exec next info"]);
-        let next_info = cmd
-            .output()
-            .map_err(WebsiteNextjsBuildpackError::NextInfoCommandError)?;
-        let next_info_stdout = String::from_utf8_lossy(&next_info.stdout);
-        let next_info_stderr = String::from_utf8_lossy(&next_info.stderr);
-        if !next_info.status.success() {
-            return Err(libcnb::Error::BuildpackError(
-                WebsiteNextjsBuildpackError::NextInfoFailure(next_info_stderr.to_string()),
-            ));
-        }
-        if !next_info_stdout.contains(&"output: export".to_string()) {
-            return Err(libcnb::Error::BuildpackError(
-                WebsiteNextjsBuildpackError::RequiresStaticExport,
-            ));
-        }
+        validate_static_export(&context.app_dir)?;
 
         BuildResultBuilder::new().build()
     }
@@ -129,6 +111,39 @@ impl Buildpack for WebsiteNextjsBuildpack {
     }
 }
 
+fn validate_static_export(app_dir: &Path) -> Result<(), WebsiteNextjsBuildpackError> {
+    let required_server_files_path = app_dir.join(".next/required-server-files.json");
+    let required_server_files_contents = std::fs::read_to_string(required_server_files_path)
+        .map_err(WebsiteNextjsBuildpackError::ReadBuildOutputMetadata)?;
+    let required_server_files: serde_json::Value =
+        serde_json::from_str(&required_server_files_contents)
+            .map_err(WebsiteNextjsBuildpackError::ParseBuildOutputMetadata)?;
+
+    if required_server_files
+        .pointer("/config/output")
+        .and_then(serde_json::Value::as_str)
+        != Some("export")
+    {
+        return Err(WebsiteNextjsBuildpackError::RequiresStaticExport);
+    }
+
+    let export_detail_path = app_dir.join(".next/export-detail.json");
+    let export_detail_contents = std::fs::read_to_string(export_detail_path)
+        .map_err(WebsiteNextjsBuildpackError::ReadBuildOutputMetadata)?;
+    let export_detail: serde_json::Value = serde_json::from_str(&export_detail_contents)
+        .map_err(WebsiteNextjsBuildpackError::ParseBuildOutputMetadata)?;
+
+    if export_detail
+        .get("success")
+        .and_then(serde_json::Value::as_bool)
+        != Some(true)
+    {
+        return Err(WebsiteNextjsBuildpackError::StaticExportFailed);
+    }
+
+    Ok(())
+}
+
 impl From<WebsiteNextjsBuildpackError> for libcnb::Error<WebsiteNextjsBuildpackError> {
     fn from(value: WebsiteNextjsBuildpackError) -> Self {
         libcnb::Error::BuildpackError(value)
@@ -136,3 +151,73 @@ impl From<WebsiteNextjsBuildpackError> for libcnb::Error<WebsiteNextjsBuildpackE
 }
 
 buildpack_main!(WebsiteNextjsBuildpack);
+
+#[cfg(test)]
+mod tests {
+    use super::validate_static_export;
+    use std::fs;
+    use std::path::Path;
+
+    fn write_build_metadata(app_dir: &Path, output: &str, success: bool) {
+        let next_dir = app_dir.join(".next");
+        fs::create_dir_all(&next_dir).unwrap();
+        fs::write(
+            next_dir.join("required-server-files.json"),
+            format!(r#"{{"config":{{"output":"{output}"}}}}"#),
+        )
+        .unwrap();
+        fs::write(
+            next_dir.join("export-detail.json"),
+            format!(r#"{{"success":{success}}}"#),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn accepts_successful_static_export() {
+        let app_dir = tempfile::tempdir().unwrap();
+        write_build_metadata(app_dir.path(), "export", true);
+
+        assert!(validate_static_export(app_dir.path()).is_ok());
+    }
+
+    #[test]
+    fn rejects_build_without_static_export_configuration() {
+        let app_dir = tempfile::tempdir().unwrap();
+        write_build_metadata(app_dir.path(), "", true);
+
+        assert!(validate_static_export(app_dir.path()).is_err());
+    }
+
+    #[test]
+    fn rejects_unsuccessful_static_export() {
+        let app_dir = tempfile::tempdir().unwrap();
+        write_build_metadata(app_dir.path(), "export", false);
+
+        assert!(validate_static_export(app_dir.path()).is_err());
+    }
+
+    #[test]
+    fn rejects_missing_export_metadata() {
+        let app_dir = tempfile::tempdir().unwrap();
+        let next_dir = app_dir.path().join(".next");
+        std::fs::create_dir(&next_dir).unwrap();
+        std::fs::write(
+            next_dir.join("required-server-files.json"),
+            r#"{"config":{"output":"export"}}"#,
+        )
+        .unwrap();
+
+        assert!(validate_static_export(app_dir.path()).is_err());
+    }
+
+    #[test]
+    fn rejects_malformed_build_metadata() {
+        let app_dir = tempfile::tempdir().unwrap();
+        let next_dir = app_dir.path().join(".next");
+        std::fs::create_dir(&next_dir).unwrap();
+        std::fs::write(next_dir.join("required-server-files.json"), "invalid json").unwrap();
+
+        assert!(validate_static_export(app_dir.path()).is_err());
+    }
+}
