@@ -14,10 +14,11 @@ locally with a minimal example and open an issue in the buildpack's GitHub repos
 #[derive(Debug)]
 pub(crate) enum WebsiteNextjsBuildpackError {
     Detect(io::Error),
-    NextInfoCommandError(io::Error),
-    NextInfoFailure(String),
+    ReadBuildOutputMetadata(io::Error),
     ReadPackageJson(io::Error),
     RequiresStaticExport,
+    StaticExportFailed,
+    ParseBuildOutputMetadata(serde_json::Error),
     ParsePackageJson(serde_json::Error),
     SettingBuildPlanMetadata(toml::ser::Error),
 }
@@ -61,19 +62,12 @@ fn buildpack_error_message(error: WebsiteNextjsBuildpackError) -> ErrorMessage {
             error_string: e.to_string(),
             error_id: "detect_error".to_string(),
         },
-        WebsiteNextjsBuildpackError::NextInfoCommandError(e) => ErrorMessage {
+        WebsiteNextjsBuildpackError::ReadBuildOutputMetadata(e) => ErrorMessage {
             message: formatdoc! {"
-                Error executing `next info` in {buildpack_name}.
+                Unable to read Next.js build output metadata in {buildpack_name}.
             ", buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: e.to_string(),
-            error_id: "next_info_command_error".to_string(),
-        },
-        WebsiteNextjsBuildpackError::NextInfoFailure(m) => ErrorMessage {
-            message: formatdoc! {"
-                `next info` command failed in {buildpack_name}.
-            ", buildpack_name = style::value(BUILDPACK_NAME) },
-            error_string: m,
-            error_id: "next_info_failure".to_string(),
+            error_id: "read_build_output_metadata_error".to_string(),
         },
         WebsiteNextjsBuildpackError::ReadPackageJson(e) => ErrorMessage {
             message: formatdoc! {"
@@ -102,6 +96,20 @@ fn buildpack_error_message(error: WebsiteNextjsBuildpackError) -> ErrorMessage {
             "#, buildpack_name = style::value(BUILDPACK_NAME) },
             error_string: "Next.js build output must target static exports".to_string(),
             error_id: "requires_static_export_error".to_string(),
+        },
+        WebsiteNextjsBuildpackError::StaticExportFailed => ErrorMessage {
+            message: formatdoc! {"
+                Next.js static export did not complete successfully in {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: "Next.js static export metadata does not indicate success".to_string(),
+            error_id: "static_export_failed".to_string(),
+        },
+        WebsiteNextjsBuildpackError::ParseBuildOutputMetadata(e) => ErrorMessage {
+            message: formatdoc! {"
+                Unable to parse Next.js build output metadata in {buildpack_name}.
+            ", buildpack_name = style::value(BUILDPACK_NAME) },
+            error_string: e.to_string(),
+            error_id: "parse_build_output_metadata_error".to_string(),
         },
         WebsiteNextjsBuildpackError::ParsePackageJson(e) => ErrorMessage {
             message: formatdoc! {"
